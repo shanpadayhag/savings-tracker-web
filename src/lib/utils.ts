@@ -23,6 +23,11 @@ export const num = {
   }
 };
 
+/**
+ * Currently there will be 1 whole total available funds. But when implementing
+ * the actual database, please note that there will be an "acount" that will
+ * act as a virtual wallet
+ */
 export type User = {
   id: "singleton";
   financialSummary: {
@@ -30,7 +35,7 @@ export type User = {
     currency: string;
     lastUpdated: Date;
   };
-}
+};
 
 export type GoalListItem = {
   id?: number;
@@ -46,16 +51,32 @@ export type GoalListItem = {
 
 export type TransactionListItem = {
   id?: number;
+  date?: Date;
+  type: string; // goal_allocation, account_balance_adjustment
+  activity: string;
+  description: string;
+  accountBalanceAdjustment?: {
+    amount: number;
+  };
+  goalAllocation?: {
+    goal: {
+      id: number;
+      name: string;
+    };
+    amountAllocated: number;
+  }[];
 };
 
 class DB extends Dexie {
   user!: Dexie.Table<User, "singleton">;
+  // goal_allocations!: Dexie.Table<GoalAllocation, number>;
   goalList!: Dexie.Table<GoalListItem, number>;
   transactionList!: Dexie.Table<TransactionListItem, number>;
 
   constructor() {
     super("savings_tracker");
     this.version(1).stores({
+      user: "id",
       goalList: "++id",
       transactionList: "++id",
     });
