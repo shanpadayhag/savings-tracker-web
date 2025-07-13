@@ -2,19 +2,20 @@
 
 import { Button } from '@/components/atoms/button';
 import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/atoms/card';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/atoms/command';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/atoms/popover';
 import { Progress } from '@/components/atoms/progress';
-import { cn, db, GoalListItem, num, TransactionListItem, User } from '@/lib/utils';
-import { IconCheck, IconChevronDown, IconDotsVertical, IconPlus, IconTrashFilled } from '@tabler/icons-react';
+import { Combobox, ComboboxItem, ComboboxItems } from '@/components/molecules/combobox';
+import { db, GoalListItem, num, TransactionListItem, User } from '@/lib/utils';
+import { IconDotsVertical, IconPlus, IconTrashFilled } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import { toast } from "sonner";
 
 export default () => {
   const [userDetails, setUserDetails] = useState<User | null>(null);
   const [goalList, setGoalList] = useState<GoalListItem[]>([]);
+  const [comboboxGoalItems, setComboboxGoalItems] = useState<ComboboxItems>([]);
   const [newGoalDialogIsOpen, setNewGoalDialogIsOpen] = useState(false);
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTargetAmount, setNewGoalTargetAmount] = useState("");
@@ -23,8 +24,10 @@ export default () => {
   const [newBalanceAmount, setNewBalanceAmount] = useState("");
   const [newTransactionDialogIsOpen, setNewTransactionDialogIsOpen] = useState(false);
   const [newTransactionActivity, setNewTransactionActivity] = useState("");
+  const [newTransactionDescription, setNewTransactionDescription] = useState("");
+  const [newTransactionGoals, setNewTransactionGoals] = useState<{ goal?: ComboboxItem; amount: string; }[]>([]);
 
-  const handleNewGoalFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleNewGoalFormOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     createGoal();
   };
@@ -39,7 +42,12 @@ export default () => {
   };
 
   const fetchGoalList = async () => {
-    setGoalList(await db.goalList.toArray());
+    const goalListData = await db.goalList.toArray();
+    setGoalList(goalListData);
+    setComboboxGoalItems(goalListData.map(goal => ({
+      label: goal.name,
+      value: goal.id!.toString()
+    })));
   };
 
   const fetchUserDetails = async () => {
@@ -136,26 +144,112 @@ export default () => {
     setNewBalanceAmount("");
   };
 
+  const handleAddGoalButtonOnClick = () => {
+    setNewTransactionGoals(goals => {
+      goals.push({ amount: "" });
+      return [...goals];
+    });
+  };
+
+  const handleGoalComboboxOnChange = (index: number) => (value: ComboboxItem) => {
+    setNewTransactionGoals(goals => {
+      goals[index].goal = value;
+      return [...goals];
+    });
+  };
+
+  const handleGoalAmountInputOnChangeValue = (value: string, index: number) => {
+    setNewTransactionGoals(goals => {
+      goals[index].amount = value;
+      return [...goals];
+    });
+  };
+
+  const handleCreateTransactionFormOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    createTransaction();
+  };
+
+  const handleCreateTransactionButtonOnClick = () => {
+    createTransaction();
+  };
+
+  const createTransaction = async () => {
+    const goals: TransactionListItem['goalAllocation'] = [];
+    let totalAmount = 0;
+
+    for (const goal of newTransactionGoals) {
+      if (!goal.goal) continue;
+
+      let goalID = parseInt(goal.goal.value);
+      if (Number.isNaN(goalID)) continue;
+      let amountAllocated = parseFloat(goal.amount);
+      if (Number.isNaN(amountAllocated) || amountAllocated === 0) continue;
+
+      goals.push({
+        goal: {
+          id: goalID,
+          name: goal.goal.label,
+        },
+        amountAllocated: amountAllocated,
+      });
+
+      if (amountAllocated > 0) totalAmount += amountAllocated;
+    };
+
+    if (goals.length <= 0) return;
+
+    const transaction: TransactionListItem = {
+      type: "goal_allocation",
+      activity: newTransactionActivity,
+      description: newTransactionDescription,
+      goalAllocation: goals,
+    };
+
+    const newAvailableFunds = userDetails!.financialSummary.totalAvailableFunds - totalAmount;
+    if (newAvailableFunds < 0) return toast.error("Insufficient balance");
+    userDetails!.financialSummary.totalAvailableFunds = newAvailableFunds;
+
+    await db.transactionList.add(transaction);
+    await db.user.update("singleton", userDetails!);
+
+    for (const transact of (transaction.goalAllocation || [])) {
+      const goal = await db.goalList.get(transact.goal.id);
+
+      if (!goal) continue;
+
+      await db.goalList.update(transact.goal.id, {
+        currentAmount: goal.currentAmount + transact.amountAllocated,
+        remainingAmount: goal.targetAmount - transact.amountAllocated,
+      });
+    }
+
+    toast.success("Transaction added");
+    fetchGoalList();
+    setUserDetails({ ...userDetails! });
+    setNewTransactionDialogIsOpen(false);
+    setNewTransactionActivity("");
+    setNewTransactionDescription("");
+    setNewTransactionGoals([]);
+  };
+
   useEffect(() => {
     handleOnPageLoad();
   }, []);
 
   return <>
     <div className="w-screen h-screen overflow-hidden bg-secondary">
-      <div className="flex flex-col items-center overflow-auto h-full">
-        <div className="flex justify-end gap-4 p-4 md:gap-6 w-full max-w-[500px]">
+      <div className="flex flex-col items-center overflow-auto h-full py-2">
+        <div className="flex justify-end gap-2 p-4 w-full max-w-[500px]">
           <Button onClick={() => setNewBalanceDialogIsOpen(true)} variant="outline"><IconPlus /> Balance</Button>
-          <Button disabled onClick={() => setNewTransactionDialogIsOpen(true)} variant="outline"><IconPlus /> Transaction</Button>
+          <Button onClick={() => setNewTransactionDialogIsOpen(true)} variant="outline"><IconPlus /> Transaction</Button>
           <Button onClick={() => setNewGoalDialogIsOpen(true)}><IconPlus /> Goal</Button>
         </div>
 
         <div className="flex flex-col gap-4 p-4 md:gap-6 w-full max-w-[500px]">
           {goalList.map(goal => <Card key={goal.id} className="flex-1">
             <CardHeader>
-              <CardTitle className="self-center row-span-2">
-                {goal.name}
-                <span className="font-normal text-sm text-muted-foreground"> ({goal.status})</span>
-              </CardTitle>
+              <CardTitle className="self-center row-span-2">{goal.name}</CardTitle>
               <CardAction>
                 <Button size="icon" variant="ghost">
                   <IconDotsVertical />
@@ -196,7 +290,7 @@ export default () => {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleNewGoalFormSubmit} className="grid gap-4">
+          <form onSubmit={handleNewGoalFormOnSubmit} className="grid gap-4">
             <div className="grid gap-3">
               <Label htmlFor="name-1">Name</Label>
               <Input onChange={event => setNewGoalName(event.target.value)} id="name-1" name="name" placeholder="Enter goal's name" autoComplete="off" />
@@ -212,6 +306,8 @@ export default () => {
                 <Label htmlFor="currency">Currency</Label>
                 <Input disabled value={newGoalCurrency} onChange={event => setNewGoalCurrency(event.target.value)} id="currency" name="currency" autoComplete="off" />
               </div>
+
+              <button className="hidden" type="submit"></button>
             </div>
           </form>
 
@@ -219,7 +315,7 @@ export default () => {
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button onClick={handleNewGoalButtonOnClick} type="submit">Save</Button>
+            <Button onClick={handleNewGoalButtonOnClick}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -234,7 +330,7 @@ export default () => {
             </DialogDescription>
           </DialogHeader>
 
-          <form className="grid gap-4">
+          <form onSubmit={handleCreateTransactionFormOnSubmit} className="grid gap-4">
             <div className="flex flex-col items-center">
               <p className="text-xs text-muted-foreground">Current Balance:</p>
               <h3 className="text-2xl font-semibold">{num.currencyFormat(userDetails?.financialSummary.totalAvailableFunds || 0, userDetails?.financialSummary.currency || "eur")}</h3>
@@ -242,62 +338,31 @@ export default () => {
 
             <div className="grid gap-3">
               <Label htmlFor="activity">Activity</Label>
-              <Input id="activity" name="activity" placeholder="Enter activity" />
+              <Input onChange={event => setNewTransactionActivity(event.target.value)} id="activity" name="activity" placeholder="Enter activity" autoComplete="off" />
             </div>
 
             <div className="grid gap-3">
               <Label htmlFor="description">Description</Label>
-              <Input id="description" name="description" placeholder="Enter description" />
+              <Input onChange={event => setNewTransactionDescription(event.target.value)} id="description" name="description" placeholder="Enter description" autoComplete="off" />
             </div>
 
-            <div><Button><IconPlus /> Goal</Button></div>
+            <div><Button onClick={handleAddGoalButtonOnClick} type="button"><IconPlus /> Goal</Button></div>
 
             <div className="grid gap-3">
-              <div className="flex gap-2">
+              {newTransactionGoals.map((goal, index) => <div key={index} className="flex gap-2">
                 <div className="flex-1">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={true}
-                        // same value as open in popover
-                        className="w-full justify-between">
-                        Select goal
-                        <IconChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search framework..." />
-                        <CommandList>
-                          <CommandEmpty>No framework found.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              value={"value"}
-                            >
-                              <IconCheck
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  // value === framework.value ? "opacity-100" : "opacity-0"
-                                  "opacity-0"
-                                )}
-                              />
-                              Groceries
-                            </CommandItem>
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <Combobox
+                    value={goal.goal}
+                    onChangeValue={handleGoalComboboxOnChange(index)}
+                    items={comboboxGoalItems} />
                 </div>
 
-                <Input placeholder="Amount" className="w-25" />
+                <Input onChange={event => handleGoalAmountInputOnChangeValue(event.target.value, index)} placeholder="Amount" className="w-25" autoComplete="off" />
 
                 <Button size="icon">
                   <IconTrashFilled />
                 </Button>
-              </div>
+              </div>)}
             </div>
           </form>
 
@@ -305,7 +370,7 @@ export default () => {
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit">Save</Button>
+            <Button onClick={handleCreateTransactionButtonOnClick} type="submit">Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -328,7 +393,7 @@ export default () => {
 
             <div className="grid gap-3">
               <Label htmlFor="amount">Amount</Label>
-              <Input onChange={event => setNewBalanceAmount(event.target.value)} id="amount" name="amount" placeholder="Enter amount" />
+              <Input onChange={event => setNewBalanceAmount(event.target.value)} id="amount" name="amount" placeholder="Enter amount" autoComplete="off" />
             </div>
           </form>
 
@@ -340,7 +405,7 @@ export default () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   </>;
 };
 
