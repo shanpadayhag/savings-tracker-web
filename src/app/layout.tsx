@@ -1,6 +1,7 @@
 import { SidebarInset, SidebarProvider } from '@/components/atoms/sidebar';
 import { AppSidebar } from '@/components/molecules/app-sidebar';
 import type { Metadata } from "next";
+import { Toaster } from "@/components/atoms/sonner";
 
 import "@/assets/css/tailwind.css";
 
@@ -25,11 +26,12 @@ export default function RootLayout({
             } as React.CSSProperties
           }
         > */}
-          {/* <AppSidebar variant="inset" /> */}
-          {/* <SidebarInset> */}
-            {children}
-          {/* </SidebarInset> */}
+        {/* <AppSidebar variant="inset" /> */}
+        {/* <SidebarInset> */}
+        {children}
+        {/* </SidebarInset> */}
         {/* </SidebarProvider> */}
+        <Toaster position="top-center" />
       </body>
     </html>
   );
