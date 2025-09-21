@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Toaster } from "@/components/atoms/sonner";
 
 import "@/assets/css/tailwind.css";
+import { ThemeProvider } from '@/components/atoms/theme-provider';
 
 export const metadata: Metadata = {
   title: "Savings Tracker",
@@ -16,9 +17,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        {/* <SidebarProvider
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange>
+          {/* <SidebarProvider
           style={
             {
               "--sidebar-width": "calc(var(--spacing) * 72)",
@@ -26,12 +32,13 @@ export default function RootLayout({
             } as React.CSSProperties
           }
         > */}
-        {/* <AppSidebar variant="inset" /> */}
-        {/* <SidebarInset> */}
-        {children}
-        {/* </SidebarInset> */}
-        {/* </SidebarProvider> */}
-        <Toaster position="top-center" />
+          {/* <AppSidebar variant="inset" /> */}
+          {/* <SidebarInset> */}
+          {children}
+          {/* </SidebarInset> */}
+          {/* </SidebarProvider> */}
+          <Toaster position="bottom-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

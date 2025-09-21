@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import Dexie from "dexie";
+import GoalListItem from '@/features/goals/entities/goal-list-item';
+import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -35,36 +37,6 @@ export type User = {
     currency: string;
     lastUpdated: Date;
   };
-};
-
-export type GoalListItem = {
-  id?: number;
-  name: string;
-  targetAmount: number;
-  currentAmount: number;
-  remainingAmount: number;
-  currency: string; // usd, euro, php
-  status: string; // active, archived, completed
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type TransactionListItem = {
-  id?: number;
-  date?: Date;
-  type: string; // goal_allocation, account_balance_adjustment
-  activity: string;
-  description: string;
-  accountBalanceAdjustment?: {
-    amount: number;
-  };
-  goalAllocation?: {
-    goal: {
-      id: number;
-      name: string;
-    };
-    amountAllocated: number;
-  }[];
 };
 
 class DB extends Dexie {
