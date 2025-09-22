@@ -11,18 +11,18 @@ type HomeSpendMoneyDialogProps = {
   goalName: string;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setAmount: React.Dispatch<React.SetStateAction<string>>;
-  spendMoney: ReturnType<typeof useHomeEvents>['spendMoney'];
+  handleSpendFromGoal: ReturnType<typeof useHomeEvents>['handleSpendFromGoal'];
 };
 
 const HomeSpendMoneyDialog = (props: HomeSpendMoneyDialogProps) => {
   const spendFundsFormOnSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    props.spendMoney();
-  }, [props.spendMoney]);
+    props.handleSpendFromGoal();
+  }, [props.handleSpendFromGoal]);
 
   const spendFundsButtonOnClick = useCallback(() => {
-    props.spendMoney();
-  }, [props.spendMoney]);
+    props.handleSpendFromGoal();
+  }, [props.handleSpendFromGoal]);
 
   return <Dialog open={props.spendMoneyDialogIsOpen} onOpenChange={props.setSpendMoneyDialogIsOpen}>
     <DialogContent className="sm:max-w-[425px]">
@@ -44,6 +44,8 @@ const HomeSpendMoneyDialog = (props: HomeSpendMoneyDialogProps) => {
           <Label htmlFor="amount">Amount</Label>
           <Input onChange={event => props.setAmount(event.target.value)} id="amount" name="amount" placeholder="Enter amount" autoComplete="off" />
         </div>
+
+        <button type="submit" className="sr-only">Submit</button>
       </form>
 
       <DialogFooter>

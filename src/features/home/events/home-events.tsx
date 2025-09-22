@@ -109,26 +109,41 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
 
   }, []);
 
-  const spendMoney = async () => {
-    try {
-      if (!states.selectedGoal) {
-        return toast.error("Oops, something went wrong.", {
-          description: "The import failed. Please check the files and try again.",
-        });
-      }
+  /**
+   * Handles spending funds from a selected goal.
+   * It validates that a goal is selected, constructs the transaction payload,
+   * calls the API, and displays success or error notifications.
+   */
+  const handleSpendFromGoal = async () => {
+    const { selectedGoal, newTransactionDescription, newTransactionAmount } = states;
 
-      await spendFundsFromGoal({
-        goalID: states.selectedGoal.id,
-        goalName: states.selectedGoal.name,
-        description: states.newTransactionDescription,
-        amount: currency(states.newTransactionAmount).value,
+    if (!selectedGoal) {
+      return toast.error("Just one thing...", {
+        description: "Please pick a goal before saving your transaction.",
       });
-      toast.success("Import complete! ✨", {
-        description: `We've successfully added your`,
+    }
+
+    try {
+      await spendFundsFromGoal({
+        goalID: selectedGoal.id,
+        goalName: selectedGoal.name,
+        description: newTransactionDescription,
+        amount: currency(newTransactionAmount).value,
+      });
+
+      fetchGoals();
+
+      states.setSpendMoneyDialogIsOpen(false);
+      states.setNewTransactionDescription("");
+      states.setNewTransactionAmount("");
+
+      toast.success("All set!", {
+        description: `Your transaction for '${selectedGoal.name}' has been saved.`,
       });
     } catch (error) {
-      toast.error("Oops, something went wrong.", {
-        description: "The import failed. Please check the files and try again.",
+      console.error("Transaction failed:", error);
+      toast.error("Oh no, something went wrong.", {
+        description: "We couldn't save your transaction. Please try again in a moment.",
       });
     }
   };
@@ -138,7 +153,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     exportTransactionsOnClick,
     importTransactionsOnClick,
     allocateMoney,
-    spendMoney,
+    handleSpendFromGoal,
   };
 };
 

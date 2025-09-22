@@ -231,7 +231,7 @@ export default () => {
         goalName={states.selectedGoal?.name || "Goal"}
         setDescription={states.setNewTransactionDescription}
         setAmount={states.setNewTransactionAmount}
-        spendMoney={events.spendMoney} />
+        handleSpendFromGoal={events.handleSpendFromGoal} />
 
       <Dialog open={newBalanceDialogIsOpen} onOpenChange={setNewBalanceDialogIsOpen}>
         <DialogContent className="sm:max-w-[425px]">
