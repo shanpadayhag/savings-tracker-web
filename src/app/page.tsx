@@ -6,30 +6,20 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Progress } from '@/components/atoms/progress';
-import { Combobox, ComboboxItem, ComboboxItems } from '@/components/molecules/combobox';
-import GoalListItem from '@/features/goals/entities/goal-list-item';
+import { ComboboxItem } from '@/components/molecules/combobox';
 import HomeGoalItemActionDropdown from '@/features/home/components/molecules/home-goal-item-action-dropdown';
 import HomeMainActionSection from '@/features/home/components/organisms/home-main-action-section';
+import HomeSpendMoneyDialog from '@/features/home/components/organisms/home-spend-money-dialog';
 import useHomeEvents from '@/features/home/events/home-events';
 import useHomeStates from '@/features/home/states/home-states';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db, num, User } from '@/lib/utils';
-import { IconPlus, IconTrashFilled } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default () => {
   const states = useHomeStates();
   const events = useHomeEvents(states);
-
-  const allocateFundsFormOnSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    events.allocateFunds();
-  }, []);
-
-  const allocateFundsButtonOnClick = useCallback(() => {
-    events.allocateFunds();
-  }, []);
 
   const [userDetails, setUserDetails] = useState<User | null>(null);
   const [newGoalDialogIsOpen, setNewGoalDialogIsOpen] = useState(false);
@@ -38,8 +28,6 @@ export default () => {
   const [newGoalCurrency, setNewGoalCurrency] = useState("eur");
   const [newBalanceDialogIsOpen, setNewBalanceDialogIsOpen] = useState(false);
   const [newBalanceAmount, setNewBalanceAmount] = useState("");
-  const [newTransactionActivity, setNewTransactionActivity] = useState("");
-  const [newTransactionDescription, setNewTransactionDescription] = useState("");
   const [newTransactionGoals, setNewTransactionGoals] = useState<{ goal?: ComboboxItem; amount: string; }[]>([]);
 
   const handleNewGoalFormOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -148,96 +136,6 @@ export default () => {
     setNewBalanceAmount("");
   };
 
-  const handleAddGoalButtonOnClick = () => {
-    setNewTransactionGoals(goals => {
-      goals.push({ amount: "" });
-      return [...goals];
-    });
-  };
-
-  const handleGoalComboboxOnChange = (index: number) => (value: ComboboxItem) => {
-    setNewTransactionGoals(goals => {
-      goals[index].goal = value;
-      return [...goals];
-    });
-  };
-
-  const handleGoalAmountInputOnChangeValue = (value: string, index: number) => {
-    setNewTransactionGoals(goals => {
-      goals[index].amount = value;
-      return [...goals];
-    });
-  };
-
-  // const handleCreateTransactionFormOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-  //   createTransaction();
-  // };
-
-  // const handleCreateTransactionButtonOnClick = () => {
-  //   createTransaction();
-  // };
-
-  // const createTransaction = async () => {
-  //   const goals: TransactionListItem['goalAllocation'] = [];
-  //   let totalAmount = 0;
-
-  //   for (const goal of newTransactionGoals) {
-  //     if (!goal.goal) continue;
-
-  //     let goalID = parseInt(goal.goal.value);
-  //     if (Number.isNaN(goalID)) continue;
-  //     let amountAllocated = parseFloat(goal.amount);
-  //     if (Number.isNaN(amountAllocated) || amountAllocated === 0) continue;
-
-  //     goals.push({
-  //       goal: {
-  //         id: goalID,
-  //         name: goal.goal.label,
-  //       },
-  //       amountAllocated: amountAllocated,
-  //     });
-
-  //     if (amountAllocated > 0) totalAmount += amountAllocated;
-  //   };
-
-  //   if (goals.length <= 0) return;
-
-  //   const transaction: TransactionListItem = {
-  //     type: "goal_allocation",
-  //     activity: newTransactionActivity,
-  //     description: newTransactionDescription,
-  //     goalAllocation: goals,
-  //   };
-
-  //   const newAvailableFunds = userDetails!.financialSummary.totalAvailableFunds - totalAmount;
-  //   console.log(userDetails!.financialSummary.totalAvailableFunds, newAvailableFunds);
-  //   if (newAvailableFunds < 0) return toast.error("Insufficient balance");
-  //   userDetails!.financialSummary.totalAvailableFunds = newAvailableFunds;
-
-  //   await db.transactionList.add(transaction);
-  //   await db.user.update("singleton", userDetails!);
-
-  //   for (const transact of (transaction.goalAllocation || [])) {
-  //     const goal = await db.goalList.get(transact.goal.id);
-
-  //     if (!goal) continue;
-
-  //     await db.goalList.update(transact.goal.id, {
-  //       currentAmount: goal.currentAmount + transact.amountAllocated,
-  //       remainingAmount: goal.targetAmount - transact.amountAllocated,
-  //     });
-  //   }
-
-  //   toast.success("Transaction added");
-  //   fetchGoalList();
-  //   setUserDetails({ ...userDetails! });
-  //   states.setNewTransactionDialogIsOpen(false);
-  //   setNewTransactionActivity("");
-  //   setNewTransactionDescription("");
-  //   setNewTransactionGoals([]);
-  // };
-
   useEffect(() => {
     handleOnPageLoad();
   }, []);
@@ -257,8 +155,10 @@ export default () => {
               <CardTitle className="self-center row-span-2">{goal.name}</CardTitle>
               <CardAction>
                 <HomeGoalItemActionDropdown
-                  allocateMoneyOnClick={() => states.setAllocateMoneyDialogIsOpen(true)}
-                  spendMoneyOnClick={() => states.setSpendMoneyDialogIsOpen(true)} />
+                  allocateMoneyOnClick={states.setAllocateMoneyDialogIsOpen}
+                  spendMoneyOnClick={states.setSpendMoneyDialogIsOpen}
+                  setSelectedGoal={states.setSelectedGoal}
+                  goal={{ id: goal.id!, name: goal.name }} />
               </CardAction>
             </CardHeader>
 
@@ -325,60 +225,13 @@ export default () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={states.spendMoneyDialogIsOpen} onOpenChange={states.setSpendMoneyDialogIsOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create transaction</DialogTitle>
-            <DialogDescription>
-              Enter your transaction details here. Click save when you&apos;re
-              done.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form className="grid gap-4">
-            <div className="flex flex-col items-center">
-              <p className="text-xs text-muted-foreground">Current Balance:</p>
-              <h3 className="text-2xl font-semibold">{num.currencyFormat(userDetails?.financialSummary.totalAvailableFunds || 0, userDetails?.financialSummary.currency || "eur")}</h3>
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="activity">Activity</Label>
-              <Input onChange={event => setNewTransactionActivity(event.target.value)} id="activity" name="activity" placeholder="Enter activity" autoComplete="off" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="description">Description</Label>
-              <Input onChange={event => setNewTransactionDescription(event.target.value)} id="description" name="description" placeholder="Enter description" autoComplete="off" />
-            </div>
-
-            <div><Button onClick={handleAddGoalButtonOnClick} type="button"><IconPlus /> Goal</Button></div>
-
-            <div className="grid gap-3">
-              {newTransactionGoals.map((goal, index) => <div key={index} className="flex gap-2">
-                <div className="flex-1">
-                  <Combobox
-                    value={goal.goal}
-                    onChangeValue={handleGoalComboboxOnChange(index)}
-                    items={states.comboboxGoalItems} />
-                </div>
-
-                <Input onChange={event => handleGoalAmountInputOnChangeValue(event.target.value, index)} placeholder="Amount" className="w-25" autoComplete="off" />
-
-                <Button size="icon">
-                  <IconTrashFilled />
-                </Button>
-              </div>)}
-            </div>
-          </form>
-
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button type="submit">Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <HomeSpendMoneyDialog
+        spendMoneyDialogIsOpen={states.spendMoneyDialogIsOpen}
+        setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
+        goalName={states.selectedGoal?.name || "Goal"}
+        setDescription={states.setNewTransactionDescription}
+        setAmount={states.setNewTransactionAmount}
+        handleSpendFromGoal={events.handleSpendFromGoal} />
 
       <Dialog open={newBalanceDialogIsOpen} onOpenChange={setNewBalanceDialogIsOpen}>
         <DialogContent className="sm:max-w-[425px]">

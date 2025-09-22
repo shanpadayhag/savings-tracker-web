@@ -1,5 +1,6 @@
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
+import currency from 'currency.js';
 
 type GoalTransactionParams = {
   goal: { id: string; name: string; };
@@ -31,8 +32,10 @@ const updateGoalAndLogTransaction = async (
   const isAllocation = transactionType === TransactionType.GoalAllocation;
   const multiplier = isAllocation ? 1 : -1;
   const actionText = isAllocation ? 'Allocated' : 'Spent';
-  const signedAmount = amount * multiplier;
-  const newCurrentAmount = existingGoal.currentAmount + signedAmount;
+  const signedAmount = currency(amount).multiply(multiplier);
+  const newCurrentAmount = currency(existingGoal.currentAmount)
+    .add(signedAmount)
+    .value;
 
   await db.transactionList.add({
     activity: `${actionText} ${Math.abs(amount)} for ${goal.name}`,

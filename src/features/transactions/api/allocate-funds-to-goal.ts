@@ -3,6 +3,7 @@ import updateGoalAndLogTransaction from '@/features/transactions/api/update-goal
 import type TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
+import currency from 'currency.js';
 
 type AllocateFundsToGoalParameters = {
   goalID: GoalListItem['id'];
@@ -37,7 +38,9 @@ const updateUserFunds = async ({ amount, date }: UpdateUserFundsParameters) => {
     throw new Error('User record not found.');
   }
 
-  const newTotalAvailableFunds = user.financialSummary.totalAvailableFunds - amount;
+  const newTotalAvailableFunds = currency(user.financialSummary.totalAvailableFunds)
+    .subtract(amount)
+    .value;
 
   return db.user.update('singleton', {
     financialSummary: {
