@@ -1,3 +1,4 @@
+import fetchGoalsApi from '@/features/goals/api/fetch-goals';
 import useHomeStates from '@/features/home/states/home-states';
 import getTransactionChunksForExport from '@/features/transactions/api/get-transaction-chunks-for-export';
 import processImportedTransactions from '@/features/transactions/api/process-imported-transactions';
@@ -9,7 +10,15 @@ import { useCallback } from 'react';
 import { toast } from 'sonner';
 
 const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
-  const fetchGoals = useCallback(async () => { }, []);
+  const fetchGoals = useCallback(async () => {
+    const goals = await fetchGoalsApi();
+
+    states.setGoalList(goals);
+    states.setComboboxGoalItems(goals.map(goal => ({
+      label: goal.name,
+      value: goal.id!.toString()
+    })));
+  }, []);
 
   /**
    * Handles the click event for exporting transactions.

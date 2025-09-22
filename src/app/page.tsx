@@ -32,8 +32,6 @@ export default () => {
   }, []);
 
   const [userDetails, setUserDetails] = useState<User | null>(null);
-  const [goalList, setGoalList] = useState<GoalListItem[]>([]);
-  const [comboboxGoalItems, setComboboxGoalItems] = useState<ComboboxItems>([]);
   const [newGoalDialogIsOpen, setNewGoalDialogIsOpen] = useState(false);
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTargetAmount, setNewGoalTargetAmount] = useState("");
@@ -55,16 +53,7 @@ export default () => {
 
   const handleOnPageLoad = async () => {
     fetchUserDetails();
-    fetchGoalList();
-  };
-
-  const fetchGoalList = async () => {
-    const goalListData = await db.goalList.toArray();
-    setGoalList(goalListData);
-    setComboboxGoalItems(goalListData.map(goal => ({
-      label: goal.name,
-      value: goal.id!.toString()
-    })));
+    events.fetchGoals();
   };
 
   const fetchUserDetails = async () => {
@@ -108,7 +97,7 @@ export default () => {
       updatedAt: today
     });
 
-    fetchGoalList();
+    events.fetchGoals();
     setNewGoalDialogIsOpen(false);
     setNewGoalName("");
     setNewGoalTargetAmount("");
@@ -263,7 +252,7 @@ export default () => {
           importTransactionsOnClick={events.importTransactionsOnClick} />
 
         <div className="flex flex-col gap-4 p-4 md:gap-6 w-full max-w-[500px]">
-          {goalList.map(goal => <Card key={goal.id} className="flex-1">
+          {states.goalList.map(goal => <Card key={goal.id} className="flex-1">
             <CardHeader>
               <CardTitle className="self-center row-span-2">{goal.name}</CardTitle>
               <CardAction>
@@ -370,7 +359,7 @@ export default () => {
                   <Combobox
                     value={goal.goal}
                     onChangeValue={handleGoalComboboxOnChange(index)}
-                    items={comboboxGoalItems} />
+                    items={states.comboboxGoalItems} />
                 </div>
 
                 <Input onChange={event => handleGoalAmountInputOnChangeValue(event.target.value, index)} placeholder="Amount" className="w-25" autoComplete="off" />
