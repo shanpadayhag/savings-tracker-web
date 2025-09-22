@@ -25,7 +25,7 @@ const HomeMainActionSection = (props: HomeMainActionSectionProps) => {
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => props.adjustBalanceOnClick(true)}>Adjust Balance</DropdownMenuItem>
-          <DropdownMenuItem disabled>Account Reset</DropdownMenuItem>
+          <DropdownMenuItem disabled><span className="text-red-700">Account Reset</span></DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Transaction</DropdownMenuLabel>

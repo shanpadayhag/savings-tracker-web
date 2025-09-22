@@ -2,14 +2,25 @@ import fetchGoalsApi from '@/features/goals/api/fetch-goals';
 import useHomeStates from '@/features/home/states/home-states';
 import getTransactionChunksForExport from '@/features/transactions/api/get-transaction-chunks-for-export';
 import processImportedTransactions from '@/features/transactions/api/process-imported-transactions';
+import spendFundsFromGoal from '@/features/transactions/api/spend-funds-from-goal';
 import ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
 import browserFileUtil from '@/utils/browser-file-util';
 import { DateUtil } from '@/utils/date-util';
 import jsonUtil from '@/utils/json-util';
+import currency from 'currency.js';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
 const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
+  /**
+   * Fetches the list of active goals and updates the application state accordingly.
+   *
+   * This memoized callback retrieves goal data from the API. Upon success, it
+   * performs two state updates:
+   * 1. It populates the main goal list state with the full, raw goal objects.
+   * 2. It transforms this data into a { label, value } format, optimized for
+   *    UI components like dropdowns or comboboxes, and updates the relevant state.
+   */
   const fetchGoals = useCallback(async () => {
     const goals = await fetchGoalsApi();
 
@@ -94,15 +105,40 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     }
   }, []);
 
-  const allocateFunds = useCallback(async () => {
+  const allocateMoney = useCallback(async () => {
 
   }, []);
+
+  const spendMoney = async () => {
+    try {
+      if (!states.selectedGoal) {
+        return toast.error("Oops, something went wrong.", {
+          description: "The import failed. Please check the files and try again.",
+        });
+      }
+
+      await spendFundsFromGoal({
+        goalID: states.selectedGoal.id,
+        goalName: states.selectedGoal.name,
+        description: states.newTransactionDescription,
+        amount: currency(states.newTransactionAmount).value,
+      });
+      toast.success("Import complete! ✨", {
+        description: `We've successfully added your`,
+      });
+    } catch (error) {
+      toast.error("Oops, something went wrong.", {
+        description: "The import failed. Please check the files and try again.",
+      });
+    }
+  };
 
   return {
     fetchGoals,
     exportTransactionsOnClick,
     importTransactionsOnClick,
-    allocateFunds,
+    allocateMoney,
+    spendMoney,
   };
 };
 
