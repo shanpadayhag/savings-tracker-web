@@ -1,5 +1,6 @@
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
+import currency from 'currency.js';
 
 type AdjustAccountBalanceParams = {
   amount: number;
@@ -27,7 +28,8 @@ const adjustAccountBalance = async ({ amount, transactionDate = new Date() }: Ad
     await db.user.update('singleton', {
       financialSummary: {
         ...user.financialSummary,
-        totalAvailableFunds: user.financialSummary.totalAvailableFunds + amount,
+        totalAvailableFunds: currency(user.financialSummary.totalAvailableFunds)
+          .add(amount).value,
         lastUpdated: transactionDate,
       },
     });
