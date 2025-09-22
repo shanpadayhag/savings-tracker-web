@@ -4,6 +4,7 @@ import GoalListItem from '@/features/goals/entities/goal-list-item';
 import allocateFundsToGoal from '@/features/transactions/api/allocate-funds-to-goal';
 import spendFundsFromGoal from '@/features/transactions/api/spend-funds-from-goal';
 import type ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
+import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
 
 type ProcessImportedTransactionsParams = {
@@ -100,7 +101,8 @@ const executeTransactionOperations = async (
     if (transaction.goalActivity) {
       const { goal, amount } = transaction.goalActivity;
       const currentGoal = goalsLookup.get(goal.id!)!;
-      const operation = amount > 0 ? allocateFundsToGoal : spendFundsFromGoal;
+      const operation = transaction.type === TransactionType.GoalAllocation
+        ? allocateFundsToGoal : spendFundsFromGoal;
 
       return operation({
         goalID: currentGoal.id,
