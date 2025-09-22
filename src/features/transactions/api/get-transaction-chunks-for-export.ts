@@ -1,65 +1,84 @@
-import ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
-import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
+import GoalListItem from '@/features/goals/entities/goal-list-item';
+import type ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
+import type TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import { db } from '@/lib/utils';
 
 const TRANSACTION_FETCH_LIMIT = 250000;
 
 /**
- * An async generator that yields chunks of transactions from the database.
- * This is memory-efficient for exporting large datasets.
+ * Transforms a raw transaction chunk into an export-ready format by embedding associated goal details.
+ *
+ * This function acts as a critical data-shaping step in the export process. It
+ * optimizes performance by first collecting all unique goal IDs from the provided
+ * transactions, then fetching the corresponding `Goal` objects in a single, batched
+ * database query. The enriched data is then efficiently mapped back to each transaction.
+ *
+ * @private
+ * @param {TransactionListItem[]} transactions - A chunk of raw transaction records fetched from the database.
+ * @returns {Promise<ExportedTransactionListItem[]>} A promise that resolves to an array of transactions where
+ *   each `goalActivity`, if present, has been populated with the full details of its associated goal.
+ */
+const enrichTransactionsWithGoalData = async (
+  transactions: TransactionListItem[],
+): Promise<ExportedTransactionListItem[]> => {
+  const goalIds = [
+    ...new Set(transactions.map(t => t.goalActivity?.goalID).filter((id): id is string => !!id)),
+  ];
+
+  const goals = await db.goalList.where('id').anyOf(goalIds).toArray();
+  const goalLookup = new Map<string, GoalListItem>(goals.map(goal => [goal.id!, goal]));
+
+  return transactions.map(transaction => {
+    const { goalActivity, ...restOfTransaction } = transaction;
+    if (!goalActivity?.goalID) return restOfTransaction;
+
+    const goal = goalLookup.get(goalActivity.goalID);
+    if (!goal) return restOfTransaction;
+
+    return {
+      ...restOfTransaction,
+      goalActivity: {
+        goal: {
+          id: goal.id,
+          groupID: goal.groupID,
+          name: goal.name,
+          targetAmount: goal.targetAmount,
+        },
+        amount: goalActivity.amount,
+      },
+    };
+  });
+};
+
+/**
+ * Provides a memory-efficient stream of all transactions, formatted for export.
+ *
+ * This function is designed to handle massive datasets without causing memory
+ * exhaustion. It operates as an asynchronous generator, fetching and processing
+ * transactions in manageable chunks rather than loading the entire set at once.
+ * Each chunk is enriched with relevant goal data before being yielded.
+ *
+ * Use this function with a `for await...of` loop to consume the data
+ * stream chunk by chunk, for example, when writing to a file.
+ *
+ * @yields {ExportedTransactionListItem[]} An array of transactions formatted for export.
  */
 async function* getTransactionChunksForExport(): AsyncGenerator<ExportedTransactionListItem[]> {
   let lastId = 0;
-  let transactionsChunk: TransactionListItem[];
 
-  do {
-    transactionsChunk = await db.transactionList
-      .where('id').above(lastId)
+  while (true) {
+    const transactionChunk = await db.transactionList
+      .where('id')
+      .above(lastId)
       .limit(TRANSACTION_FETCH_LIMIT)
       .toArray();
 
-    if (transactionsChunk.length > 0) {
-      lastId = transactionsChunk[transactionsChunk.length - 1].id!;
+    if (transactionChunk.length === 0) break;
+    lastId = transactionChunk[transactionChunk.length - 1].id!;
 
-      console.log(transactionsChunk);
-      const goalGroupIds = [...new Set(transactionsChunk.map(t => t.goalActivity?.goalID || 0).filter(Boolean))];
-
-      console.log(goalGroupIds);
-      const allGoalVersions = await db.goalList
-        .where('id').anyOf(goalGroupIds)
-        .toArray();
-
-      console.log(allGoalVersions);
-      const latestGoalsMap = new Map();
-      for (const goal of allGoalVersions) {
-        const existing = latestGoalsMap.get(goal.id);
-        if (!existing || goal.createdAt > existing.createdAt) {
-          latestGoalsMap.set(goal.id, goal);
-        }
-      }
-
-      const transactionsWithGoals = transactionsChunk.map(transaction => {
-        if (!transaction.goalActivity) return transaction;
-
-        const specificGoal = latestGoalsMap.get(transaction.goalActivity.goalID);
-
-        return {
-          ...transaction,
-          goalActivity: {
-            goal: {
-              id: specificGoal.id,
-              groupID: specificGoal.groupID,
-              name: specificGoal.name,
-              targetAmount: specificGoal.targetAmount,
-            },
-            amount: transaction.goalActivity?.amount,
-          }
-        };
-      });
-
-      yield transactionsWithGoals as any;
-    }
-  } while (transactionsChunk.length > 0);
+    const enrichedChunk = await enrichTransactionsWithGoalData(transactionChunk);
+    yield enrichedChunk;
+  }
 }
 
 export default getTransactionChunksForExport;

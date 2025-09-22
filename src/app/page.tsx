@@ -16,11 +16,20 @@ import TransactionListItem from '@/features/transactions/entities/transaction-li
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db, num, User } from '@/lib/utils';
 import { IconPlus, IconTrashFilled } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default () => {
   const states = useHomeStates();
   const events = useHomeEvents(states);
+
+  const allocateFundsFormOnSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    events.allocateFunds();
+  }, []);
+
+  const allocateFundsButtonOnClick = useCallback(() => {
+    events.allocateFunds();
+  }, []);
 
   const [userDetails, setUserDetails] = useState<User | null>(null);
   const [goalList, setGoalList] = useState<GoalListItem[]>([]);

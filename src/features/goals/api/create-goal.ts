@@ -1,41 +1,42 @@
+import GoalListItem from '@/features/goals/entities/goal-list-item';
 import { db } from '@/lib/utils';
 
-interface CreateGoalParams {
-  id?: string;
-  groupID?: string;
-  name: string;
-  targetAmount: number;
-}
+/**
+ * Defines the parameters for creating a new goal.
+ * It requires a name and target amount, while ID and groupID are optional.
+ */
+type CreateGoalParameters = Pick<GoalListItem, 'name' | 'targetAmount'> &
+  Partial<Pick<GoalListItem, 'id' | 'groupID'>>;
 
 /**
  * Creates a new savings goal and adds it to the database.
  *
- * @param {CreateGoalParams} params - The details for the new goal.
- * @param {string} params.name - The name of the goal. Must not be empty.
- * @param {number} params.targetAmount - The financial target. Must be a positive number.
- * @param {string} params.currency - The currency code (e.g., 'EUR').
- * @returns {Promise<number>} A promise that resolves with the unique ID of the newly created goal.
+ * @param {CreateGoalParameters} params - The details for the new goal.
+ * @returns {Promise<Goal>} A promise that resolves with the newly created goal object.
  * @throws {Error} If the name is empty or the target amount is not positive.
  */
-const createGoal = async ({ id = crypto.randomUUID(), groupID = crypto.randomUUID(), name, targetAmount }: CreateGoalParams) => {
+const createGoal = async ({
+  id = crypto.randomUUID(),
+  groupID = crypto.randomUUID(),
+  name,
+  targetAmount,
+}: CreateGoalParameters): Promise<GoalListItem> => {
   if (!name?.trim()) throw new Error('Goal name cannot be empty.');
   if (targetAmount <= 0) throw new Error('Target amount must be a positive number.');
 
-  const now = new Date();
-
-  const newGoalObj = {
+  const newGoal: GoalListItem = {
     id,
     groupID,
     name,
     targetAmount,
     currentAmount: 0,
     status: 'active',
-    createdAt: now,
-    updatedAt: now,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
-  await db.goalList.add(newGoalObj);
-  return newGoalObj;
+  await db.goalList.add(newGoal);
+  return newGoal;
 };
 
 export default createGoal;

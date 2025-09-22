@@ -1,12 +1,16 @@
 import useHomeStates from '@/features/home/states/home-states';
 import getTransactionChunksForExport from '@/features/transactions/api/get-transaction-chunks-for-export';
-import storeTransactionsViaImport from '@/features/transactions/api/store-transactions-via-import';
+import processImportedTransactions from '@/features/transactions/api/process-imported-transactions';
+import ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
 import browserFileUtil from '@/utils/browser-file-util';
 import { DateUtil } from '@/utils/date-util';
+import jsonUtil from '@/utils/json-util';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
 const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
+  const fetchGoals = useCallback(async () => { }, []);
+
   /**
    * Handles the click event for exporting transactions.
    *
@@ -55,27 +59,19 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
   const importTransactionsOnClick = useCallback(async () => {
     try {
       const fileContents = await browserFileUtil.openAndReadFiles({
-        accept: '.json',
-        multiple: true,
+        accept: '.json', multiple: true
       });
 
-      const transactionsToImport = fileContents.flatMap((content) => {
-        try {
-          const data = JSON.parse(content);
-          return Array.isArray(data) ? data : [];
-        } catch {
-          return [];
-        }
-      });
+      const transactionsToImport = fileContents.flatMap(jsonUtil.parseJsonArray<ExportedTransactionListItem>);
 
       if (transactionsToImport.length === 0) {
-        toast.info("Nothing to import!", {
+        return toast.info("Nothing to import!", {
           description: "We couldn't find any valid transactions in the files you selected.",
         });
-        return;
       }
 
-      storeTransactionsViaImport({ transactions: transactionsToImport });
+      await processImportedTransactions({ transactions: transactionsToImport });
+      fetchGoals();
 
       const count = transactionsToImport.length;
       const transactionWord = count === 1 ? 'transaction' : 'transactions';
@@ -93,20 +89,11 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
 
   }, []);
 
-  const allocateFundsFormOnSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    allocateFunds();
-  }, []);
-
-  const allocateFundsButtonOnClick = useCallback(() => {
-    allocateFunds();
-  }, []);
-
   return {
+    fetchGoals,
     exportTransactionsOnClick,
     importTransactionsOnClick,
-    allocateFundsFormOnSubmit,
-    allocateFundsButtonOnClick,
+    allocateFunds,
   };
 };
 

@@ -1,9 +1,9 @@
-import GoalListItem from '@/features/goals/entities/goal-list-item';
+import type GoalListItem from '@/features/goals/entities/goal-list-item';
 import updateGoalAndLogTransaction from '@/features/transactions/api/update-goal-and-log-transaction';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
 
-type SpendFundsFromGoalParams = {
+type SpendFundsFromGoalParameters = {
   goalID: GoalListItem['id'];
   goalName: GoalListItem['name'];
   description: string;
@@ -13,26 +13,30 @@ type SpendFundsFromGoalParams = {
 
 /**
  * Records an expense by deducting funds from a specific goal's balance.
- * This function ensures data integrity by wrapping the balance update and
- * transaction log creation in a single, atomic database transaction.
  *
- * @param {SpendFundsFromGoalParams} params - The parameters for the expense.
- * @param {GoalReference} params.goal - The goal from which funds are being spent.
- * @param {string} params.description - A description for the transaction record.
- * @param {number} params.amount - The positive amount of money to spend.
- * @param {Date} [params.transactionDate=new Date()] - The date of the expense. Defaults to now.
+ * This function creates a transaction log for the expense and updates the goal's
+ * current balance within a single, atomic database transaction to ensure data integrity.
+ *
+ * @param {SpendFundsFromGoalParameters} params - The parameters for the expense transaction.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
- * @throws {Error} If the goal ID is missing or if the database operation fails.
+ * @throws {Error} If the description is empty, the amount is not positive, or a database error occurs.
  */
-const spendFundsFromGoal = async ({ goalID, goalName, description, amount, transactionDate = new Date() }: SpendFundsFromGoalParams) => {
-  if (!description || amount <= 0) return;
+const spendFundsFromGoal = async ({
+  goalID,
+  goalName,
+  description,
+  amount,
+  transactionDate = new Date(),
+}: SpendFundsFromGoalParameters): Promise<void> => {
+  if (!description?.trim()) throw new Error('Transaction description cannot be empty.');
+  if (amount <= 0) throw new Error('Expense amount must be a positive number.');
 
   await db.transaction('rw', db.transactionList, db.goalList, async () => {
     await updateGoalAndLogTransaction({
       goal: { id: goalID!, name: goalName },
-      description: description,
-      amount: amount,
-      transactionDate: transactionDate,
+      description,
+      amount,
+      transactionDate,
     }, TransactionType.GoalExpense);
   });
 };
