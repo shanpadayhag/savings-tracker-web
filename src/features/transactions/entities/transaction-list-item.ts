@@ -1,18 +1,17 @@
+import TransactionType from '@/features/transactions/enums/transaction-type';
+
 type TransactionListItem = {
   id?: number;
-  date?: Date;
-  type: string; // goal_allocation, account_balance_adjustment
+  type: TransactionType;
   activity: string;
   description: string;
-  accountBalanceAdjustment?: {
+  createdAt?: Date;
+  accountAdjustment?: {
     amount: number;
   };
-  goalAllocation?: {
-    goal: {
-      id: number;
-      name: string;
-    };
-    amountAllocated: number;
+  goalActivity?: {
+    goalID: string;
+    amount: number;
   };
 };
 

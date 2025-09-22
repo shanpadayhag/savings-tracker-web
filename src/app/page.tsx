@@ -13,6 +13,7 @@ import HomeMainActionSection from '@/features/home/components/organisms/home-mai
 import useHomeEvents from '@/features/home/events/home-events';
 import useHomeStates from '@/features/home/states/home-states';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
+import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db, num, User } from '@/lib/utils';
 import { IconPlus, IconTrashFilled } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -93,8 +94,6 @@ export default () => {
       name: newGoalName,
       targetAmount: targetAmount,
       currentAmount: 0,
-      remainingAmount: targetAmount,
-      currency: newGoalCurrency,
       status: 'active',
       createdAt: today,
       updatedAt: today
@@ -131,11 +130,11 @@ export default () => {
     }
 
     const transaction: TransactionListItem = {
-      date: today,
-      type: "account_balance_adjustment",
+      createdAt: today,
+      type: TransactionType.AccountAdjustment,
       activity: `Allocated ${amount} euro for account balance`,
       description: "Allocation for account balance",
-      accountBalanceAdjustment: {
+      accountAdjustment: {
         amount: amount,
       },
     };
@@ -145,7 +144,7 @@ export default () => {
 
     db.user.update("singleton", userDetails);
     setUserDetails({ ...userDetails! });
-    // db.transactionList.add(transaction);
+    db.transactionList.add(transaction);
 
     setNewBalanceDialogIsOpen(false);
     setNewBalanceAmount("");
@@ -266,22 +265,22 @@ export default () => {
             </CardHeader>
 
             <CardContent>
-              <h3 className="text-3xl font-semibold">{num.currencyFormat(goal.targetAmount, goal.currency)}</h3>
+              <h3 className="text-3xl font-semibold">{num.currencyFormat(goal.targetAmount)}</h3>
               <Progress value={(goal.currentAmount / goal.targetAmount) * 100} className="mt-3 mb-2" />
               <p className="flex justify-between">
                 <span className="font-semibold">
-                  {num.currencyFormat(goal.currentAmount, goal.currency)}
+                  {num.currencyFormat(goal.currentAmount)}
                   <span className="text-muted-foreground text-sm font-normal"> saved so far</span>
                 </span>
 
-                <span>{num.currencyFormat((goal.currentAmount / goal.targetAmount) * 100, goal.currency, false)}%</span>
+                <span>{num.currencyFormat((goal.currentAmount / goal.targetAmount) * 100, undefined, false)}%</span>
               </p>
             </CardContent>
 
             <CardFooter className="mt-2">
               <p className="flex justify-between w-full">
                 <span className="text-sm">Remaining</span>
-                <span className="text-sm font-semibold">{num.currencyFormat(goal.remainingAmount, goal.currency)}</span>
+                <span className="text-sm font-semibold">{num.currencyFormat(goal.targetAmount - goal.currentAmount)}</span>
               </p>
             </CardFooter>
           </Card>)}

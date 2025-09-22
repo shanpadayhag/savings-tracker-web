@@ -25,8 +25,8 @@ const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
       <DropdownMenuSeparator />
       <DropdownMenuLabel>Transaction</DropdownMenuLabel>
       <DropdownMenuGroup>
-        <DropdownMenuItem onClick={props.allocateMoneyOnClick}>Allocate Money</DropdownMenuItem>
-        <DropdownMenuItem onClick={props.spendMoneyOnClick}>Spend Money</DropdownMenuItem>
+        <DropdownMenuItem disabled onClick={props.allocateMoneyOnClick}>Allocate Money</DropdownMenuItem>
+        <DropdownMenuItem disabled onClick={props.spendMoneyOnClick}>Spend Money</DropdownMenuItem>
         <DropdownMenuItem disabled>Transfer Money</DropdownMenuItem>
       </DropdownMenuGroup>
     </DropdownMenuContent>

@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const num = {
-  currencyFormat(amount: number, currency: string, showSymbol: boolean = true) {
+  currencyFormat(amount: number, currency = "eur", showSymbol: boolean = true) {
     const options: Intl.NumberFormatOptions = {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -41,15 +41,14 @@ export type User = {
 
 class DB extends Dexie {
   user!: Dexie.Table<User, "singleton">;
-  // goal_allocations!: Dexie.Table<GoalAllocation, number>;
-  goalList!: Dexie.Table<GoalListItem, number>;
+  goalList!: Dexie.Table<GoalListItem, string>;
   transactionList!: Dexie.Table<TransactionListItem, number>;
 
   constructor() {
     super("savings_tracker");
     this.version(1).stores({
       user: "id",
-      goalList: "++id",
+      goalList: "id, groupID",
       transactionList: "++id",
     });
   }

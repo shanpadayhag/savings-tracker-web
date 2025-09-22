@@ -75,7 +75,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
         return;
       }
 
-      // await storeTransactionsViaImport({ transactions: transactionsToImport });
+      storeTransactionsViaImport({ transactions: transactionsToImport });
 
       const count = transactionsToImport.length;
       const transactionWord = count === 1 ? 'transaction' : 'transactions';
@@ -89,9 +89,24 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     }
   }, []);
 
+  const allocateFunds = useCallback(async () => {
+
+  }, []);
+
+  const allocateFundsFormOnSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    allocateFunds();
+  }, []);
+
+  const allocateFundsButtonOnClick = useCallback(() => {
+    allocateFunds();
+  }, []);
+
   return {
     exportTransactionsOnClick,
     importTransactionsOnClick,
+    allocateFundsFormOnSubmit,
+    allocateFundsButtonOnClick,
   };
 };
 
