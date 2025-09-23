@@ -33,9 +33,8 @@ const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
     <DropdownMenuContent align="end" className="w-38">
       <DropdownMenuLabel>Transaction</DropdownMenuLabel>
       <DropdownMenuGroup>
-        <DropdownMenuItem disabled onClick={allocateMoneyOnClick}>Allocate Money</DropdownMenuItem>
+        <DropdownMenuItem onClick={allocateMoneyOnClick}>Allocate Money</DropdownMenuItem>
         <DropdownMenuItem onClick={spendMoneyOnClick}>Spend Money</DropdownMenuItem>
-        <DropdownMenuItem disabled>Transfer Money</DropdownMenuItem>
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuLabel>Goal</DropdownMenuLabel>

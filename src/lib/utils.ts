@@ -46,9 +46,9 @@ class DB extends Dexie {
 
   constructor() {
     super("savings_tracker");
-    this.version(1).stores({
+    this.version(2).stores({
       user: "id",
-      goalList: "id, status",
+      goalList: "id, status, updatedAt",
       transactionList: "++id",
     });
   }
