@@ -1,5 +1,7 @@
+import createGoal from '@/features/goals/api/create-goal';
 import fetchGoalsApi from '@/features/goals/api/fetch-goals';
 import useHomeStates from '@/features/home/states/home-states';
+import allocateFundsToGoal from '@/features/transactions/api/allocate-funds-to-goal';
 import getTransactionChunksForExport from '@/features/transactions/api/get-transaction-chunks-for-export';
 import processImportedTransactions from '@/features/transactions/api/process-imported-transactions';
 import spendFundsFromGoal from '@/features/transactions/api/spend-funds-from-goal';
@@ -105,16 +107,93 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     }
   }, []);
 
-  const allocateMoney = useCallback(async () => {
+  /**
+   * Handles the creation of a new financial goal.
+   * It validates the goal's name and target amount before making the API call.
+   * Displays success or error notifications to the user based on the outcome.
+   */
+  const handleCreateGoal = useCallback(async () => {
+    const goalName = states.newGoalName.trim();
+    const targetAmount = currency(states.newGoalTargetAmount).value;
 
-  }, []);
+    if (!goalName) {
+      return toast.error("Hold on! 📝", {
+        description: "Please give your goal a name to continue.",
+      });
+    } else if (targetAmount <= 0) {
+      return toast.error("Check the numbers! 💰", {
+        description: "The target amount must be greater than zero.",
+      });
+    }
+
+    try {
+      await createGoal({
+        name: goalName,
+        targetAmount: targetAmount,
+      });
+
+      fetchGoals();
+
+      states.setCreateGoalDialogIsOpen(false);
+      states.setNewGoalName("");
+      states.setNewGoalTargetAmount("");
+
+      toast.success("Goal Created! 🎉", {
+        description: `Your new goal "${goalName}" has been added.`,
+      });
+    } catch (error) {
+      console.error("Failed to create goal:", error);
+      toast.error("Oh no! 😥", {
+        description: "We couldn't save your goal. Please try again.",
+      });
+    }
+  }, [states.newGoalName, states.newGoalTargetAmount]);
+
+  /**
+   * Handles allocating funds to a selected goal.
+   * It validates that a goal is selected, constructs the transaction payload,
+   * calls the API, and displays success or error notifications.
+   */
+  const handleAllocateFromGoal = useCallback(async () => {
+    const { selectedGoal, newTransactionDescription, newTransactionAmount } = states;
+
+    if (!selectedGoal) {
+      return toast.error("Just one thing...", {
+        description: "Please pick a goal before saving your transaction.",
+      });
+    }
+
+    try {
+      await allocateFundsToGoal({
+        goalID: selectedGoal.id,
+        goalName: selectedGoal.name,
+        description: newTransactionDescription,
+        amount: currency(newTransactionAmount).value,
+      });
+
+      fetchGoals();
+
+      states.setAllocateMoneyDialogIsOpen(false);
+      states.setNewTransactionDescription("");
+      states.setNewTransactionAmount("");
+
+      toast.success("All set!", {
+        description: `Your transaction for '${selectedGoal.name}' has been saved.`,
+      });
+    } catch (error) {
+      console.error("Transaction failed:", error);
+      toast.error("Oh no, something went wrong.", {
+        description: "We couldn't save your transaction. Please try again in a moment.",
+      });
+    }
+  }, [states.selectedGoal, states.newTransactionDescription, states.newTransactionAmount]);
 
   /**
    * Handles spending funds from a selected goal.
    * It validates that a goal is selected, constructs the transaction payload,
    * calls the API, and displays success or error notifications.
    */
-  const handleSpendFromGoal = async () => {
+  const handleSpendFromGoal = useCallback(async () => {
     const { selectedGoal, newTransactionDescription, newTransactionAmount } = states;
 
     if (!selectedGoal) {
@@ -146,13 +225,14 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
         description: "We couldn't save your transaction. Please try again in a moment.",
       });
     }
-  };
+  }, [states.selectedGoal, states.newTransactionDescription, states.newTransactionAmount]);
 
   return {
     fetchGoals,
     exportTransactionsOnClick,
     importTransactionsOnClick,
-    allocateMoney,
+    handleCreateGoal,
+    handleAllocateFromGoal,
     handleSpendFromGoal,
   };
 };

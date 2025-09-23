@@ -1,17 +1,18 @@
 import { Button } from '@/components/atoms/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/atoms/dropdown-menu';
+import useHomeStates from '@/features/home/states/home-states';
 import { IconDotsVertical } from '@tabler/icons-react';
 
 type HomeMainActionSectionProps = {
   adjustBalanceOnClick: (value: true) => void;
-  newGoalOnClick: (value: true) => void;
+  setCreateGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setCreateGoalDialogIsOpen'];
   exportTransactionsOnClick: () => void;
   importTransactionsOnClick: () => void;
 };
 
 const HomeMainActionSection = (props: HomeMainActionSectionProps) => {
   return <div className="flex justify-end gap-2 p-4 w-full max-w-[500px]">
-    <Button onClick={() => props.newGoalOnClick(true)}>New Goal</Button>
+    <Button onClick={() => props.setCreateGoalDialogIsOpen(true)}>New Goal</Button>
 
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -8,6 +8,8 @@ import { Label } from '@/components/atoms/label';
 import { Progress } from '@/components/atoms/progress';
 import { ComboboxItem } from '@/components/molecules/combobox';
 import HomeGoalItemActionDropdown from '@/features/home/components/molecules/home-goal-item-action-dropdown';
+import HomeAllocateMoneyDialog from '@/features/home/components/organisms/home-allocate-money-dialog';
+import HomeCreateGoalDialog from '@/features/home/components/organisms/home-create-goal-dialog';
 import HomeMainActionSection from '@/features/home/components/organisms/home-main-action-section';
 import HomeSpendMoneyDialog from '@/features/home/components/organisms/home-spend-money-dialog';
 import useHomeEvents from '@/features/home/events/home-events';
@@ -15,7 +17,7 @@ import useHomeStates from '@/features/home/states/home-states';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db, num, User } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { SetStateAction, useEffect, useState } from 'react';
 
 export default () => {
   const states = useHomeStates();
@@ -145,7 +147,7 @@ export default () => {
       <div className="flex flex-col items-center overflow-auto h-full py-2">
         <HomeMainActionSection
           adjustBalanceOnClick={setNewBalanceDialogIsOpen}
-          newGoalOnClick={setNewGoalDialogIsOpen}
+          setCreateGoalDialogIsOpen={states.setCreateGoalDialogIsOpen}
           exportTransactionsOnClick={events.exportTransactionsOnClick}
           importTransactionsOnClick={events.importTransactionsOnClick} />
 
@@ -185,45 +187,12 @@ export default () => {
         </div>
       </div>
 
-      <Dialog open={newGoalDialogIsOpen} onOpenChange={setNewGoalDialogIsOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create goal</DialogTitle>
-            <DialogDescription>
-              Enter your goal details here. Click save when you&apos;re
-              done.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleNewGoalFormOnSubmit} className="grid gap-4">
-            <div className="grid gap-3">
-              <Label htmlFor="name-1">Name</Label>
-              <Input onChange={event => setNewGoalName(event.target.value)} id="name-1" name="name" placeholder="Enter goal's name" autoComplete="off" />
-            </div>
-
-            <div className="flex gap-3">
-              <div className="grid gap-3 flex-1">
-                <Label htmlFor="target-amount">Target Amount</Label>
-                <Input onChange={event => setNewGoalTargetAmount(event.target.value)} id="target-amount" name="target-amount" placeholder="Enter goal's target amount" autoComplete="off" />
-              </div>
-
-              <div className="grid gap-3 w-30">
-                <Label htmlFor="currency">Currency</Label>
-                <Input disabled value={newGoalCurrency} onChange={event => setNewGoalCurrency(event.target.value)} id="currency" name="currency" autoComplete="off" />
-              </div>
-
-              <button className="hidden" type="submit"></button>
-            </div>
-          </form>
-
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button onClick={handleNewGoalButtonOnClick}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <HomeCreateGoalDialog
+        createGoalDialogIsOpen={states.createGoalDialogIsOpen}
+        setCreateGoalDialogIsOpen={states.setCreateGoalDialogIsOpen}
+        handleCreateGoal={events.handleCreateGoal}
+        setNewGoalName={states.setNewGoalName}
+        setNewGoalTargetAmount={states.setNewGoalTargetAmount} />
 
       <HomeSpendMoneyDialog
         spendMoneyDialogIsOpen={states.spendMoneyDialogIsOpen}
@@ -232,6 +201,14 @@ export default () => {
         setDescription={states.setNewTransactionDescription}
         setAmount={states.setNewTransactionAmount}
         handleSpendFromGoal={events.handleSpendFromGoal} />
+
+      <HomeAllocateMoneyDialog
+        allocateMoneyDialogIsOpen={states.allocateMoneyDialogIsOpen}
+        setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
+        goalName={states.selectedGoal?.name || "Goal"}
+        setDescription={states.setNewTransactionDescription}
+        setAmount={states.setNewTransactionAmount}
+        handleAllocateFromGoal={events.handleAllocateFromGoal} />
 
       <Dialog open={newBalanceDialogIsOpen} onOpenChange={setNewBalanceDialogIsOpen}>
         <DialogContent className="sm:max-w-[425px]">

@@ -7,7 +7,8 @@ import { db } from '@/lib/utils';
  */
 const fetchGoals = async (): Promise<GoalListItem[]> => {
   return db.goalList
-    .where('status').equals('active')
+    .orderBy('updatedAt').reverse()
+    .filter(goal => goal.status === 'active')
     .toArray();
 };
 

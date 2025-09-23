@@ -6,19 +6,26 @@ const useHomeStates = () => {
   const [goalList, setGoalList] = useState<GoalListItem[]>([]);
   const [comboboxGoalItems, setComboboxGoalItems] = useState<ComboboxItems>([]);
 
+  const [newGoalName, setNewGoalName] = useState("");
+  const [newGoalTargetAmount, setNewGoalTargetAmount] = useState("");
+
+  const [selectedGoal, setSelectedGoal] = useState<{ id: string; name: string; }>();
   const [newTransactionDescription, setNewTransactionDescription] = useState("");
   const [newTransactionAmount, setNewTransactionAmount] = useState("");
 
-  const [selectedGoal, setSelectedGoal] = useState<{ id: string; name: string; }>();
+  const [createGoalDialogIsOpen, setCreateGoalDialogIsOpen] = useState(false);
   const [allocateMoneyDialogIsOpen, setAllocateMoneyDialogIsOpen] = useState(false);
   const [spendMoneyDialogIsOpen, setSpendMoneyDialogIsOpen] = useState(false);
 
   return {
     goalList, setGoalList,
     comboboxGoalItems, setComboboxGoalItems,
+    newGoalName, setNewGoalName,
+    newGoalTargetAmount, setNewGoalTargetAmount,
+    selectedGoal, setSelectedGoal,
     newTransactionDescription, setNewTransactionDescription,
     newTransactionAmount, setNewTransactionAmount,
-    selectedGoal, setSelectedGoal,
+    createGoalDialogIsOpen, setCreateGoalDialogIsOpen,
     allocateMoneyDialogIsOpen, setAllocateMoneyDialogIsOpen,
     spendMoneyDialogIsOpen, setSpendMoneyDialogIsOpen,
   };
