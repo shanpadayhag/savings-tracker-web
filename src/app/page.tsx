@@ -1,15 +1,12 @@
 "use client";
 
 import { Button } from '@/components/atoms/button';
-import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/atoms/card';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import { Progress } from '@/components/atoms/progress';
-import { ComboboxItem } from '@/components/molecules/combobox';
-import HomeGoalItemActionDropdown from '@/features/home/components/molecules/home-goal-item-action-dropdown';
 import HomeAllocateMoneyDialog from '@/features/home/components/organisms/home-allocate-money-dialog';
 import HomeCreateGoalDialog from '@/features/home/components/organisms/home-create-goal-dialog';
+import HomeGoalTable from '@/features/home/components/organisms/home-goal-table';
 import HomeMainActionSection from '@/features/home/components/organisms/home-main-action-section';
 import HomeSpendMoneyDialog from '@/features/home/components/organisms/home-spend-money-dialog';
 import useHomeEvents from '@/features/home/events/home-events';
@@ -17,29 +14,15 @@ import useHomeStates from '@/features/home/states/home-states';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db, num, User } from '@/lib/utils';
-import { SetStateAction, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default () => {
   const states = useHomeStates();
   const events = useHomeEvents(states);
 
   const [userDetails, setUserDetails] = useState<User | null>(null);
-  const [newGoalDialogIsOpen, setNewGoalDialogIsOpen] = useState(false);
-  const [newGoalName, setNewGoalName] = useState("");
-  const [newGoalTargetAmount, setNewGoalTargetAmount] = useState("");
-  const [newGoalCurrency, setNewGoalCurrency] = useState("eur");
   const [newBalanceDialogIsOpen, setNewBalanceDialogIsOpen] = useState(false);
   const [newBalanceAmount, setNewBalanceAmount] = useState("");
-  const [newTransactionGoals, setNewTransactionGoals] = useState<{ goal?: ComboboxItem; amount: string; }[]>([]);
-
-  const handleNewGoalFormOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    createGoal();
-  };
-
-  const handleNewGoalButtonOnClick = () => {
-    createGoal();
-  };
 
   const handleOnPageLoad = async () => {
     fetchUserDetails();
@@ -72,26 +55,6 @@ export default () => {
     } else {
       setUserDetails(user);
     }
-  };
-
-  const createGoal = async () => {
-    const today = new Date();
-    const targetAmount = parseFloat(newGoalTargetAmount) || 0;
-
-    await db.goalList.add({
-      name: newGoalName,
-      targetAmount: targetAmount,
-      currentAmount: 0,
-      status: 'active',
-      createdAt: today,
-      updatedAt: today
-    });
-
-    events.fetchGoals();
-    setNewGoalDialogIsOpen(false);
-    setNewGoalName("");
-    setNewGoalTargetAmount("");
-    setNewGoalCurrency("eur");
   };
 
   const handleAddBalanceButtonOnClick = () => {
@@ -143,7 +106,7 @@ export default () => {
   }, []);
 
   return <>
-    <div className="w-screen h-screen overflow-hidden bg-secondary">
+    <div className="w-screen h-screen overflow-hidden bg-background">
       <div className="flex flex-col items-center overflow-auto h-full py-2">
         <HomeMainActionSection
           adjustBalanceOnClick={setNewBalanceDialogIsOpen}
@@ -151,40 +114,12 @@ export default () => {
           exportTransactionsOnClick={events.exportTransactionsOnClick}
           importTransactionsOnClick={events.importTransactionsOnClick} />
 
-        <div className="flex flex-col gap-4 p-4 md:gap-6 w-full max-w-[500px]">
-          {states.goalList.map(goal => <Card key={goal.id} className="flex-1">
-            <CardHeader>
-              <CardTitle className="self-center row-span-2">{goal.name}</CardTitle>
-              <CardAction>
-                <HomeGoalItemActionDropdown
-                  allocateMoneyOnClick={states.setAllocateMoneyDialogIsOpen}
-                  spendMoneyOnClick={states.setSpendMoneyDialogIsOpen}
-                  setSelectedGoal={states.setSelectedGoal}
-                  goal={{ id: goal.id!, name: goal.name }} />
-              </CardAction>
-            </CardHeader>
-
-            <CardContent>
-              <h3 className="text-3xl font-semibold">{num.currencyFormat(goal.targetAmount)}</h3>
-              <Progress value={(goal.currentAmount / goal.targetAmount) * 100} className="mt-3 mb-2" />
-              <p className="flex justify-between">
-                <span className="font-semibold">
-                  {num.currencyFormat(goal.currentAmount)}
-                  <span className="text-muted-foreground text-sm font-normal"> saved so far</span>
-                </span>
-
-                <span>{num.currencyFormat((goal.currentAmount / goal.targetAmount) * 100, undefined, false)}%</span>
-              </p>
-            </CardContent>
-
-            <CardFooter className="mt-2">
-              <p className="flex justify-between w-full">
-                <span className="text-sm">Remaining</span>
-                <span className="text-sm font-semibold">{num.currencyFormat(goal.targetAmount - goal.currentAmount)}</span>
-              </p>
-            </CardFooter>
-          </Card>)}
-        </div>
+        <HomeGoalTable
+          goalList={states.goalList}
+          setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
+          setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
+          setSelectedGoal={states.setSelectedGoal}
+          selectedGoal={states.selectedGoal} />
       </div>
 
       <HomeCreateGoalDialog

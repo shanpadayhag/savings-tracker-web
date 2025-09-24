@@ -45,7 +45,7 @@ const HomeSpendMoneyDialog = (props: HomeSpendMoneyDialogProps) => {
           <Input onChange={event => props.setAmount(event.target.value)} id="amount" name="amount" placeholder="Enter amount" autoComplete="off" />
         </div>
 
-        <button type="submit" className="sr-only">Submit</button>
+        <button type="submit" className="hidden">Submit</button>
       </form>
 
       <DialogFooter>

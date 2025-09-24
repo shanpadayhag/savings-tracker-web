@@ -4,22 +4,22 @@ import useHomeStates from '@/features/home/states/home-states';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
-type HomeGoalItemActionDropdownProps = {
-  allocateMoneyOnClick: (value: true) => void;
-  spendMoneyOnClick: (value: true) => void;
+export type HomeGoalItemActionDropdownProps = {
+  setAllocateMoneyDialogIsOpen: ReturnType<typeof useHomeStates>['setAllocateMoneyDialogIsOpen'];
+  setSpendMoneyDialogIsOpen: ReturnType<typeof useHomeStates>['setSpendMoneyDialogIsOpen'];
   setSelectedGoal: ReturnType<typeof useHomeStates>['setSelectedGoal'];
-  goal: ReturnType<typeof useHomeStates>['selectedGoal'];
+  selectedGoal: ReturnType<typeof useHomeStates>['selectedGoal'];
 };
 
 const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
   const spendMoneyOnClick = useCallback(() => {
-    props.setSelectedGoal(props.goal);
-    props.spendMoneyOnClick(true);
+    props.setSelectedGoal(props.selectedGoal);
+    props.setSpendMoneyDialogIsOpen(true);
   }, []);
 
   const allocateMoneyOnClick = useCallback(() => {
-    props.setSelectedGoal(props.goal);
-    props.allocateMoneyOnClick(true);
+    props.setSelectedGoal(props.selectedGoal);
+    props.setAllocateMoneyDialogIsOpen(true);
   }, []);
 
   return <DropdownMenu>

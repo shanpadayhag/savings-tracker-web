@@ -46,7 +46,7 @@ const HomeCreateGoalDialog = (props: HomeCreateGoalDialogProps) => {
             <Input onChange={event => props.setNewGoalTargetAmount(event.target.value)} id="target-amount" name="target-amount" placeholder="Enter goal's target amount" autoComplete="off" />
           </div>
 
-          <button className="sr-only" type="submit"></button>
+          <button className="hidden" type="submit"></button>
         </div>
       </form>
 
