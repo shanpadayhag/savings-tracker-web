@@ -11,7 +11,7 @@ type HomeMainActionSectionProps = {
 };
 
 const HomeMainActionSection = (props: HomeMainActionSectionProps) => {
-  return <div className="flex justify-end gap-2 p-4 w-full max-w-[500px]">
+  return <div className="flex justify-end gap-2 p-4 w-full">
     <Button onClick={() => props.setCreateGoalDialogIsOpen(true)}>New Goal</Button>
 
     <DropdownMenu>
