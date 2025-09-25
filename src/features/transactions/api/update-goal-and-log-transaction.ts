@@ -1,3 +1,4 @@
+import { AppError } from '@/errors/app-error';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
 import currency from 'currency.js';
@@ -27,7 +28,7 @@ const updateGoalAndLogTransaction = async (
   transactionType: TransactionType.GoalAllocation | TransactionType.GoalExpense,
 ) => {
   const existingGoal = await db.goalList.get(goal.id);
-  if (!existingGoal) throw new Error(`Goal with ID ${goal.id} not found.`);
+  if (!existingGoal) throw new AppError("Goal Not Found 🔍", "We couldn't find this goal. It may have been deleted. Please try refreshing your list.");
 
   const isAllocation = transactionType === TransactionType.GoalAllocation;
   const multiplier = isAllocation ? 1 : -1;

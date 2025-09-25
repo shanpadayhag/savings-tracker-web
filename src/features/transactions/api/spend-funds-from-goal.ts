@@ -1,3 +1,4 @@
+import { AppError } from '@/errors/app-error';
 import type GoalListItem from '@/features/goals/entities/goal-list-item';
 import updateGoalAndLogTransaction from '@/features/transactions/api/update-goal-and-log-transaction';
 import TransactionType from '@/features/transactions/enums/transaction-type';
@@ -28,8 +29,8 @@ const spendFundsFromGoal = async ({
   amount,
   transactionDate = new Date(),
 }: SpendFundsFromGoalParameters): Promise<void> => {
-  if (!description?.trim()) throw new Error('Transaction description cannot be empty.');
-  if (amount <= 0) throw new Error('Expense amount must be a positive number.');
+  if (!description?.trim()) throw new AppError("Add a Note ✍️", "A quick description will help you remember this transaction later.");
+  if (amount <= 0) throw new AppError("Log Your Spending 💸", "Please enter an amount greater than zero to track this expense.");
 
   await db.transaction('rw', db.transactionList, db.goalList, async () => {
     await updateGoalAndLogTransaction({

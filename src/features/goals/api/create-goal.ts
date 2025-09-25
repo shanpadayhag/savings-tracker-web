@@ -1,3 +1,4 @@
+import { AppError } from '@/errors/app-error';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import { db } from '@/lib/utils';
 
@@ -21,8 +22,8 @@ const createGoal = async ({
   name,
   targetAmount,
 }: CreateGoalParameters): Promise<GoalListItem> => {
-  if (!name?.trim()) throw new Error('Goal name cannot be empty.');
-  if (targetAmount <= 0) throw new Error('Target amount must be a positive number.');
+  if (!name?.trim()) throw new AppError("Name Your Goal 🎯", "Every great goal needs a name. What will you call this one?");
+  if (targetAmount <= 0) throw new AppError("Set a Target 📈", "What number are you aiming for? Please enter an amount greater than zero.");
 
   const newGoal: GoalListItem = {
     id,
