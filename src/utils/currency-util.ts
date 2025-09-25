@@ -1,15 +1,26 @@
 import Currency from '@/enums/currency';
 import currency from 'currency.js';
 
-// Map currency codes to their specific formatting options
-const currencyFormatters: Record<`${Currency}`, (value: number) => string> = {
-  EURO: (value) => currency(value, { symbol: '€', precision: 2, decimal: ',', separator: '.', pattern: `! #` }).format(),
-  CAD: (value) => currency(value, { symbol: 'CA$', precision: 2, pattern: `! #` }).format(),
-  USD: (value) => currency(value, { symbol: '$', precision: 2, pattern: `! #` }).format(),
-  PESO: (value) => currency(value, { symbol: '₱', precision: 2, pattern: `! #` }).format()
+const currencyOptions = {
+  EURO: { symbol: '€', precision: 2, decimal: ',', separator: '.', pattern: `! #` },
+  CAD: { symbol: 'CA$', precision: 2, pattern: `! #` },
+  USD: { symbol: '$', precision: 2, pattern: `! #` },
+  PESO: { symbol: '₱', precision: 2, pattern: `! #` }
 };
 
 export const currencyUtil = {
+  /**
+   * Parses a value (string, number) into a currency.js object
+   * based on a dynamic currency code. Defaults to 'EURO'.
+   * @param value The string, number, or decimal to parse.
+   * @param code The currency code to use for parsing rules. Defaults to 'EURO'.
+   * @returns A currency object.
+   */
+  parse(value: currency.Any, code: Currency = Currency.Euro): currency {
+    const options = currencyOptions[code] || currencyOptions.EURO;
+    return currency(value, options);
+  },
+
   /**
    * Formats a numeric value based on a dynamic currency code.
    * Defaults to 'EURO' if no code is provided.
@@ -17,8 +28,8 @@ export const currencyUtil = {
    * @param code The currency code to use for formatting. Defaults to 'EURO'.
    * @returns The formatted currency string.
    */
-  format(value: number, code: Currency = Currency.Euro): string {
-    return currencyFormatters[code](value);
+  format(value: currency.Any, code: Currency = Currency.Euro): string {
+    return this.parse(value, code).format();
   }
 };
 
