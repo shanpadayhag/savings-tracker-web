@@ -1,3 +1,4 @@
+import { AppError } from '@/errors/app-error';
 import type GoalListItem from '@/features/goals/entities/goal-list-item';
 import updateGoalAndLogTransaction from '@/features/transactions/api/update-goal-and-log-transaction';
 import type TransactionListItem from '@/features/transactions/entities/transaction-list-item';
@@ -34,9 +35,7 @@ type UpdateUserFundsParameters = {
  */
 const updateUserFunds = async ({ amount, date }: UpdateUserFundsParameters) => {
   const user = await db.user.get('singleton');
-  if (!user) {
-    throw new Error('User record not found.');
-  }
+  if (!user) throw new AppError("Let's Find You 🤔", "We can't find an account with those details. Please check them and try again.");
 
   const newTotalAvailableFunds = currency(user.financialSummary.totalAvailableFunds)
     .subtract(amount)
@@ -67,8 +66,8 @@ const allocateFundsToGoal = async ({
   amount,
   transactionDate = new Date(),
 }: AllocateFundsToGoalParameters): Promise<void> => {
-  if (!description?.trim()) throw new Error('Transaction description cannot be empty.');
-  if (amount <= 0) throw new Error('Allocation amount must be a positive number.');
+  if (!description?.trim()) throw new AppError("Add a Note ✍️", "A quick description will help you remember this transaction later.");
+  if (amount <= 0) throw new AppError("Boost Your Goal 📈", "Please enter an amount greater than zero to move closer to your target.");
 
   await db.transaction('rw', db.transactionList, db.goalList, db.user, async () => {
     await updateGoalAndLogTransaction({

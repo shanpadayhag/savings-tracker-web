@@ -1,3 +1,4 @@
+import { AppError } from '@/errors/app-error';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
 import currency from 'currency.js';
@@ -23,7 +24,7 @@ const adjustAccountBalance = async ({ amount, transactionDate = new Date() }: Ad
 
   await db.transaction('rw', db.user, db.transactionList, async () => {
     const user = await db.user.get('singleton');
-    if (!user) throw new Error('User record not found. Cannot apply adjustment.');
+    if (!user) throw new AppError("Let's Find You 🤔", "We can't find an account with those details. Please check them and try again.");
 
     await db.user.update('singleton', {
       financialSummary: {
