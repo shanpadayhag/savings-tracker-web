@@ -20,6 +20,7 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
             <TableHead colSpan={1}>Target Amount</TableHead>
             <TableHead colSpan={1}>Progess</TableHead>
             <TableHead colSpan={1}>Saved Amount</TableHead>
+            <TableHead colSpan={1}>Remaining Amount</TableHead>
             <TableHead colSpan={1}><span className="sr-only">Action</span></TableHead>
           </TableRow>
         </TableHeader>
@@ -27,10 +28,9 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
         <TableBody className="**:data-[slot=table-cell]:first:w-8">
           {props.goalList.length
             ? props.goalList.map(goal => {
-              const calculatedProgress = currency(goal.currentAmount)
+              const calculatedProgress = currencyUtil.parse(goal.currentAmount)
                 .multiply(100)
-                .divide(goal.targetAmount)
-                .value;
+                .divide(goal.targetAmount);
 
               return <TableRow className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
                 key={goal.id}
@@ -40,10 +40,11 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
                 <TableCell>{goal.name}</TableCell>
                 <TableCell>{currencyUtil.format(goal.targetAmount)}</TableCell>
                 <TableCell><span className="flex items-center gap-2">
-                  <Progress value={calculatedProgress} className="w-30"/>
-                  {calculatedProgress}%
+                  <Progress value={calculatedProgress.value} className="w-30" />
+                  {calculatedProgress.format()}%
                 </span></TableCell>
                 <TableCell>{currencyUtil.format(goal.currentAmount)}</TableCell>
+                <TableCell>{currencyUtil.parse(goal.targetAmount).subtract(goal.currentAmount).format()}</TableCell>
                 <TableCell><HomeGoalItemActionDropdown
                   setAllocateMoneyDialogIsOpen={props.setAllocateMoneyDialogIsOpen}
                   setSpendMoneyDialogIsOpen={props.setSpendMoneyDialogIsOpen}

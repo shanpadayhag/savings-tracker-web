@@ -14,6 +14,7 @@ import useHomeStates from '@/features/home/states/home-states';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db, num, User } from '@/lib/utils';
+import { currencyUtil } from '@/utils/currency-util';
 import { useEffect, useState } from 'react';
 
 export default () => {
@@ -67,7 +68,7 @@ export default () => {
   };
 
   const addBalance = async () => {
-    const amount = parseFloat(newBalanceAmount) || 0;
+    const amount = currencyUtil.parse(newBalanceAmount).value;
     const today = new Date;
 
     if (amount === 0) {
