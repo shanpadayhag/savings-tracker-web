@@ -29,7 +29,7 @@ const updateGoalAndLogTransaction = async (
 ) => {
   const existingGoal = await db.goalList.get(goal.id);
   if (!existingGoal) throw new AppError("Goal Not Found 🔍", "We couldn't find this goal. It may have been deleted. Please try refreshing your list.");
-
+// test
   const isAllocation = transactionType === TransactionType.GoalAllocation;
   const multiplier = isAllocation ? 1 : -1;
   const actionText = isAllocation ? 'Allocated' : 'Spent';
