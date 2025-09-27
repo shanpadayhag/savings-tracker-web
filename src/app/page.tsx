@@ -4,6 +4,7 @@ import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
+import HomeDialogCurrentBalance from '@/features/home/components/molecules/home-dialog-current-balance';
 import HomeAllocateMoneyDialog from '@/features/home/components/organisms/home-allocate-money-dialog';
 import HomeCreateGoalDialog from '@/features/home/components/organisms/home-create-goal-dialog';
 import HomeGoalTable from '@/features/home/components/organisms/home-goal-table';
@@ -135,6 +136,7 @@ export default () => {
         spendMoneyDialogIsOpen={states.spendMoneyDialogIsOpen}
         setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
         goalName={states.selectedGoal?.name || "Goal"}
+        totalAvailableFunds={userDetails?.financialSummary.totalAvailableFunds}
         setDescription={states.setNewTransactionDescription}
         setAmount={states.setNewTransactionAmount}
         handleSpendFromGoal={events.handleSpendFromGoal} />
@@ -143,6 +145,7 @@ export default () => {
         allocateMoneyDialogIsOpen={states.allocateMoneyDialogIsOpen}
         setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
         goalName={states.selectedGoal?.name || "Goal"}
+        totalAvailableFunds={userDetails?.financialSummary.totalAvailableFunds}
         setDescription={states.setNewTransactionDescription}
         setAmount={states.setNewTransactionAmount}
         handleAllocateFromGoal={events.handleAllocateFromGoal} />
@@ -158,10 +161,8 @@ export default () => {
           </DialogHeader>
 
           <form onSubmit={handleAddBalanceFormOnSubmit} className="grid gap-4">
-            <div className="flex flex-col items-center">
-              <p className="text-xs text-muted-foreground">Current Balance:</p>
-              <h3 className="text-2xl font-semibold">{num.currencyFormat(userDetails?.financialSummary.totalAvailableFunds || 0, userDetails?.financialSummary.currency || "eur")}</h3>
-            </div>
+            <HomeDialogCurrentBalance
+              totalAvailableFunds={userDetails?.financialSummary.totalAvailableFunds} />
 
             <div className="grid gap-3">
               <Label htmlFor="amount">Amount</Label>

@@ -2,6 +2,7 @@ import { Button } from '@/components/atoms/button';
 import { DialogHeader, DialogFooter, Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
+import HomeDialogCurrentBalance from '@/features/home/components/molecules/home-dialog-current-balance';
 import useHomeEvents from '@/features/home/events/home-events';
 import { useCallback } from 'react';
 
@@ -9,6 +10,7 @@ type HomeAllocateMoneyDialogProps = {
   allocateMoneyDialogIsOpen: boolean;
   setAllocateMoneyDialogIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   goalName: string;
+  totalAvailableFunds: number | undefined;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setAmount: React.Dispatch<React.SetStateAction<string>>;
   handleAllocateFromGoal: ReturnType<typeof useHomeEvents>['handleAllocateFromGoal'];
@@ -35,6 +37,9 @@ const HomeAllocateMoneyDialog = (props: HomeAllocateMoneyDialogProps) => {
       </DialogHeader>
 
       <form onSubmit={allocateFundsFormOnSubmit} className="grid gap-4">
+        <HomeDialogCurrentBalance
+          totalAvailableFunds={props.totalAvailableFunds} />
+
         <div className="grid gap-3">
           <Label htmlFor="description">Description</Label>
           <Input onChange={event => props.setDescription(event.target.value)} id="description" name="description" placeholder="Enter description" autoComplete="off" />
