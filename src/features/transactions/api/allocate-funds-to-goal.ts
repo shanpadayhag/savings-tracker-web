@@ -19,11 +19,6 @@ type UpdateUserFundsParameters = {
   user: User;
 };
 
-type VerifySufficientFundsParams = {
-  funds: number;
-  amount: number;
-};
-
 /**
  * This is a private helper function designed to update the user's financial
  * summary within a larger database transaction to ensure data integrity.
