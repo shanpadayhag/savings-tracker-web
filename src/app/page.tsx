@@ -162,7 +162,7 @@ export default () => {
 
           <form onSubmit={handleAddBalanceFormOnSubmit} className="grid gap-4">
             <HomeDialogCurrentBalance
-              totalAvailableFunds={userDetails?.financialSummary.totalAvailableFunds} />
+              currentBalance={userDetails?.financialSummary.totalAvailableFunds} />
 
             <div className="grid gap-3">
               <Label htmlFor="amount">Amount</Label>
