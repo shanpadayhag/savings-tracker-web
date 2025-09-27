@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import Dexie from "dexie";
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
+import User from '@/features/user/entities/user';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -23,20 +24,6 @@ export const num = {
 
     return new Intl.NumberFormat('en-US', options).format(amount);
   }
-};
-
-/**
- * Currently there will be 1 whole total available funds. But when implementing
- * the actual database, please note that there will be an "acount" that will
- * act as a virtual wallet
- */
-export type User = {
-  id: "singleton";
-  financialSummary: {
-    totalAvailableFunds: number;
-    currency: string;
-    lastUpdated: Date;
-  };
 };
 
 class DB extends Dexie {

@@ -13,7 +13,8 @@ import useHomeEvents from '@/features/home/events/home-events';
 import useHomeStates from '@/features/home/states/home-states';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
-import { db, num, User } from '@/lib/utils';
+import User from '@/features/user/entities/user';
+import { db, num } from '@/lib/utils';
 import { currencyUtil } from '@/utils/currency-util';
 import { useEffect, useState } from 'react';
 
