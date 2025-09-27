@@ -1,4 +1,5 @@
 import { AppError } from '@/errors/app-error';
+import calculateRemainingBalance from '@/features/calculations/api/calculate-remaining-balance';
 import type GoalListItem from '@/features/goals/entities/goal-list-item';
 import updateGoalAndLogTransaction from '@/features/transactions/api/update-goal-and-log-transaction';
 import TransactionType from '@/features/transactions/enums/transaction-type';
@@ -6,7 +7,6 @@ import { db } from '@/lib/utils';
 
 type SpendFundsFromGoalParameters = {
   goalID: GoalListItem['id'];
-  goalName: GoalListItem['name'];
   description: string;
   amount: number;
   transactionDate?: Date;
@@ -24,7 +24,6 @@ type SpendFundsFromGoalParameters = {
  */
 const spendFundsFromGoal = async ({
   goalID,
-  goalName,
   description,
   amount,
   transactionDate = new Date(),
@@ -32,11 +31,18 @@ const spendFundsFromGoal = async ({
   if (!description?.trim()) throw new AppError("Add a Note ✍️", "A quick description will help you remember this transaction later.");
   if (amount <= 0) throw new AppError("Log Your Spending 💸", "Please enter an amount greater than zero to track this expense.");
 
+  const existingGoal = await db.goalList.get(goalID!);
+  if (!existingGoal) throw new AppError("Goal Not Found 🔍", "We couldn't find this goal. It may have been deleted. Please try refreshing your list.");
+
+  const newSavedAmount = calculateRemainingBalance(existingGoal.currentAmount, amount).value;
+  if (newSavedAmount < 0) throw new AppError("Goal is a Little Short 🤏", "This goal doesn't have enough funds to cover this expense. Please adjust the amount or allocate more funds to this goal first.");
+
   await db.transaction('rw', db.transactionList, db.goalList, async () => {
     await updateGoalAndLogTransaction({
-      goal: { id: goalID!, name: goalName },
+      goal: existingGoal,
       description,
       amount,
+      newSavedAmount,
       transactionDate,
     }, TransactionType.GoalExpense);
   });

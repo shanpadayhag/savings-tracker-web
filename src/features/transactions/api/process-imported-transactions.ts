@@ -81,10 +81,9 @@ const ensureGoalsExist = async (
 /**
  * Creates and executes all database operations derived from a list of transactions.
  *
- * This is the final execution stage of the import process. It maps each transaction
+ * This is the final execution stage of the import process. It loops each transaction
  * record to a specific, asynchronous action (e.g., `allocateFundsToGoal`, `spendFundsFromGoal`,
- * `adjustAccountBalance`). All generated actions are then run concurrently to
- * maximize throughput.
+ * `adjustAccountBalance`).
  *
  * @private
  * @param {ExportedTransactionListItem[]} transactions - The list of transaction records to be executed.
@@ -97,16 +96,15 @@ const executeTransactionOperations = async (
   transactions: ExportedTransactionListItem[],
   goalsLookup: Map<string, GoalListItem>,
 ): Promise<void> => {
-  const operations = transactions.map(transaction => {
+  for (const transaction of transactions) {
     if (transaction.goalActivity) {
       const { goal, amount } = transaction.goalActivity;
       const currentGoal = goalsLookup.get(goal.id!)!;
       const operation = transaction.type === TransactionType.GoalAllocation
         ? allocateFundsToGoal : spendFundsFromGoal;
 
-      return operation({
+      await operation({
         goalID: currentGoal.id,
-        goalName: currentGoal.name,
         description: transaction.description,
         amount,
         transactionDate: transaction.createdAt,
@@ -114,15 +112,12 @@ const executeTransactionOperations = async (
     }
 
     if (transaction.accountAdjustment) {
-      return adjustAccountBalance({
+      await adjustAccountBalance({
         amount: transaction.accountAdjustment.amount,
         transactionDate: transaction.createdAt,
       });
     }
-    return null;
-  });
-
-  await Promise.all(operations.filter(Boolean));
+  }
 };
 
 /**
@@ -134,9 +129,7 @@ const executeTransactionOperations = async (
  *
  * 1.  **Data Extraction:** Scans the transaction list to identify all unique goals.
  * 2.  **Goal Provisioning:** Fetches existing goals and creates missing ones in batch.
- * 3.  **Operation Execution:** Executes all individual transaction operations concurrently.
- *
- * This approach minimizes database round-trips and maximizes performance.
+ * 3.  **Operation Execution:** Executes all individual transaction operations.
  *
  * @param {ProcessImportedTransactionsParams} params - The parameters for the import process.
  * @param {ExportedTransactionListItem[]} params.transactions - The list of transaction records to process.

@@ -9,7 +9,7 @@ const useHomeStates = () => {
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTargetAmount, setNewGoalTargetAmount] = useState("");
 
-  const [selectedGoal, setSelectedGoal] = useState<{ id: string; name: string; }>();
+  const [selectedGoal, setSelectedGoal] = useState<GoalListItem | null>(null);
   const [newTransactionDescription, setNewTransactionDescription] = useState("");
   const [newTransactionAmount, setNewTransactionAmount] = useState("");
 

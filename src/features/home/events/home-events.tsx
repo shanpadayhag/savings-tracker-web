@@ -1,3 +1,4 @@
+import { AppError } from '@/errors/app-error';
 import createGoal from '@/features/goals/api/create-goal';
 import fetchGoalsApi from '@/features/goals/api/fetch-goals';
 import useHomeStates from '@/features/home/states/home-states';
@@ -7,9 +8,9 @@ import processImportedTransactions from '@/features/transactions/api/process-imp
 import spendFundsFromGoal from '@/features/transactions/api/spend-funds-from-goal';
 import ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
 import browserFileUtil from '@/utils/browser-file-util';
+import { currencyUtil } from '@/utils/currency-util';
 import { DateUtil } from '@/utils/date-util';
 import jsonUtil from '@/utils/json-util';
-import currency from 'currency.js';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
@@ -101,9 +102,9 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
         description: `We've successfully added your ${count} ${transactionWord}.`,
       });
     } catch (error) {
-      toast.error("Oops, something went wrong.", {
-        description: "The import failed. Please check the files and try again.",
-      });
+      console.error("Failed to import data:", error);
+      if (error instanceof AppError) toast.error(error.title, { description: error.description });
+      else toast.error("Oh no! 😥", { description: "The import failed. Please check the files and try again." });
     }
   }, []);
 
@@ -114,7 +115,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
    */
   const handleCreateGoal = useCallback(async () => {
     const goalName = states.newGoalName.trim();
-    const targetAmount = currency(states.newGoalTargetAmount).value;
+    const targetAmount = currencyUtil.parse(states.newGoalTargetAmount).value;
 
     if (!goalName) {
       return toast.error("Hold on! 📝", {
@@ -143,9 +144,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       });
     } catch (error) {
       console.error("Failed to create goal:", error);
-      toast.error("Oh no! 😥", {
-        description: "We couldn't save your goal. Please try again.",
-      });
+      if (error instanceof AppError) toast.error(error.title, { description: error.description });
+      else toast.error("Oh no! 😥", { description: "We couldn't save your goal. Please try again." });
     }
   }, [states.newGoalName, states.newGoalTargetAmount]);
 
@@ -166,9 +166,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     try {
       await allocateFundsToGoal({
         goalID: selectedGoal.id,
-        goalName: selectedGoal.name,
         description: newTransactionDescription,
-        amount: currency(newTransactionAmount).value,
+        amount: currencyUtil.parse(newTransactionAmount).value,
       });
 
       fetchGoals();
@@ -182,9 +181,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       });
     } catch (error) {
       console.error("Transaction failed:", error);
-      toast.error("Oh no, something went wrong.", {
-        description: "We couldn't save your transaction. Please try again in a moment.",
-      });
+      if (error instanceof AppError) toast.error(error.title, { description: error.description });
+      else toast.error("Oh no, something went wrong.", { description: "We couldn't save your transaction. Please try again in a moment." });
     }
   }, [states.selectedGoal, states.newTransactionDescription, states.newTransactionAmount]);
 
@@ -205,9 +203,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     try {
       await spendFundsFromGoal({
         goalID: selectedGoal.id,
-        goalName: selectedGoal.name,
         description: newTransactionDescription,
-        amount: currency(newTransactionAmount).value,
+        amount: currencyUtil.parse(newTransactionAmount).value,
       });
 
       fetchGoals();
@@ -221,9 +218,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       });
     } catch (error) {
       console.error("Transaction failed:", error);
-      toast.error("Oh no, something went wrong.", {
-        description: "We couldn't save your transaction. Please try again in a moment.",
-      });
+      if (error instanceof AppError) toast.error(error.title, { description: error.description });
+      else toast.error("Oh no, something went wrong.", { description: "We couldn't save your transaction. Please try again in a moment." });
     }
   }, [states.selectedGoal, states.newTransactionDescription, states.newTransactionAmount]);
 
