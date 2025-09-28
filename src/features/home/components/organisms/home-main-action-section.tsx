@@ -6,6 +6,7 @@ import { IconDotsVertical } from '@tabler/icons-react';
 type HomeMainActionSectionProps = {
   adjustBalanceOnClick: (value: true) => void;
   setCreateGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setCreateGoalDialogIsOpen'];
+  setResetDialogIsOpen: ReturnType<typeof useHomeStates>['setResetDialogIsOpen'];
   exportTransactionsOnClick: () => void;
   importTransactionsOnClick: () => void;
 };
@@ -26,7 +27,7 @@ const HomeMainActionSection = (props: HomeMainActionSectionProps) => {
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => props.adjustBalanceOnClick(true)}>Adjust Balance</DropdownMenuItem>
-          <DropdownMenuItem disabled><span className="text-red-700">Account Reset</span></DropdownMenuItem>
+          <DropdownMenuItem onClick={() => props.setResetDialogIsOpen(true)}><span className="text-red-700">Account Reset</span></DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Transaction</DropdownMenuLabel>
