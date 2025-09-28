@@ -9,13 +9,13 @@ import HomeAllocateMoneyDialog from '@/features/home/components/organisms/home-a
 import HomeCreateGoalDialog from '@/features/home/components/organisms/home-create-goal-dialog';
 import HomeGoalTable from '@/features/home/components/organisms/home-goal-table';
 import HomeMainActionSection from '@/features/home/components/organisms/home-main-action-section';
+import HomeResetAccountConfirmationDialog from '@/features/home/components/organisms/home-reset-account-confirmation-dialog';
 import HomeSpendMoneyDialog from '@/features/home/components/organisms/home-spend-money-dialog';
 import useHomeEvents from '@/features/home/events/home-events';
 import useHomeStates from '@/features/home/states/home-states';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
-import User from '@/features/user/entities/user';
-import { db, num } from '@/lib/utils';
+import { db } from '@/lib/utils';
 import { currencyUtil } from '@/utils/currency-util';
 import { useEffect, useState } from 'react';
 
@@ -23,42 +23,8 @@ export default () => {
   const states = useHomeStates();
   const events = useHomeEvents(states);
 
-  const [userDetails, setUserDetails] = useState<User | null>(null);
   const [newBalanceDialogIsOpen, setNewBalanceDialogIsOpen] = useState(false);
   const [newBalanceAmount, setNewBalanceAmount] = useState("");
-
-  const handleOnPageLoad = async () => {
-    fetchUserDetails();
-    events.fetchGoals();
-  };
-
-  const fetchUserDetails = async () => {
-    const user = await db.user.get("singleton");
-
-    if (!user) {
-      const today = new Date();
-      const user: User = {
-        id: 'singleton',
-        financialSummary: {
-          totalAvailableFunds: 0,
-          currency: 'eur',
-          lastUpdated: today
-        }
-      };
-
-      await db.user.add({
-        id: 'singleton',
-        financialSummary: {
-          totalAvailableFunds: 0,
-          currency: 'eur',
-          lastUpdated: today
-        }
-      });
-      setUserDetails(user);
-    } else {
-      setUserDetails(user);
-    }
-  };
 
   const handleAddBalanceButtonOnClick = () => {
     addBalance();
@@ -78,7 +44,7 @@ export default () => {
       return;
     }
 
-    if (!userDetails) {
+    if (!states.authUser) {
       alert("Something went wrong, reload the page. if persists contact dev");
       return;
     }
@@ -93,11 +59,11 @@ export default () => {
       },
     };
 
-    userDetails!.financialSummary.totalAvailableFunds += amount;
-    userDetails!.financialSummary.lastUpdated = today;
+    states.authUser.financialSummary.totalAvailableFunds += amount;
+    states.authUser.financialSummary.lastUpdated = today;
 
-    db.user.update("singleton", userDetails);
-    setUserDetails({ ...userDetails! });
+    db.user.update("singleton", states.authUser);
+    states.setAuthUser({ ...states.authUser });
     db.transactionList.add(transaction);
 
     setNewBalanceDialogIsOpen(false);
@@ -105,7 +71,8 @@ export default () => {
   };
 
   useEffect(() => {
-    handleOnPageLoad();
+    events.handleFetchGoals();
+    events.handleFetchAuthUser();
   }, []);
 
   return <>
@@ -114,6 +81,7 @@ export default () => {
         <HomeMainActionSection
           adjustBalanceOnClick={setNewBalanceDialogIsOpen}
           setCreateGoalDialogIsOpen={states.setCreateGoalDialogIsOpen}
+          setResetDialogIsOpen={states.setResetDialogIsOpen}
           exportTransactionsOnClick={events.exportTransactionsOnClick}
           importTransactionsOnClick={events.importTransactionsOnClick} />
 
@@ -145,10 +113,15 @@ export default () => {
         allocateMoneyDialogIsOpen={states.allocateMoneyDialogIsOpen}
         setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
         goalName={states.selectedGoal?.name || "Goal"}
-        currentBalance={userDetails?.financialSummary.totalAvailableFunds}
+        currentBalance={states.authUser?.financialSummary.totalAvailableFunds}
         setDescription={states.setNewTransactionDescription}
         setAmount={states.setNewTransactionAmount}
         handleAllocateFromGoal={events.handleAllocateFromGoal} />
+
+      <HomeResetAccountConfirmationDialog
+        resetDialogIsOpen={states.resetDialogIsOpen}
+        setResetDialogIsOpen={states.setResetDialogIsOpen}
+        handleResetAccount={events.handleResetAccount} />
 
       <Dialog open={newBalanceDialogIsOpen} onOpenChange={setNewBalanceDialogIsOpen}>
         <DialogContent className="sm:max-w-[425px]">
@@ -162,7 +135,7 @@ export default () => {
 
           <form onSubmit={handleAddBalanceFormOnSubmit} className="grid gap-4">
             <HomeDialogCurrentBalance
-              currentBalance={userDetails?.financialSummary.totalAvailableFunds} />
+              currentBalance={states.authUser?.financialSummary.totalAvailableFunds} />
 
             <div className="grid gap-3">
               <Label htmlFor="amount">Amount</Label>

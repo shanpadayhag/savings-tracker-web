@@ -1,12 +1,14 @@
 import { AppError } from '@/errors/app-error';
+import resetAccount from '@/features/accounts/api/reset-account';
 import createGoal from '@/features/goals/api/create-goal';
-import fetchGoalsApi from '@/features/goals/api/fetch-goals';
+import fetchGoals from '@/features/goals/api/fetch-goals';
 import useHomeStates from '@/features/home/states/home-states';
 import allocateFundsToGoal from '@/features/transactions/api/allocate-funds-to-goal';
 import getTransactionChunksForExport from '@/features/transactions/api/get-transaction-chunks-for-export';
 import processImportedTransactions from '@/features/transactions/api/process-imported-transactions';
 import spendFundsFromGoal from '@/features/transactions/api/spend-funds-from-goal';
 import ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
+import fetchSingletonUser from '@/features/user/api/fetch-singleton-user';
 import browserFileUtil from '@/utils/browser-file-util';
 import { currencyUtil } from '@/utils/currency-util';
 import { DateUtil } from '@/utils/date-util';
@@ -16,6 +18,21 @@ import { toast } from 'sonner';
 
 const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
   /**
+   * A memoized callback function to fetch the authenticated user's data.
+   * It updates the state with the user details upon success.
+   * If the fetch fails, it logs the error and displays a toast notification.
+   */
+  const handleFetchAuthUser = useCallback(async () => {
+    try {
+      states.setAuthUser(await fetchSingletonUser());
+    } catch (error) {
+      console.error("User Fetch Failed:", error);
+      if (error instanceof AppError) toast.error(error.title, { description: error.description });
+      else toast.error("", { description: "" });
+    }
+  }, []);
+
+  /**
    * Fetches the list of active goals and updates the application state accordingly.
    *
    * This memoized callback retrieves goal data from the API. Upon success, it
@@ -24,8 +41,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
    * 2. It transforms this data into a { label, value } format, optimized for
    *    UI components like dropdowns or comboboxes, and updates the relevant state.
    */
-  const fetchGoals = useCallback(async () => {
-    const goals = await fetchGoalsApi();
+  const handleFetchGoals = useCallback(async () => {
+    const goals = await fetchGoals();
 
     states.setGoalList(goals);
     states.setComboboxGoalItems(goals.map(goal => ({
@@ -94,7 +111,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       }
 
       await processImportedTransactions({ transactions: transactionsToImport });
-      fetchGoals();
+      handleFetchAuthUser();
+      handleFetchGoals();
 
       const count = transactionsToImport.length;
       const transactionWord = count === 1 ? 'transaction' : 'transactions';
@@ -133,7 +151,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
         targetAmount: targetAmount,
       });
 
-      fetchGoals();
+      handleFetchGoals();
 
       states.setCreateGoalDialogIsOpen(false);
       states.setNewGoalName("");
@@ -170,7 +188,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
         amount: currencyUtil.parse(newTransactionAmount).value,
       });
 
-      fetchGoals();
+      handleFetchAuthUser();
+      handleFetchGoals();
 
       states.setAllocateMoneyDialogIsOpen(false);
       states.setNewTransactionDescription("");
@@ -207,7 +226,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
         amount: currencyUtil.parse(newTransactionAmount).value,
       });
 
-      fetchGoals();
+      handleFetchGoals();
 
       states.setSpendMoneyDialogIsOpen(false);
       states.setNewTransactionDescription("");
@@ -223,13 +242,38 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     }
   }, [states.selectedGoal, states.newTransactionDescription, states.newTransactionAmount]);
 
+  /**
+   * Handles the resetting of the user's account.
+   * It calls the API to reset the account, re-fetches the latest user and
+   * goal data, and displays success or error notifications.
+   */
+  const handleResetAccount = useCallback(async () => {
+    try {
+      await resetAccount();
+
+      states.setResetDialogIsOpen(false);
+      handleFetchAuthUser();
+      handleFetchGoals();
+
+      toast.success("Account Reset! ✨", {
+        description: "Your account has been successfully reset.",
+      });
+    } catch (error) {
+      console.error("Reset failed:", error);
+      if (error instanceof AppError) toast.error(error.title, { description: error.description });
+      else toast.error("Oh no, something went wrong 🤔", { description: "We couldn't reset your account. Please try again in a moment." });
+    }
+  }, []);
+
   return {
-    fetchGoals,
+    handleFetchAuthUser,
+    handleFetchGoals,
     exportTransactionsOnClick,
     importTransactionsOnClick,
     handleCreateGoal,
     handleAllocateFromGoal,
     handleSpendFromGoal,
+    handleResetAccount,
   };
 };
 
