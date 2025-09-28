@@ -19,7 +19,7 @@ const HomeResetAccountConfirmationDialog = (
   const [confirmationInput, setConfirmationInput] = useState("");
 
   const handleConfirmResetAccount = () => {
-    if (confirmationInput.trim().toLowerCase() === "reset") {
+    if (confirmationInput.trim() === "RESET") {
       props.handleResetAccount();
     } else {
       toast.error("Incorrect Confirmation 🤔", { description: "To confirm, you must type RESET in uppercase." });
@@ -47,7 +47,7 @@ const HomeResetAccountConfirmationDialog = (
       <form onSubmit={confirmResetAccountFormOnSubmit} className="flex items-center gap-2">
         <div className="grid flex-1 gap-2">
           <Label htmlFor="confirmation-input" className="sr-only">Link</Label>
-          <Input onChange={event => setConfirmationInput(event.target.value)} placeholder="RESET" id="confirmation-input" />
+          <Input onChange={event => setConfirmationInput(event.target.value)} placeholder="RESET" id="confirmation-input" autoComplete="off" />
         </div>
 
         <button className="hidden">Submit</button>
