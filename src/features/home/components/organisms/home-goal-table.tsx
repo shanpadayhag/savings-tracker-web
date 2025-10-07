@@ -28,7 +28,7 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
         <TableBody className="**:data-[slot=table-cell]:first:w-8">
           {props.goalList.length
             ? props.goalList.map(goal => {
-              const calculatedProgress = currencyUtil.parse(goal.currentAmount)
+              const calculatedProgress = currency(goal.currentAmount, { precision: 2, decimal: ',', pattern: `#` })
                 .multiply(100)
                 .divide(goal.targetAmount);
 
