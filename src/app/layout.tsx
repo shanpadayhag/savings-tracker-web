@@ -1,5 +1,3 @@
-import { SidebarInset, SidebarProvider } from '@/components/atoms/sidebar';
-import { AppSidebar } from '@/components/molecules/app-sidebar';
 import type { Metadata } from "next";
 import { Toaster } from "@/components/atoms/sonner";
 
@@ -20,23 +18,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange>
-          {/* <SidebarProvider
-          style={
-            {
-              "--sidebar-width": "calc(var(--spacing) * 72)",
-              "--header-height": "calc(var(--spacing) * 12)",
-            } as React.CSSProperties
-          }
-        > */}
-          {/* <AppSidebar variant="inset" /> */}
-          {/* <SidebarInset> */}
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange>
           {children}
-          {/* </SidebarInset> */}
-          {/* </SidebarProvider> */}
           <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
