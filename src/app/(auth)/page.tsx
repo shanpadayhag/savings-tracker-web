@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import authAxios from '@/configs/axios/auth';
+import { AxiosError } from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
@@ -18,22 +19,50 @@ export default () => {
 
   const login = async () => {
     try {
-      const response = await authAxios.post("/login", {
+      await authAxios.post("/login", {
         email: email,
         password: password,
       });
 
-      if (response.data.value) {
-        router.replace("/user");
-        return;
-      }
-      toast.error("Oops, that didn't work 🤔", {
-        description: "The email or password you entered doesn't match our records. Please double-check and try again."
-      });
+      router.replace("/user");
     } catch (exception) {
-      toast.error("Something went wrong 🛠️", {
-        description: "We couldn't log you in right now. Try again in a few moments."
-      });
+      if (exception instanceof AxiosError) {
+        if (!exception.response) {
+          return toast.error("Network Error 🌐", {
+            description: "Cannot connect to the server. Please check your internet connection.",
+          });
+        }
+
+        switch (exception.response.status) {
+          case 400:
+            toast.error("Invalid Input 🤔", {
+              description: "Please check the details you entered and try again.",
+            });
+            break;
+
+          case 401:
+            toast.error("Login Failed 🔒", {
+              description: "The email or password you entered is incorrect.",
+            });
+            break;
+
+          case 500:
+            toast.error("Server Issue 🛠️", {
+              description: "We're having trouble on our end. Please try again in a moment.",
+            });
+            break;
+
+          default:
+            toast.error("Unexpected Error 💥", {
+              description: "An unknown error occurred. If this continues, please contact support.",
+            });
+            break;
+        }
+      } else {
+        toast.error("Unexpected Error 💥", {
+          description: "An unknown error occurred. If this continues, please contact support.",
+        });
+      }
     }
   };
 
