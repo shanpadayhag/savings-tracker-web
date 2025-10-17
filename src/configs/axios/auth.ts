@@ -3,6 +3,7 @@ import axiosDefault from 'axios';
 
 const authAxios = axiosDefault.create({
   baseURL: env.SERVER_URL,
+  withCredentials: true,
   timeout: 60000,
   headers: { Accept: 'application/json' },
 });
