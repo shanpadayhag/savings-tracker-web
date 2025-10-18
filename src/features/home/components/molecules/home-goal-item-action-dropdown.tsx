@@ -15,12 +15,12 @@ const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
   const spendMoneyOnClick = useCallback(() => {
     props.setSelectedGoal(props.selectedGoal);
     props.setSpendMoneyDialogIsOpen(true);
-  }, []);
+  }, [props.selectedGoal]);
 
   const allocateMoneyOnClick = useCallback(() => {
     props.setSelectedGoal(props.selectedGoal);
     props.setAllocateMoneyDialogIsOpen(true);
-  }, []);
+  }, [props.selectedGoal]);
 
   return <DropdownMenu>
     <DropdownMenuTrigger asChild>

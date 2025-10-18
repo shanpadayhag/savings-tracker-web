@@ -11,10 +11,6 @@ const authAxios = axiosDefault.create({
 authAxios.interceptors.request.use(
   async (config) => {
     if (!config.headers) return config;
-
-    // config.headers.Authorization = `Bearer ${token}`;
-    config.headers.Authorization = null;
-
     return config;
   },
   (error) => Promise.reject(error)
