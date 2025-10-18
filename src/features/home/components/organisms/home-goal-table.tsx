@@ -2,7 +2,7 @@ import { Progress } from '@/components/atoms/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
 import HomeGoalItemActionDropdown, { HomeGoalItemActionDropdownProps } from '@/features/home/components/molecules/home-goal-item-action-dropdown';
 import useHomeStates from '@/features/home/states/home-states';
-import { currencyUtil } from '@/utils/currency-util';
+import currencyUtil from '@/utils/currency-util';
 import currency from 'currency.js';
 
 type HomeGoalTableProps = {
@@ -10,7 +10,7 @@ type HomeGoalTableProps = {
 } & HomeGoalItemActionDropdownProps;
 
 const HomeGoalTable = (props: HomeGoalTableProps) => {
-  return <div className="flex flex-col gap-4 p-4 md:gap-6 w-full">
+  return <div className="flex flex-col gap-4 px-4 md:gap-6 w-full">
     <div className="rounded-lg border">
       <Table>
         <TableHeader className="bg-muted sticky top-0 z-10">

@@ -8,7 +8,7 @@ const currencyOptions = {
   PESO: { symbol: '₱', precision: 2, pattern: `! #` }
 };
 
-export const currencyUtil = {
+const currencyUtil = {
   /**
    * Parses a value (string, number) into a currency.js object
    * based on a dynamic currency code. Defaults to 'EURO'.
@@ -33,3 +33,4 @@ export const currencyUtil = {
   }
 };
 
+export default currencyUtil;

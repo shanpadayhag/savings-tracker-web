@@ -1,11 +1,13 @@
 import { ComboboxItems } from '@/components/molecules/combobox';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
+import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import User from '@/features/user/entities/user';
 import { useState } from 'react';
 
 const useHomeStates = () => {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [goalList, setGoalList] = useState<GoalListItem[]>([]);
+  const [transactionList, setTransactionList] = useState<TransactionListItem[]>([]);
   const [comboboxGoalItems, setComboboxGoalItems] = useState<ComboboxItems>([]);
 
   const [createGoalDialogIsOpen, setCreateGoalDialogIsOpen] = useState(false);
@@ -23,6 +25,7 @@ const useHomeStates = () => {
   return {
     authUser, setAuthUser,
     goalList, setGoalList,
+    transactionList, setTransactionList,
     comboboxGoalItems, setComboboxGoalItems,
     createGoalDialogIsOpen, setCreateGoalDialogIsOpen,
     newGoalName, setNewGoalName,

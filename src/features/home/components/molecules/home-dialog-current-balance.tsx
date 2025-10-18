@@ -1,4 +1,4 @@
-import { currencyUtil } from '@/utils/currency-util';
+import currencyUtil from '@/utils/currency-util';
 
 export type HomeDialogCurrentBalanceProps = {
   currentBalance: number | undefined;

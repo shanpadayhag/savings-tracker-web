@@ -4,6 +4,7 @@ import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/atoms/tabs';
 import HomeDialogCurrentBalance from '@/features/home/components/molecules/home-dialog-current-balance';
 import HomeAllocateMoneyDialog from '@/features/home/components/organisms/home-allocate-money-dialog';
 import HomeCreateGoalDialog from '@/features/home/components/organisms/home-create-goal-dialog';
@@ -11,12 +12,13 @@ import HomeGoalTable from '@/features/home/components/organisms/home-goal-table'
 import HomeMainActionSection from '@/features/home/components/organisms/home-main-action-section';
 import HomeResetAccountConfirmationDialog from '@/features/home/components/organisms/home-reset-account-confirmation-dialog';
 import HomeSpendMoneyDialog from '@/features/home/components/organisms/home-spend-money-dialog';
+import HomeTransactionsTable from '@/features/home/components/organisms/home-transactions-table';
 import useHomeEvents from '@/features/home/events/home-events';
 import useHomeStates from '@/features/home/states/home-states';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
-import { currencyUtil } from '@/utils/currency-util';
+import currencyUtil from '@/utils/currency-util';
 import { useEffect, useState } from 'react';
 
 export default () => {
@@ -73,6 +75,7 @@ export default () => {
   useEffect(() => {
     events.handleFetchGoals();
     events.handleFetchAuthUser();
+    events.handleFetchTransactions();
   }, []);
 
   return <>
@@ -85,12 +88,24 @@ export default () => {
           exportTransactionsOnClick={events.exportTransactionsOnClick}
           importTransactionsOnClick={events.importTransactionsOnClick} />
 
-        <HomeGoalTable
-          goalList={states.goalList}
-          setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
-          setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
-          setSelectedGoal={states.setSelectedGoal}
-          selectedGoal={states.selectedGoal} />
+        <Tabs className="w-full gap-3" defaultValue="goals">
+          <TabsList className="mx-4">
+            <TabsTrigger value="goals">Goals</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          </TabsList>
+          <TabsContent value="goals">
+            <HomeGoalTable
+              goalList={states.goalList}
+              setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
+              setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
+              setSelectedGoal={states.setSelectedGoal}
+              selectedGoal={states.selectedGoal} />
+          </TabsContent>
+          <TabsContent value="transactions">
+            <HomeTransactionsTable
+              transactionList={states.transactionList} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <HomeCreateGoalDialog
