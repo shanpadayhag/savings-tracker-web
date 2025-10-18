@@ -5,12 +5,13 @@ import fetchGoals from '@/features/goals/api/fetch-goals';
 import useHomeStates from '@/features/home/states/home-states';
 import allocateFundsToGoal from '@/features/transactions/api/allocate-funds-to-goal';
 import getTransactionChunksForExport from '@/features/transactions/api/get-transaction-chunks-for-export';
+import getTransactions from '@/features/transactions/api/get-transactions';
 import processImportedTransactions from '@/features/transactions/api/process-imported-transactions';
 import spendFundsFromGoal from '@/features/transactions/api/spend-funds-from-goal';
 import ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
 import fetchSingletonUser from '@/features/user/api/fetch-singleton-user';
 import browserFileUtil from '@/utils/browser-file-util';
-import { currencyUtil } from '@/utils/currency-util';
+import currencyUtil from '@/utils/currency-util';
 import { DateUtil } from '@/utils/date-util';
 import jsonUtil from '@/utils/json-util';
 import { useCallback } from 'react';
@@ -49,6 +50,19 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       label: goal.name,
       value: goal.id!.toString()
     })));
+  }, []);
+
+
+  /**
+   * A memoized callback that fetches the latest transactions and updates the
+   * application state.
+   *
+   * It calls the async `getTransactions` function and passes the result to
+   * the `states.setTransactionList` state setter.
+   * Wrapped in `useCallback` for performance optimization in React components.
+   */
+  const handleFetchTransactions = useCallback(async () => {
+    states.setTransactionList(await getTransactions());
   }, []);
 
   /**
@@ -190,6 +204,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
 
       handleFetchAuthUser();
       handleFetchGoals();
+      handleFetchTransactions();
 
       states.setAllocateMoneyDialogIsOpen(false);
       states.setNewTransactionDescription("");
@@ -227,6 +242,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       });
 
       handleFetchGoals();
+      handleFetchTransactions();
 
       states.setSpendMoneyDialogIsOpen(false);
       states.setNewTransactionDescription("");
@@ -268,6 +284,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
   return {
     handleFetchAuthUser,
     handleFetchGoals,
+    handleFetchTransactions,
     exportTransactionsOnClick,
     importTransactionsOnClick,
     handleCreateGoal,
