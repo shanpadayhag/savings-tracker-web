@@ -1,6 +1,7 @@
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
+import currencyUtil from '@/utils/currency-util';
 
 type GoalTransactionParams = {
   goal: GoalListItem;
@@ -29,10 +30,10 @@ const updateGoalAndLogTransaction = async (
   transactionType: TransactionType.GoalAllocation | TransactionType.GoalExpense,
 ) => {
   const isAllocation = transactionType === TransactionType.GoalAllocation;
-  const actionText = isAllocation ? 'Allocated' : 'Spent';
+  const actionText = isAllocation ? ['Allocated', 'to'] : ['Spent', 'from'];
 
   await db.transactionList.add({
-    activity: `${actionText} ${Math.abs(amount)} for ${goal.name}`,
+    activity: `${actionText[0]} ${currencyUtil.format(amount)} ${actionText[1]} ${goal.name}`,
     description: description,
     type: transactionType,
     createdAt: transactionDate,
