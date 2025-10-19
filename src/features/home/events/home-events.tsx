@@ -12,7 +12,7 @@ import ExportedTransactionListItem from '@/features/transactions/entities/export
 import fetchSingletonUser from '@/features/user/api/fetch-singleton-user';
 import browserFileUtil from '@/utils/browser-file-util';
 import currencyUtil from '@/utils/currency-util';
-import { DateUtil } from '@/utils/date-util';
+import dateUtil from '@/utils/date-util';
 import jsonUtil from '@/utils/json-util';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
@@ -77,7 +77,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
    */
   const exportTransactionsOnClick = useCallback(async () => {
     const transactionChunks = getTransactionChunksForExport();
-    const timestamp = DateUtil.toTimestampString();
+    const timestamp = dateUtil.toTimestampString();
     const baseFilename = `savings_tracker_${timestamp}`;
     let chunkIndex = 0;
 
@@ -127,6 +127,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       await processImportedTransactions({ transactions: transactionsToImport });
       handleFetchAuthUser();
       handleFetchGoals();
+      handleFetchTransactions();
 
       const count = transactionsToImport.length;
       const transactionWord = count === 1 ? 'transaction' : 'transactions';
