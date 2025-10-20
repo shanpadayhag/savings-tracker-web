@@ -16,7 +16,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode; }) => {
         await authAxios.post("/auth");
 
         if (!pathname.startsWith('/user')) {
-          router.replace('/user/home');
+          router.replace('/user');
         }
       } catch (error) {
         router.replace('/');
