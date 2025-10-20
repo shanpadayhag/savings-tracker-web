@@ -1,10 +1,11 @@
 "use client";
 
+import LoadingPage from '@/components/templates/loading-page';
 import authAxios from '@/configs/axios/auth';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+const AuthProvider = ({ children }: { children: React.ReactNode; }) => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -22,17 +23,14 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } finally {
         setTimeout(() => {
           setIsLoading(false);
-        }, 300)
+        }, 300);
       }
     };
 
     authenticate();
   }, []);
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
+  if (isLoading) return <LoadingPage />;
   return <>{children}</>;
 };
 
