@@ -271,6 +271,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       states.setResetDialogIsOpen(false);
       handleFetchAuthUser();
       handleFetchGoals();
+      handleFetchTransactions();
 
       toast.success("Account Reset! ✨", {
         description: "Your account has been successfully reset.",
