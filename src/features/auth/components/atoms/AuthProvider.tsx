@@ -2,6 +2,7 @@
 
 import LoadingPage from '@/components/templates/loading-page';
 import authAxios from '@/configs/axios/auth';
+import Routes from '@/enums/routes';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -15,11 +16,10 @@ const AuthProvider = ({ children }: { children: React.ReactNode; }) => {
       try {
         await authAxios.post("/auth");
 
-        if (!pathname.startsWith('/user')) {
-          router.replace('/user');
-        }
+        if (!pathname.startsWith(Routes.UserPrefix))
+          router.replace(Routes.UserHome);
       } catch (error) {
-        router.replace('/');
+        router.replace(Routes.Login);
       } finally {
         setTimeout(() => {
           setIsLoading(false);

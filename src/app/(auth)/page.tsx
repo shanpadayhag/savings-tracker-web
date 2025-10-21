@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import authAxios from '@/configs/axios/auth';
+import Routes from '@/enums/routes';
 import { AxiosError } from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -24,7 +25,7 @@ export default () => {
         password: password,
       });
 
-      router.replace("/user");
+      router.replace(Routes.UserHome);
     } catch (exception) {
       if (exception instanceof AxiosError) {
         if (!exception.response) {
