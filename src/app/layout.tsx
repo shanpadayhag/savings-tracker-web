@@ -23,7 +23,8 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange>
-          <AuthProvider>{children}</AuthProvider>
+            {children}
+          <AuthProvider></AuthProvider>
           <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>

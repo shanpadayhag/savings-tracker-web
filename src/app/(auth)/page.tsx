@@ -4,6 +4,7 @@ import { Button } from '@/components/atoms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
+import { Spinner } from '@/components/atoms/spinner';
 import authAxios from '@/configs/axios/auth';
 import Routes from '@/enums/routes';
 import { AxiosError } from 'axios';
@@ -18,8 +19,11 @@ export default () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [loggingIn, setLoggingIn] = useState(false);
+
   const login = async () => {
     try {
+      setLoggingIn(true);
       await authAxios.post("/login", {
         email: email,
         password: password,
@@ -64,6 +68,8 @@ export default () => {
           description: "An unknown error occurred. If this continues, please contact support.",
         });
       }
+    } finally {
+      setLoggingIn(false);
     }
   };
 
@@ -98,7 +104,7 @@ export default () => {
                 </div>
 
                 <div className="grid gap-2">
-                  <Button type="submit">Login</Button>
+                  <Button disabled={loggingIn} type="submit">{loggingIn ? <><Spinner /> Loading...</> : "Login"}</Button>
                   <p className="text-muted-foreground text-sm leading-normal font-normal group-has-[[data-orientation=horizontal]]/field:text-balance last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5 [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4 text-center">Don&apos;t have an account? <Link className="cursor-not-allowed" scroll={false} onClick={(e) => { e.preventDefault(); }} href="/signup">Sign up</Link></p>
                 </div>
               </div>
