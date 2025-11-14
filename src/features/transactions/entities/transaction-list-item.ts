@@ -4,7 +4,7 @@ type TransactionListItem = {
   id?: number;
   type: TransactionType;
   activity: string;
-  description: string;
+  description: string | null;
   createdAt?: Date;
   accountAdjustment?: {
     amount: number;

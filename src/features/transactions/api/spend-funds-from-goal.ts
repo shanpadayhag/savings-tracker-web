@@ -2,12 +2,13 @@ import { AppError } from '@/errors/app-error';
 import calculateRemainingBalance from '@/features/calculations/api/calculate-remaining-balance';
 import type GoalListItem from '@/features/goals/entities/goal-list-item';
 import updateGoalAndLogTransaction from '@/features/transactions/api/update-goal-and-log-transaction';
+import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
 
 type SpendFundsFromGoalParameters = {
   goalID: GoalListItem['id'];
-  description: string;
+  description: TransactionListItem['description'];
   amount: number;
   transactionDate?: Date;
 };

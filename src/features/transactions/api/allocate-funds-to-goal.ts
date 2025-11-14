@@ -50,7 +50,6 @@ const allocateFundsToGoal = async ({
   amount,
   transactionDate = new Date(),
 }: AllocateFundsToGoalParameters): Promise<void> => {
-  if (!description?.trim()) throw new AppError("Add a Note ✍️", "A quick description will help you remember this transaction later.");
   if (amount <= 0) throw new AppError("Boost Your Goal 📈", "Please enter an amount greater than zero to move closer to your target.");
 
   const user = await db.user.get('singleton');
@@ -71,7 +70,7 @@ const allocateFundsToGoal = async ({
   await db.transaction('rw', db.transactionList, db.goalList, db.user, async () => {
     await updateGoalAndLogTransaction({
       goal: existingGoal,
-      description,
+      description: description || null,
       amount,
       newSavedAmount,
       transactionDate,

@@ -16,6 +16,7 @@ const useHomeStates = () => {
 
   const [allocateMoneyDialogIsOpen, setAllocateMoneyDialogIsOpen] = useState(false);
   const [spendMoneyDialogIsOpen, setSpendMoneyDialogIsOpen] = useState(false);
+  const [archiveGoalDialogIsOpen, setArchiveGoalDialogIsOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<GoalListItem | null>(null);
   const [newTransactionDescription, setNewTransactionDescription] = useState("");
   const [newTransactionAmount, setNewTransactionAmount] = useState("");
@@ -32,6 +33,7 @@ const useHomeStates = () => {
     newGoalTargetAmount, setNewGoalTargetAmount,
     allocateMoneyDialogIsOpen, setAllocateMoneyDialogIsOpen,
     spendMoneyDialogIsOpen, setSpendMoneyDialogIsOpen,
+    archiveGoalDialogIsOpen, setArchiveGoalDialogIsOpen,
     selectedGoal, setSelectedGoal,
     newTransactionDescription, setNewTransactionDescription,
     newTransactionAmount, setNewTransactionAmount,

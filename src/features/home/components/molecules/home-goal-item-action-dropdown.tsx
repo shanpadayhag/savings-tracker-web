@@ -1,5 +1,6 @@
 import { Button } from '@/components/atoms/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/atoms/dropdown-menu';
+import useHomeEvents from '@/features/home/events/home-events';
 import useHomeStates from '@/features/home/states/home-states';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { useCallback } from 'react';
@@ -9,6 +10,7 @@ export type HomeGoalItemActionDropdownProps = {
   setSpendMoneyDialogIsOpen: ReturnType<typeof useHomeStates>['setSpendMoneyDialogIsOpen'];
   setSelectedGoal: ReturnType<typeof useHomeStates>['setSelectedGoal'];
   selectedGoal: ReturnType<typeof useHomeStates>['selectedGoal'];
+  setArchiveGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setArchiveGoalDialogIsOpen'];
 };
 
 const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
@@ -21,6 +23,11 @@ const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
     props.setSelectedGoal(props.selectedGoal);
     props.setAllocateMoneyDialogIsOpen(true);
   }, [props.selectedGoal]);
+
+  const archiveGoalOnClick = useCallback(() => {
+    props.setSelectedGoal(props.selectedGoal);
+    props.setArchiveGoalDialogIsOpen(true);
+  }, [props.selectedGoal])
 
   return <DropdownMenu>
     <DropdownMenuTrigger asChild>
@@ -41,7 +48,7 @@ const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
       <DropdownMenuGroup>
         <DropdownMenuItem disabled>Adjust Amount</DropdownMenuItem>
         <DropdownMenuItem disabled>Complete Goal</DropdownMenuItem>
-        <DropdownMenuItem disabled>Archive Goal</DropdownMenuItem>
+        <DropdownMenuItem onClick={archiveGoalOnClick}><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
       </DropdownMenuGroup>
     </DropdownMenuContent>
   </DropdownMenu>;
