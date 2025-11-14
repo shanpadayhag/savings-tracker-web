@@ -3,7 +3,7 @@ import { Toaster } from "@/components/atoms/sonner";
 
 import "@/assets/css/tailwind.css";
 import { ThemeProvider } from '@/components/atoms/theme-provider';
-import AuthProvider from '@/features/auth/components/atoms/AuthProvider';
+// import AuthProvider from '@/features/auth/components/atoms/AuthProvider';
 
 export const metadata: Metadata = {
   title: "Savings Tracker",
@@ -23,7 +23,8 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange>
-          <AuthProvider>{children}</AuthProvider>
+          {children}
+          {/* <AuthProvider></AuthProvider> */}
           <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
