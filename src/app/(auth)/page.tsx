@@ -1,111 +1,197 @@
 "use client";
 
 import { Button } from '@/components/atoms/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import authAxios from '@/configs/axios/auth';
-import Routes from '@/enums/routes';
-import { AxiosError } from 'axios';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
-import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/atoms/tabs';
+import HomeDialogCurrentBalance from '@/features/home/components/molecules/home-dialog-current-balance';
+import HomeAllocateMoneyDialog from '@/features/home/components/organisms/home-allocate-money-dialog';
+import HomeCreateGoalDialog from '@/features/home/components/organisms/home-create-goal-dialog';
+import HomeGoalTable from '@/features/home/components/organisms/home-goal-table';
+import HomeMainActionSection from '@/features/home/components/organisms/home-main-action-section';
+import HomeResetAccountConfirmationDialog from '@/features/home/components/organisms/home-reset-account-confirmation-dialog';
+import HomeSpendMoneyDialog from '@/features/home/components/organisms/home-spend-money-dialog';
+import HomeTransactionsTable from '@/features/home/components/organisms/home-transactions-table';
+import useHomeEvents from '@/features/home/events/home-events';
+import useHomeStates from '@/features/home/states/home-states';
+import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
+import TransactionType from '@/features/transactions/enums/transaction-type';
+import { db } from '@/lib/utils';
+import currencyUtil from '@/utils/currency-util';
+import { useEffect, useState } from 'react';
 
 export default () => {
-  const router = useRouter();
+  const states = useHomeStates();
+  const events = useHomeEvents(states);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [newBalanceDialogIsOpen, setNewBalanceDialogIsOpen] = useState(false);
+  const [newBalanceAmount, setNewBalanceAmount] = useState("");
 
-  const login = async () => {
-    try {
-      await authAxios.post("/login", {
-        email: email,
-        password: password,
-      });
-
-      router.replace(Routes.UserHome);
-    } catch (exception) {
-      if (exception instanceof AxiosError) {
-        if (!exception.response) {
-          return toast.error("Network Error 🌐", {
-            description: "Cannot connect to the server. Please check your internet connection.",
-          });
-        }
-
-        switch (exception.response.status) {
-          case 400:
-            toast.error("Invalid Input 🤔", {
-              description: "Please check the details you entered and try again.",
-            });
-            break;
-
-          case 401:
-            toast.error("Login Failed 🔒", {
-              description: "The email or password you entered is incorrect.",
-            });
-            break;
-
-          case 500:
-            toast.error("Server Issue 🛠️", {
-              description: "We're having trouble on our end. Please try again in a moment.",
-            });
-            break;
-
-          default:
-            toast.error("Unexpected Error 💥", {
-              description: "An unknown error occurred. If this continues, please contact support.",
-            });
-            break;
-        }
-      } else {
-        toast.error("Unexpected Error 💥", {
-          description: "An unknown error occurred. If this continues, please contact support.",
-        });
-      }
-    }
+  const handleAddBalanceButtonOnClick = () => {
+    addBalance();
   };
 
-  const loginFormOnSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleAddBalanceFormOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    login();
+    addBalance();
   };
 
-  return <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-    <div className="w-full max-w-sm">
-      <div className="flex flex-col gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Login to your account</CardTitle>
-            <CardDescription>
-              Enter your email below to login to your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={loginFormOnSubmit}>
-              <div className="grid gap-6">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input onChange={event => setEmail(event.target.value)} placeholder="m@example.com" type="email" id="email" autoComplete="off" />
-                  </div>
+  const addBalance = async () => {
+    const amount = currencyUtil.parse(newBalanceAmount).value;
+    const today = new Date;
 
-                  <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input onChange={event => setPassword(event.target.value)} type="password" id="email" autoComplete="off" />
-                  </div>
-                </div>
+    if (amount === 0) {
+      alert("Amount is invalid");
+      return;
+    }
 
-                <div className="grid gap-2">
-                  <Button type="submit">Login</Button>
-                  <p className="text-muted-foreground text-sm leading-normal font-normal group-has-[[data-orientation=horizontal]]/field:text-balance last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5 [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4 text-center">Don&apos;t have an account? <Link className="cursor-not-allowed" scroll={false} onClick={(e) => { e.preventDefault(); }} href="/signup">Sign up</Link></p>
-                </div>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+    if (!states.authUser) {
+      alert("Something went wrong, reload the page. if persists contact dev");
+      return;
+    }
+
+    const transaction: TransactionListItem = {
+      createdAt: today,
+      type: TransactionType.AccountAdjustment,
+      activity: `Allocated ${amount} euro for account balance`,
+      description: "Allocation for account balance",
+      accountAdjustment: {
+        amount: amount,
+      },
+    };
+
+    states.authUser.financialSummary.totalAvailableFunds += amount;
+    states.authUser.financialSummary.lastUpdated = today;
+
+    db.user.update("singleton", states.authUser);
+    states.setAuthUser({ ...states.authUser });
+    db.transactionList.add(transaction);
+
+    setNewBalanceDialogIsOpen(false);
+    setNewBalanceAmount("");
+  };
+
+  useEffect(() => {
+    events.handleFetchGoals();
+    events.handleFetchAuthUser();
+    events.handleFetchTransactions();
+  }, []);
+
+  return <>
+    <div className="w-screen h-screen overflow-hidden bg-background">
+      <div className="flex flex-col items-center overflow-auto h-full py-2">
+        <HomeMainActionSection
+          adjustBalanceOnClick={setNewBalanceDialogIsOpen}
+          setCreateGoalDialogIsOpen={states.setCreateGoalDialogIsOpen}
+          setResetDialogIsOpen={states.setResetDialogIsOpen}
+          exportTransactionsOnClick={events.exportTransactionsOnClick}
+          importTransactionsOnClick={events.importTransactionsOnClick} />
+
+        <Tabs className="w-full gap-3" defaultValue="goals">
+          <TabsList className="mx-4">
+            <TabsTrigger value="goals">Goals</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          </TabsList>
+          <TabsContent value="goals">
+            <HomeGoalTable
+              goalList={states.goalList}
+              setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
+              setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
+              setSelectedGoal={states.setSelectedGoal}
+              selectedGoal={states.selectedGoal} />
+          </TabsContent>
+          <TabsContent value="transactions">
+            <HomeTransactionsTable
+              transactionList={states.transactionList} />
+          </TabsContent>
+        </Tabs>
       </div>
-    </div>
-  </div>;
+
+      <HomeCreateGoalDialog
+        createGoalDialogIsOpen={states.createGoalDialogIsOpen}
+        setCreateGoalDialogIsOpen={states.setCreateGoalDialogIsOpen}
+        handleCreateGoal={events.handleCreateGoal}
+        setNewGoalName={states.setNewGoalName}
+        setNewGoalTargetAmount={states.setNewGoalTargetAmount} />
+
+      <HomeSpendMoneyDialog
+        spendMoneyDialogIsOpen={states.spendMoneyDialogIsOpen}
+        setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
+        goalName={states.selectedGoal?.name || "Goal"}
+        currentBalance={states.selectedGoal?.currentAmount}
+        setDescription={states.setNewTransactionDescription}
+        setAmount={states.setNewTransactionAmount}
+        handleSpendFromGoal={events.handleSpendFromGoal} />
+
+      <HomeAllocateMoneyDialog
+        allocateMoneyDialogIsOpen={states.allocateMoneyDialogIsOpen}
+        setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
+        goalName={states.selectedGoal?.name || "Goal"}
+        currentBalance={states.authUser?.financialSummary.totalAvailableFunds}
+        setDescription={states.setNewTransactionDescription}
+        setAmount={states.setNewTransactionAmount}
+        handleAllocateFromGoal={events.handleAllocateFromGoal} />
+
+      <HomeResetAccountConfirmationDialog
+        resetDialogIsOpen={states.resetDialogIsOpen}
+        setResetDialogIsOpen={states.setResetDialogIsOpen}
+        handleResetAccount={events.handleResetAccount} />
+
+      <Dialog open={newBalanceDialogIsOpen} onOpenChange={setNewBalanceDialogIsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Update balance</DialogTitle>
+            <DialogDescription>
+              Enter your details here. Click save when you&apos;re
+              done.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleAddBalanceFormOnSubmit} className="grid gap-4">
+            <HomeDialogCurrentBalance
+              currentBalance={states.authUser?.financialSummary.totalAvailableFunds} />
+
+            <div className="grid gap-3">
+              <Label htmlFor="amount">Amount</Label>
+              <Input onChange={event => setNewBalanceAmount(event.target.value)} id="amount" name="amount" placeholder="Enter amount" autoComplete="off" />
+            </div>
+          </form>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleAddBalanceButtonOnClick} type="submit">Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div >
+  </>;
 };
+
+// import { ChartAreaInteractive } from "@/features/dashboard/components/molecules/chart-area-interactive";
+// import { DataTable } from "@/features/dashboard/components/molecules/data-table";
+// import { SectionCards } from "@/features/dashboard/components/molecules/section-cards";
+
+// import data from "./data.json";
+// import { SiteHeader } from '@/features/dashboard/components/molecules/site-header';
+
+// export default function Page() {
+//   return (
+//     <>
+//       <SiteHeader />
+//       <div className="flex flex-1 flex-col">
+//         <div className="@container/main flex flex-1 flex-col gap-2">
+//           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+//             <SectionCards />
+//             <div className="px-4 lg:px-6">
+//               <ChartAreaInteractive />
+//             </div>
+//             <DataTable data={data} />
+//           </div>
+//         </div>
+//       </div>
+//     </>
+//   );
+// }
