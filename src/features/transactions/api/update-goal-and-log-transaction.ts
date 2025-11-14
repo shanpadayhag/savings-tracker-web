@@ -1,11 +1,12 @@
 import GoalListItem from '@/features/goals/entities/goal-list-item';
+import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
 import currencyUtil from '@/utils/currency-util';
 
 type GoalTransactionParams = {
   goal: GoalListItem;
-  description: string;
+  description: TransactionListItem['description'];
   amount: number;
   newSavedAmount: number;
   transactionDate?: Date;

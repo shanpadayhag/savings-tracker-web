@@ -1,7 +1,9 @@
 import { AppError } from '@/errors/app-error';
 import resetAccount from '@/features/accounts/api/reset-account';
+import archiveGoal from '@/features/goals/api/archive-goal';
 import createGoal from '@/features/goals/api/create-goal';
 import fetchGoals from '@/features/goals/api/fetch-goals';
+import GoalListItem from '@/features/goals/entities/goal-list-item';
 import useHomeStates from '@/features/home/states/home-states';
 import allocateFundsToGoal from '@/features/transactions/api/allocate-funds-to-goal';
 import getTransactionChunksForExport from '@/features/transactions/api/get-transaction-chunks-for-export';
@@ -10,6 +12,7 @@ import processImportedTransactions from '@/features/transactions/api/process-imp
 import spendFundsFromGoal from '@/features/transactions/api/spend-funds-from-goal';
 import ExportedTransactionListItem from '@/features/transactions/entities/exported-transaction-list-item';
 import fetchSingletonUser from '@/features/user/api/fetch-singleton-user';
+import { db } from '@/lib/utils';
 import browserFileUtil from '@/utils/browser-file-util';
 import currencyUtil from '@/utils/currency-util';
 import dateUtil from '@/utils/date-util';
@@ -283,6 +286,32 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     }
   }, []);
 
+  const handleArchiveGoal = useCallback(async () => {
+    try {
+      if (!states.selectedGoal) throw new AppError("Select a Goal 🎯", "Please choose which goal this action applies to before continuing.");
+
+      await db.transaction('rw', db.user, db.transactionList, db.goalList, async () => {
+        await archiveGoal({
+          goal: states.selectedGoal!,
+          user: states.authUser!,
+        });
+      });
+
+      states.setArchiveGoalDialogIsOpen(false);
+      handleFetchAuthUser();
+      handleFetchGoals();
+      handleFetchTransactions();
+
+      toast.success("Goal Archived! 📦", {
+        description: `"${states.selectedGoal.name}" is now archived. The remaining balance has been returned to your account.`,
+      });
+    } catch (error) {
+      console.error("Goal Archive Failed:", error);
+      if (error instanceof AppError) toast.error(error.title, { description: error.description });
+      else toast.error("Oh no, something went wrong 🤔", { description: "We couldn't archive the goal. Please try again in a moment." });
+    }
+  }, [states.selectedGoal, states.authUser]);
+
   return {
     handleFetchAuthUser,
     handleFetchGoals,
@@ -293,6 +322,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     handleAllocateFromGoal,
     handleSpendFromGoal,
     handleResetAccount,
+    handleArchiveGoal,
   };
 };
 

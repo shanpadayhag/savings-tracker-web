@@ -5,7 +5,8 @@ const getTransactions = async () => {
   const desiredTypes = [
     TransactionType.GoalAllocation,
     TransactionType.GoalExpense,
-    TransactionType.GoalTransfer
+    TransactionType.GoalTransfer,
+    TransactionType.GoalDeallocation,
   ];
 
   return await db.transactionList.reverse()

@@ -1,5 +1,6 @@
 enum Routes {
-  Login = "/",
+  LandingPage = "/",
+  Login = "/login",
   UserPrefix = "/user",
   UserHome = `${UserPrefix}`,
 }

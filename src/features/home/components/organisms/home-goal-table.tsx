@@ -28,7 +28,7 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
         <TableBody className="**:data-[slot=table-cell]:first:w-8">
           {props.goalList.length
             ? props.goalList.map(goal => {
-              const calculatedProgress = currency(goal.currentAmount, { precision: 2, decimal: ',', pattern: `#` })
+              const calculatedProgress = currency(goal.currentAmount, { precision: 2, decimal: ',', pattern: `# %` })
                 .multiply(100)
                 .divide(goal.targetAmount);
 
@@ -41,13 +41,14 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
                 <TableCell>{currencyUtil.format(goal.targetAmount)}</TableCell>
                 <TableCell><span className="flex items-center gap-2">
                   <Progress value={calculatedProgress.value} className="w-30" />
-                  {calculatedProgress.format()}%
+                  {calculatedProgress.format()}
                 </span></TableCell>
                 <TableCell>{currencyUtil.format(goal.currentAmount)}</TableCell>
                 <TableCell>{currencyUtil.parse(goal.targetAmount).subtract(goal.currentAmount).format()}</TableCell>
                 <TableCell><HomeGoalItemActionDropdown
                   setAllocateMoneyDialogIsOpen={props.setAllocateMoneyDialogIsOpen}
                   setSpendMoneyDialogIsOpen={props.setSpendMoneyDialogIsOpen}
+                  setArchiveGoalDialogIsOpen={props.setArchiveGoalDialogIsOpen}
                   setSelectedGoal={props.setSelectedGoal}
                   selectedGoal={goal} /></TableCell>
               </TableRow>;

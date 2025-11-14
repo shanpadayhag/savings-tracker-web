@@ -7,6 +7,7 @@ import { Label } from '@/components/atoms/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/atoms/tabs';
 import HomeDialogCurrentBalance from '@/features/home/components/molecules/home-dialog-current-balance';
 import HomeAllocateMoneyDialog from '@/features/home/components/organisms/home-allocate-money-dialog';
+import HomeArchiveGoalDialog from '@/features/home/components/organisms/home-archive-goal-dialog';
 import HomeCreateGoalDialog from '@/features/home/components/organisms/home-create-goal-dialog';
 import HomeGoalTable from '@/features/home/components/organisms/home-goal-table';
 import HomeMainActionSection from '@/features/home/components/organisms/home-main-action-section';
@@ -98,6 +99,7 @@ export default () => {
               goalList={states.goalList}
               setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
               setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
+              setArchiveGoalDialogIsOpen={states.setArchiveGoalDialogIsOpen}
               setSelectedGoal={states.setSelectedGoal}
               selectedGoal={states.selectedGoal} />
           </TabsContent>
@@ -137,6 +139,12 @@ export default () => {
         resetDialogIsOpen={states.resetDialogIsOpen}
         setResetDialogIsOpen={states.setResetDialogIsOpen}
         handleResetAccount={events.handleResetAccount} />
+
+      <HomeArchiveGoalDialog
+        archiveGoalDialogIsOpen={states.archiveGoalDialogIsOpen}
+        setArchiveGoalDialogIsOpen={states.setArchiveGoalDialogIsOpen}
+        selectedGoal={states.selectedGoal}
+        handleArchiveGoal={events.handleArchiveGoal} />
 
       <Dialog open={newBalanceDialogIsOpen} onOpenChange={setNewBalanceDialogIsOpen}>
         <DialogContent className="sm:max-w-[425px]">
