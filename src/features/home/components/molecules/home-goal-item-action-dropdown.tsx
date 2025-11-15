@@ -11,6 +11,7 @@ export type HomeGoalItemActionDropdownProps = {
   setSelectedGoal: ReturnType<typeof useHomeStates>['setSelectedGoal'];
   selectedGoal: ReturnType<typeof useHomeStates>['selectedGoal'];
   setArchiveGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setArchiveGoalDialogIsOpen'];
+  setCompleteGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setCompleteGoalDialogIsOpen'];
 };
 
 const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
@@ -27,7 +28,12 @@ const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
   const archiveGoalOnClick = useCallback(() => {
     props.setSelectedGoal(props.selectedGoal);
     props.setArchiveGoalDialogIsOpen(true);
-  }, [props.selectedGoal])
+  }, [props.selectedGoal]);
+
+  const completeGoalOnClick = useCallback(() => {
+    props.setSelectedGoal(props.selectedGoal);
+    props.setCompleteGoalDialogIsOpen(true);
+  }, [props.selectedGoal]);
 
   return <DropdownMenu>
     <DropdownMenuTrigger asChild>
@@ -47,7 +53,7 @@ const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
       <DropdownMenuLabel>Goal</DropdownMenuLabel>
       <DropdownMenuGroup>
         <DropdownMenuItem disabled>Adjust Amount</DropdownMenuItem>
-        <DropdownMenuItem disabled>Complete Goal</DropdownMenuItem>
+        <DropdownMenuItem onClick={completeGoalOnClick}>Complete Goal</DropdownMenuItem>
         <DropdownMenuItem onClick={archiveGoalOnClick}><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
       </DropdownMenuGroup>
     </DropdownMenuContent>

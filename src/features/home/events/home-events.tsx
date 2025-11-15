@@ -1,6 +1,7 @@
 import { AppError } from '@/errors/app-error';
 import resetAccount from '@/features/accounts/api/reset-account';
 import archiveGoal from '@/features/goals/api/archive-goal';
+import completeGoal from '@/features/goals/api/complete-goal';
 import createGoal from '@/features/goals/api/create-goal';
 import fetchGoals from '@/features/goals/api/fetch-goals';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
@@ -306,11 +307,32 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
         description: `"${states.selectedGoal.name}" is now archived. The remaining balance has been returned to your account.`,
       });
     } catch (error) {
-      console.error("Goal Archive Failed:", error);
+      console.error("Archive Goal Failed:", error);
       if (error instanceof AppError) toast.error(error.title, { description: error.description });
       else toast.error("Oh no, something went wrong 🤔", { description: "We couldn't archive the goal. Please try again in a moment." });
     }
   }, [states.selectedGoal, states.authUser]);
+
+  const handleCompleteGoal = useCallback(async () => {
+    try {
+      if (!states.selectedGoal) throw new AppError("Select a Goal 🎯", "Please choose which goal this action applies to before continuing.");
+
+      await db.transaction('rw', db.goalList, async () => {
+        await completeGoal(states.selectedGoal?.id);
+      });
+
+      states.setCompleteGoalDialogIsOpen(false);
+      handleFetchGoals();
+
+      toast.success("Goal Achieved! 🏆", {
+        description: `Congratulations! You successfully completed the goal: "${states.selectedGoal.name}". Time to celebrate your progress.`,
+      });
+    } catch (error) {
+      console.error("Complete Goal Failed:", error);
+      if (error instanceof AppError) toast.error(error.title, { description: error.description });
+      else toast.error("Oh no, something went wrong 🤔", { description: "We couldn't complete the goal. Please try again in a moment." });
+    }
+  }, [states.selectedGoal]);
 
   return {
     handleFetchAuthUser,
@@ -323,6 +345,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
     handleSpendFromGoal,
     handleResetAccount,
     handleArchiveGoal,
+    handleCompleteGoal,
   };
 };
 
