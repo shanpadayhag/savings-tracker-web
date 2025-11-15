@@ -49,6 +49,7 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
                   setAllocateMoneyDialogIsOpen={props.setAllocateMoneyDialogIsOpen}
                   setSpendMoneyDialogIsOpen={props.setSpendMoneyDialogIsOpen}
                   setArchiveGoalDialogIsOpen={props.setArchiveGoalDialogIsOpen}
+                  setCompleteGoalDialogIsOpen={props.setCompleteGoalDialogIsOpen}
                   setSelectedGoal={props.setSelectedGoal}
                   selectedGoal={goal} /></TableCell>
               </TableRow>;

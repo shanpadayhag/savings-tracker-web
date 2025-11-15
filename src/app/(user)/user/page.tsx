@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/atoms/tab
 import HomeDialogCurrentBalance from '@/features/home/components/molecules/home-dialog-current-balance';
 import HomeAllocateMoneyDialog from '@/features/home/components/organisms/home-allocate-money-dialog';
 import HomeArchiveGoalDialog from '@/features/home/components/organisms/home-archive-goal-dialog';
+import HomeCompleteGoalDialog from '@/features/home/components/organisms/home-complete-goal-dialog';
 import HomeCreateGoalDialog from '@/features/home/components/organisms/home-create-goal-dialog';
 import HomeGoalTable from '@/features/home/components/organisms/home-goal-table';
 import HomeMainActionSection from '@/features/home/components/organisms/home-main-action-section';
@@ -20,7 +21,7 @@ import TransactionListItem from '@/features/transactions/entities/transaction-li
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import { db } from '@/lib/utils';
 import currencyUtil from '@/utils/currency-util';
-import { useEffect, useState } from 'react';
+import { SetStateAction, useEffect, useState } from 'react';
 
 export default () => {
   const states = useHomeStates();
@@ -100,6 +101,7 @@ export default () => {
               setAllocateMoneyDialogIsOpen={states.setAllocateMoneyDialogIsOpen}
               setSpendMoneyDialogIsOpen={states.setSpendMoneyDialogIsOpen}
               setArchiveGoalDialogIsOpen={states.setArchiveGoalDialogIsOpen}
+              setCompleteGoalDialogIsOpen={states.setCompleteGoalDialogIsOpen}
               setSelectedGoal={states.setSelectedGoal}
               selectedGoal={states.selectedGoal} />
           </TabsContent>
@@ -145,6 +147,12 @@ export default () => {
         setArchiveGoalDialogIsOpen={states.setArchiveGoalDialogIsOpen}
         selectedGoal={states.selectedGoal}
         handleArchiveGoal={events.handleArchiveGoal} />
+
+      <HomeCompleteGoalDialog
+        completeGoalDialogIsOpen={states.completeGoalDialogIsOpen}
+        setCompleteGoalDialogIsOpen={states.setCompleteGoalDialogIsOpen}
+        selectedGoal={states.selectedGoal}
+        handleCompleteGoal={events.handleCompleteGoal} />
 
       <Dialog open={newBalanceDialogIsOpen} onOpenChange={setNewBalanceDialogIsOpen}>
         <DialogContent className="sm:max-w-[425px]">

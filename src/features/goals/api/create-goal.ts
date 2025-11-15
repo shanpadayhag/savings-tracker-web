@@ -1,5 +1,6 @@
 import { AppError } from '@/errors/app-error';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
+import GoalStatus from '@/features/goals/enums/goal-status';
 import { db } from '@/lib/utils';
 
 /**
@@ -31,7 +32,7 @@ const createGoal = async ({
     name,
     targetAmount,
     currentAmount: 0,
-    status: 'active',
+    status: GoalStatus.Active,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
