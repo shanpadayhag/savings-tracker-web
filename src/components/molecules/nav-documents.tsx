@@ -1,29 +1,12 @@
 "use client";
 
-import {
-  IconDots,
-  IconFolder,
-  IconReport,
-  IconShare3,
-  IconTrash,
-  type Icon,
-} from "@tabler/icons-react";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/atoms/dropdown-menu";
+import { IconReport } from "@tabler/icons-react";
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/atoms/sidebar";
 
 export function NavDocuments() {

@@ -2,16 +2,16 @@ import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import useHomeEvents from '@/features/home/events/home-events';
-import useHomeStates from '@/features/home/states/home-states';
+import useDashboardEvents from '@/features/dashboard/events/dashboard-events';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import { useCallback } from 'react';
 
 type HomeCreateGoalDialogProps = {
-  createGoalDialogIsOpen: ReturnType<typeof useHomeStates>['createGoalDialogIsOpen'];
-  setCreateGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setCreateGoalDialogIsOpen'];
-  handleCreateGoal: ReturnType<typeof useHomeEvents>['handleCreateGoal'];
-  setNewGoalName: ReturnType<typeof useHomeStates>['setNewGoalName'];
-  setNewGoalTargetAmount: ReturnType<typeof useHomeStates>['setNewGoalTargetAmount'];
+  createGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['createGoalDialogIsOpen'];
+  setCreateGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['setCreateGoalDialogIsOpen'];
+  handleCreateGoal: ReturnType<typeof useDashboardEvents>['handleCreateGoal'];
+  setNewGoalName: ReturnType<typeof useDashboardStates>['setNewGoalName'];
+  setNewGoalTargetAmount: ReturnType<typeof useDashboardStates>['setNewGoalTargetAmount'];
 };
 
 const HomeCreateGoalDialog = (props: HomeCreateGoalDialogProps) => {

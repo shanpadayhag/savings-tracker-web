@@ -2,20 +2,22 @@ import { Button } from '@/components/atoms/button';
 import { DialogHeader, DialogFooter, Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import HomeDialogCurrentBalance, { HomeDialogCurrentBalanceProps } from '@/features/home/components/molecules/home-dialog-current-balance';
-import useHomeEvents from '@/features/home/events/home-events';
+import DashboardDialogCurrentBalance, { DashboardDialogCurrentBalanceProps } from '@/features/dashboard/components/molecules/dashboard-dialog-current-balance';
+import useDashboardEvents from '@/features/dashboard/events/dashboard-events';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import { useCallback } from 'react';
 
-type HomeAllocateMoneyDialogProps = {
+type DashboardAllocateMoneyDialogProps = {
+  authUser: ReturnType<typeof useDashboardStates>['authUser'];
   allocateMoneyDialogIsOpen: boolean;
   setAllocateMoneyDialogIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   goalName: string;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setAmount: React.Dispatch<React.SetStateAction<string>>;
-  handleAllocateFromGoal: ReturnType<typeof useHomeEvents>['handleAllocateFromGoal'];
-} & HomeDialogCurrentBalanceProps;
+  handleAllocateFromGoal: ReturnType<typeof useDashboardEvents>['handleAllocateFromGoal'];
+} & DashboardDialogCurrentBalanceProps;
 
-const HomeAllocateMoneyDialog = (props: HomeAllocateMoneyDialogProps) => {
+const DashboardAllocateMoneyDialog = (props: DashboardAllocateMoneyDialogProps) => {
   const allocateFundsFormOnSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     props.handleAllocateFromGoal();
@@ -36,7 +38,8 @@ const HomeAllocateMoneyDialog = (props: HomeAllocateMoneyDialogProps) => {
       </DialogHeader>
 
       <form onSubmit={allocateFundsFormOnSubmit} className="grid gap-4">
-        <HomeDialogCurrentBalance
+        <DashboardDialogCurrentBalance
+          authUser={props.authUser}
           currentBalance={props.currentBalance} />
 
         <div className="grid gap-3">
@@ -62,4 +65,4 @@ const HomeAllocateMoneyDialog = (props: HomeAllocateMoneyDialogProps) => {
   </Dialog>;
 };
 
-export default HomeAllocateMoneyDialog;
+export default DashboardAllocateMoneyDialog;

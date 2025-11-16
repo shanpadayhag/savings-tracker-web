@@ -25,7 +25,7 @@ export default () => {
         password: password,
       });
 
-      router.replace(Routes.UserHome);
+      router.replace(Routes.UserDashboard);
     } catch (exception) {
       if (exception instanceof AxiosError) {
         if (!exception.response) {

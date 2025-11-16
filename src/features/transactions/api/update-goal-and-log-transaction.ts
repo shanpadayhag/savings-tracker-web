@@ -1,3 +1,4 @@
+import Currency from '@/enums/currency';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
@@ -8,6 +9,7 @@ type GoalTransactionParams = {
   goal: GoalListItem;
   description: TransactionListItem['description'];
   amount: number;
+  currency: Currency;
   newSavedAmount: number;
   transactionDate?: Date;
 };
@@ -27,14 +29,14 @@ type GoalTransactionParams = {
  * @throws {Error} If the goal ID does not correspond to an existing goal.
  */
 const updateGoalAndLogTransaction = async (
-  { goal, description, amount, newSavedAmount, transactionDate }: GoalTransactionParams,
+  { goal, description, amount, newSavedAmount, currency, transactionDate }: GoalTransactionParams,
   transactionType: TransactionType.GoalAllocation | TransactionType.GoalExpense,
 ) => {
   const isAllocation = transactionType === TransactionType.GoalAllocation;
   const actionText = isAllocation ? ['Allocated', 'to'] : ['Spent', 'from'];
 
   await db.transactionList.add({
-    activity: `${actionText[0]} ${currencyUtil.format(amount)} ${actionText[1]} ${goal.name}`,
+    activity: `${actionText[0]} ${currencyUtil.format(amount, currency)} ${actionText[1]} ${goal.name}`,
     description: description,
     type: transactionType,
     createdAt: transactionDate,

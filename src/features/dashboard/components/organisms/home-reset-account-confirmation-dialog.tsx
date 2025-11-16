@@ -2,15 +2,15 @@ import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import useHomeEvents from '@/features/home/events/home-events';
-import useHomeStates from '@/features/home/states/home-states';
+import useDashboardEvents from '@/features/dashboard/events/dashboard-events';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 type HomeResetAccountConfirmationDialogProps = {
-  resetDialogIsOpen: ReturnType<typeof useHomeStates>['resetDialogIsOpen'];
-  setResetDialogIsOpen: ReturnType<typeof useHomeStates>['setResetDialogIsOpen'];
-  handleResetAccount: ReturnType<typeof useHomeEvents>['handleResetAccount'];
+  resetDialogIsOpen: ReturnType<typeof useDashboardStates>['resetDialogIsOpen'];
+  setResetDialogIsOpen: ReturnType<typeof useDashboardStates>['setResetDialogIsOpen'];
+  handleResetAccount: ReturnType<typeof useDashboardEvents>['handleResetAccount'];
 };
 
 const HomeResetAccountConfirmationDialog = (

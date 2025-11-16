@@ -1,3 +1,4 @@
+import Currency from '@/enums/currency';
 import { AppError } from '@/errors/app-error';
 import calculateRemainingBalance from '@/features/calculations/api/calculate-remaining-balance';
 import type GoalListItem from '@/features/goals/entities/goal-list-item';
@@ -10,6 +11,7 @@ type SpendFundsFromGoalParameters = {
   goalID: GoalListItem['id'];
   description: TransactionListItem['description'];
   amount: number;
+  currency: Currency;
   transactionDate?: Date;
 };
 
@@ -27,6 +29,7 @@ const spendFundsFromGoal = async ({
   goalID,
   description,
   amount,
+  currency,
   transactionDate = new Date(),
 }: SpendFundsFromGoalParameters): Promise<void> => {
   if (!description?.trim()) throw new AppError("Add a Note ✍️", "A quick description will help you remember this transaction later.");
@@ -43,6 +46,7 @@ const spendFundsFromGoal = async ({
       goal: existingGoal,
       description,
       amount,
+      currency,
       newSavedAmount,
       transactionDate,
     }, TransactionType.GoalExpense);

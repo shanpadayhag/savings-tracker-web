@@ -72,6 +72,7 @@ const allocateFundsToGoal = async ({
       goal: existingGoal,
       description: description || null,
       amount,
+      currency: user.financialSummary.currency,
       newSavedAmount,
       transactionDate,
     }, TransactionType.GoalAllocation);

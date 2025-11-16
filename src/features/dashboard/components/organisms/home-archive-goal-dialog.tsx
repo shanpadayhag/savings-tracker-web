@@ -1,15 +1,17 @@
 import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
-import useHomeEvents from '@/features/home/events/home-events';
-import useHomeStates from '@/features/home/states/home-states';
+import Currency from '@/enums/currency';
+import useDashboardEvents from '@/features/dashboard/events/dashboard-events';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import currencyUtil from '@/utils/currency-util';
 import { useCallback } from 'react';
 
 type HomeArchiveGoalDialogProps = {
-  archiveGoalDialogIsOpen: ReturnType<typeof useHomeStates>['archiveGoalDialogIsOpen'];
-  setArchiveGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setArchiveGoalDialogIsOpen'];
-  selectedGoal: ReturnType<typeof useHomeStates>['selectedGoal'];
-  handleArchiveGoal: ReturnType<typeof useHomeEvents>['handleArchiveGoal'];
+  authUser: ReturnType<typeof useDashboardStates>['authUser'];
+  archiveGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['archiveGoalDialogIsOpen'];
+  setArchiveGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['setArchiveGoalDialogIsOpen'];
+  selectedGoal: ReturnType<typeof useDashboardStates>['selectedGoal'];
+  handleArchiveGoal: ReturnType<typeof useDashboardEvents>['handleArchiveGoal'];
 };
 
 const HomeArchiveGoalDialog = (props: HomeArchiveGoalDialogProps) => {
@@ -23,7 +25,7 @@ const HomeArchiveGoalDialog = (props: HomeArchiveGoalDialogProps) => {
         <DialogTitle>Archive Goal "{props.selectedGoal?.name}"?</DialogTitle>
         <DialogDescription>
           {props.selectedGoal?.currentAmount || 0 > 0
-          ? `This will archive the goal. The remaining balance of ${currencyUtil.parse(props.selectedGoal?.currentAmount || 0).format()} will be returned to your main account.`
+          ? `This will archive the goal. The remaining balance of ${currencyUtil.parse(props.selectedGoal?.currentAmount || 0, props.authUser?.financialSummary.currency || Currency.Euro).format()} will be returned to your main account.`
           : `This will archive the goal. This goal has no remaining balance`}
         </DialogDescription>
       </DialogHeader>
