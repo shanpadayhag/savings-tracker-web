@@ -4,8 +4,7 @@ import archiveGoal from '@/features/goals/api/archive-goal';
 import completeGoal from '@/features/goals/api/complete-goal';
 import createGoal from '@/features/goals/api/create-goal';
 import fetchGoals from '@/features/goals/api/fetch-goals';
-import GoalListItem from '@/features/goals/entities/goal-list-item';
-import useHomeStates from '@/features/home/states/home-states';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import allocateFundsToGoal from '@/features/transactions/api/allocate-funds-to-goal';
 import getTransactionChunksForExport from '@/features/transactions/api/get-transaction-chunks-for-export';
 import getTransactions from '@/features/transactions/api/get-transactions';
@@ -20,8 +19,9 @@ import dateUtil from '@/utils/date-util';
 import jsonUtil from '@/utils/json-util';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
+import Currency from '@/enums/currency';
 
-const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
+const useDashboardEvents = (states: ReturnType<typeof useDashboardStates>) => {
   /**
    * A memoized callback function to fetch the authenticated user's data.
    * It updates the state with the user details upon success.
@@ -152,7 +152,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
    */
   const handleCreateGoal = useCallback(async () => {
     const goalName = states.newGoalName.trim();
-    const targetAmount = currencyUtil.parse(states.newGoalTargetAmount).value;
+    const targetAmount = currencyUtil.parse(states.newGoalTargetAmount, states.authUser?.financialSummary.currency || Currency.Euro).value;
 
     if (!goalName) {
       return toast.error("Hold on! 📝", {
@@ -204,7 +204,7 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       await allocateFundsToGoal({
         goalID: selectedGoal.id,
         description: newTransactionDescription,
-        amount: currencyUtil.parse(newTransactionAmount).value,
+        amount: currencyUtil.parse(newTransactionAmount, states.authUser?.financialSummary.currency || Currency.Euro).value,
       });
 
       handleFetchAuthUser();
@@ -243,7 +243,8 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
       await spendFundsFromGoal({
         goalID: selectedGoal.id,
         description: newTransactionDescription,
-        amount: currencyUtil.parse(newTransactionAmount).value,
+        amount: currencyUtil.parse(newTransactionAmount, states.authUser?.financialSummary.currency || Currency.Euro).value,
+        currency: states.authUser?.financialSummary.currency || Currency.Euro,
       });
 
       handleFetchGoals();
@@ -349,4 +350,4 @@ const useHomeEvents = (states: ReturnType<typeof useHomeStates>) => {
   };
 };
 
-export default useHomeEvents;
+export default useDashboardEvents;

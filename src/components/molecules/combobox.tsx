@@ -32,6 +32,7 @@ type ComboboxProps = {
   value?: ComboboxItem;
   onChangeValue?: (item: ComboboxItem) => void;
   items?: ComboboxItems;
+  disabled?: boolean;
 };
 
 export function Combobox(props: ComboboxProps) {
@@ -43,6 +44,7 @@ export function Combobox(props: ComboboxProps) {
         <Button variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={props.disabled}
           className="w-full justify-between">
           {props.value
             ? props.value?.label

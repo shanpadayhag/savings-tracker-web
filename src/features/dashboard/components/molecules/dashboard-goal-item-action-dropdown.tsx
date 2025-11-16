@@ -1,20 +1,19 @@
 import { Button } from '@/components/atoms/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/atoms/dropdown-menu';
-import useHomeEvents from '@/features/home/events/home-events';
-import useHomeStates from '@/features/home/states/home-states';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
-export type HomeGoalItemActionDropdownProps = {
-  setAllocateMoneyDialogIsOpen: ReturnType<typeof useHomeStates>['setAllocateMoneyDialogIsOpen'];
-  setSpendMoneyDialogIsOpen: ReturnType<typeof useHomeStates>['setSpendMoneyDialogIsOpen'];
-  setSelectedGoal: ReturnType<typeof useHomeStates>['setSelectedGoal'];
-  selectedGoal: ReturnType<typeof useHomeStates>['selectedGoal'];
-  setArchiveGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setArchiveGoalDialogIsOpen'];
-  setCompleteGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setCompleteGoalDialogIsOpen'];
+export type DashboardGoalItemActionDropdownProps = {
+  setAllocateMoneyDialogIsOpen: ReturnType<typeof useDashboardStates>['setAllocateMoneyDialogIsOpen'];
+  setSpendMoneyDialogIsOpen: ReturnType<typeof useDashboardStates>['setSpendMoneyDialogIsOpen'];
+  setSelectedGoal: ReturnType<typeof useDashboardStates>['setSelectedGoal'];
+  selectedGoal: ReturnType<typeof useDashboardStates>['selectedGoal'];
+  setArchiveGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['setArchiveGoalDialogIsOpen'];
+  setCompleteGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['setCompleteGoalDialogIsOpen'];
 };
 
-const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
+const DashboardGoalItemActionDropdown = (props: DashboardGoalItemActionDropdownProps) => {
   const spendMoneyOnClick = useCallback(() => {
     props.setSelectedGoal(props.selectedGoal);
     props.setSpendMoneyDialogIsOpen(true);
@@ -60,4 +59,4 @@ const HomeGoalItemActionDropdown = (props: HomeGoalItemActionDropdownProps) => {
   </DropdownMenu>;
 };
 
-export default HomeGoalItemActionDropdown;
+export default DashboardGoalItemActionDropdown;

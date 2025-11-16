@@ -1,15 +1,17 @@
 import { Progress } from '@/components/atoms/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
-import HomeGoalItemActionDropdown, { HomeGoalItemActionDropdownProps } from '@/features/home/components/molecules/home-goal-item-action-dropdown';
-import useHomeStates from '@/features/home/states/home-states';
+import Currency from '@/enums/currency';
+import DashboardGoalItemActionDropdown, { DashboardGoalItemActionDropdownProps } from '@/features/dashboard/components/molecules/dashboard-goal-item-action-dropdown';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import currencyUtil from '@/utils/currency-util';
 import currency from 'currency.js';
 
-type HomeGoalTableProps = {
-  goalList: ReturnType<typeof useHomeStates>['goalList'];
-} & HomeGoalItemActionDropdownProps;
+type DashboardGoalTableProps = {
+  authUser: ReturnType<typeof useDashboardStates>['authUser'];
+  goalList: ReturnType<typeof useDashboardStates>['goalList'];
+} & DashboardGoalItemActionDropdownProps;
 
-const HomeGoalTable = (props: HomeGoalTableProps) => {
+const DashboardGoalTable = (props: DashboardGoalTableProps) => {
   return <div className="flex flex-col gap-4 px-4 md:gap-6 w-full">
     <div className="rounded-lg border">
       <Table>
@@ -38,14 +40,14 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
                 data-state="false">
                 <TableCell></TableCell>
                 <TableCell>{goal.name}</TableCell>
-                <TableCell>{currencyUtil.format(goal.targetAmount)}</TableCell>
+                <TableCell>{currencyUtil.format(goal.targetAmount, props.authUser?.financialSummary.currency || Currency.Euro)}</TableCell>
                 <TableCell><span className="flex items-center gap-2">
                   <Progress value={calculatedProgress.value} className="w-30" />
                   {calculatedProgress.format()}
                 </span></TableCell>
-                <TableCell>{currencyUtil.format(goal.currentAmount)}</TableCell>
-                <TableCell>{currencyUtil.parse(goal.targetAmount).subtract(goal.currentAmount).format()}</TableCell>
-                <TableCell><HomeGoalItemActionDropdown
+                <TableCell>{currencyUtil.format(goal.currentAmount, props.authUser?.financialSummary.currency || Currency.Euro)}</TableCell>
+                <TableCell>{currencyUtil.parse(goal.targetAmount, props.authUser?.financialSummary.currency || Currency.Euro).subtract(goal.currentAmount).format()}</TableCell>
+                <TableCell><DashboardGoalItemActionDropdown
                   setAllocateMoneyDialogIsOpen={props.setAllocateMoneyDialogIsOpen}
                   setSpendMoneyDialogIsOpen={props.setSpendMoneyDialogIsOpen}
                   setArchiveGoalDialogIsOpen={props.setArchiveGoalDialogIsOpen}
@@ -65,4 +67,4 @@ const HomeGoalTable = (props: HomeGoalTableProps) => {
   </div>;
 };
 
-export default HomeGoalTable;
+export default DashboardGoalTable;

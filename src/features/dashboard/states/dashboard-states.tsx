@@ -4,7 +4,7 @@ import TransactionListItem from '@/features/transactions/entities/transaction-li
 import User from '@/features/user/entities/user';
 import { useState } from 'react';
 
-const useHomeStates = () => {
+const useDashboardStates = () => {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [goalList, setGoalList] = useState<GoalListItem[]>([]);
   const [transactionList, setTransactionList] = useState<TransactionListItem[]>([]);
@@ -43,4 +43,4 @@ const useHomeStates = () => {
   };
 };
 
-export default useHomeStates;
+export default useDashboardStates;

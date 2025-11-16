@@ -1,3 +1,4 @@
+import Currency from '@/enums/currency';
 import adjustAccountBalance from '@/features/accounts/api/adjust-account-balance';
 import createGoal from '@/features/goals/api/create-goal';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
@@ -107,6 +108,7 @@ const executeTransactionOperations = async (
         goalID: currentGoal.id,
         description: transaction.description,
         amount,
+        currency: Currency.Euro, // ⚠️ NEEDS TO BE UPDATED
         transactionDate: transaction.createdAt,
       });
     }

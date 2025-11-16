@@ -11,12 +11,12 @@ type ArchiveGoalParams = {
 };
 
 const archiveGoal = async (params: ArchiveGoalParams) => {
-  const goalID = params.goal.id!;
-  const goalName = params.goal.name;
-  const goalCurrentAmount = currencyUtil.parse(params.goal.currentAmount);
   const userID = params.user.id;
-  const userTotalAvailableFunds = params.user.financialSummary.totalAvailableFunds;
   const userCurrency = params.user.financialSummary.currency;
+  const userTotalAvailableFunds = params.user.financialSummary.totalAvailableFunds;
+  const goalName = params.goal.name;
+  const goalID = params.goal.id!;
+  const goalCurrentAmount = currencyUtil.parse(params.goal.currentAmount, userCurrency);
 
   if (goalCurrentAmount.value > 0) {
     await deallocateFundsFromGoal({

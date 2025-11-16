@@ -1,15 +1,14 @@
 import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
-import useHomeEvents from '@/features/home/events/home-events';
-import useHomeStates from '@/features/home/states/home-states';
-import currencyUtil from '@/utils/currency-util';
+import useDashboardEvents from '@/features/dashboard/events/dashboard-events';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import { useCallback } from 'react';
 
 type HomeCompleteGoalDialogProps = {
-  completeGoalDialogIsOpen: ReturnType<typeof useHomeStates>['completeGoalDialogIsOpen'];
-  setCompleteGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setCompleteGoalDialogIsOpen'];
-  selectedGoal: ReturnType<typeof useHomeStates>['selectedGoal'];
-  handleCompleteGoal: ReturnType<typeof useHomeEvents>['handleCompleteGoal'];
+  completeGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['completeGoalDialogIsOpen'];
+  setCompleteGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['setCompleteGoalDialogIsOpen'];
+  selectedGoal: ReturnType<typeof useDashboardStates>['selectedGoal'];
+  handleCompleteGoal: ReturnType<typeof useDashboardEvents>['handleCompleteGoal'];
 };
 
 const HomeCompleteGoalDialog = (props: HomeCompleteGoalDialogProps) => {

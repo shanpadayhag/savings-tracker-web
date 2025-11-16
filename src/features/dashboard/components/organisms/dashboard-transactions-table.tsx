@@ -1,17 +1,19 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
-import useHomeStates from '@/features/home/states/home-states';
+import Currency from '@/enums/currency';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import currencyUtil from '@/utils/currency-util';
 import dateUtil from '@/utils/date-util';
 
-type HomeTransactionsTableProps = {
-  transactionList: ReturnType<typeof useHomeStates>['transactionList'];
+type DashboardTransactionsTableProps = {
+  authUser: ReturnType<typeof useDashboardStates>['authUser'];
+  transactionList: ReturnType<typeof useDashboardStates>['transactionList'];
 };
 
-const HomeTransactionsTable = (props: HomeTransactionsTableProps) => {
+const DashboardTransactionsTable = (props: DashboardTransactionsTableProps) => {
   return <div className="flex flex-col gap-4 px-4 md:gap-6 w-full">
-    <div className="rounded-lg border">
+    <div className="overflow-auto rounded-lg border">
       <Table>
-        <TableHeader className="bg-muted sticky top-0 z-10">
+        <TableHeader className="bg-muted sticky top-0 z-0">
           <TableRow>
             <TableHead colSpan={1}><span className="sr-only">Drag</span></TableHead>
             <TableHead colSpan={1}>Activity</TableHead>
@@ -27,11 +29,11 @@ const HomeTransactionsTable = (props: HomeTransactionsTableProps) => {
               key={transaction.id!}
               // data-state="selected"
               data-state="false">
-              <TableCell></TableCell>
-              <TableCell className="py-4">{transaction.activity}</TableCell>
-              <TableCell>{transaction.description}</TableCell>
-              <TableCell>{currencyUtil.format(transaction.goalActivity!.amount)}</TableCell>
-              <TableCell>{dateUtil.formatDisplayDate(new Date(transaction.createdAt!))}</TableCell>
+              <TableCell className="py-4"></TableCell>
+              <TableCell className="py-4 whitespace-normal break-keep">{transaction.activity}</TableCell>
+              <TableCell className="py-4 whitespace-normal break-keep">{transaction.description}</TableCell>
+              <TableCell className="py-4">{currencyUtil.format(transaction.goalActivity!.amount, props.authUser?.financialSummary.currency || Currency.Euro)}</TableCell>
+              <TableCell className="py-4">{dateUtil.formatDisplayDate(new Date(transaction.createdAt!))}</TableCell>
             </TableRow>)
             : <TableRow>
               <TableCell className="h-24 text-center" colSpan={6}>
@@ -44,4 +46,4 @@ const HomeTransactionsTable = (props: HomeTransactionsTableProps) => {
   </div>;
 };
 
-export default HomeTransactionsTable;
+export default DashboardTransactionsTable;

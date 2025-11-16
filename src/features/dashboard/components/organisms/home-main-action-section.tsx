@@ -1,12 +1,12 @@
 import { Button } from '@/components/atoms/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/atoms/dropdown-menu';
-import useHomeStates from '@/features/home/states/home-states';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import { IconDotsVertical } from '@tabler/icons-react';
 
 type HomeMainActionSectionProps = {
   adjustBalanceOnClick: (value: true) => void;
-  setCreateGoalDialogIsOpen: ReturnType<typeof useHomeStates>['setCreateGoalDialogIsOpen'];
-  setResetDialogIsOpen: ReturnType<typeof useHomeStates>['setResetDialogIsOpen'];
+  setCreateGoalDialogIsOpen: ReturnType<typeof useDashboardStates>['setCreateGoalDialogIsOpen'];
+  setResetDialogIsOpen: ReturnType<typeof useDashboardStates>['setResetDialogIsOpen'];
   exportTransactionsOnClick: () => void;
   importTransactionsOnClick: () => void;
 };

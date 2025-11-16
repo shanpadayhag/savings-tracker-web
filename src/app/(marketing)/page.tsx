@@ -23,7 +23,7 @@ export default () => {
           <h1 className="text-4xl font-bold">Finally. A Savings Tracker That's Just for Savings.</h1>
           <p className="text-lg">No complicated budgets. No endless categories. Just a clear, simple view of your progress towards your goals.</p>
           <div>
-            <Link href={Routes.UserHome} className={buttonVariants()}>Get Your Simple Tracker</Link>
+            <Link href={Routes.UserDashboard} className={buttonVariants()}>Get Your Simple Tracker</Link>
           </div>
         </div>
       </div>

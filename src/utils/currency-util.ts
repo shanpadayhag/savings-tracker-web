@@ -16,7 +16,7 @@ const currencyUtil = {
    * @param code The currency code to use for parsing rules. Defaults to 'EURO'.
    * @returns A currency object.
    */
-  parse(value: currency.Any, code: Currency = Currency.Euro): currency {
+  parse(value: currency.Any, code: Currency): currency {
     const options = currencyOptions[code] || currencyOptions.EURO;
     return currency(value, options);
   },
@@ -28,7 +28,7 @@ const currencyUtil = {
    * @param code The currency code to use for formatting. Defaults to 'EURO'.
    * @returns The formatted currency string.
    */
-  format(value: currency.Any, code: Currency = Currency.Euro): string {
+  format(value: currency.Any, code: Currency): string {
     return this.parse(value, code).format();
   }
 };

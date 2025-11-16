@@ -2,20 +2,22 @@ import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import HomeDialogCurrentBalance, { HomeDialogCurrentBalanceProps } from '@/features/home/components/molecules/home-dialog-current-balance';
-import useHomeEvents from '@/features/home/events/home-events';
+import DashboardDialogCurrentBalance, { DashboardDialogCurrentBalanceProps } from '@/features/dashboard/components/molecules/dashboard-dialog-current-balance';
+import useDashboardEvents from '@/features/dashboard/events/dashboard-events';
+import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 import { useCallback } from 'react';
 
-type HomeSpendMoneyDialogProps = {
+type DashboardSpendMoneyDialogProps = {
+  authUser: ReturnType<typeof useDashboardStates>['authUser'];
   spendMoneyDialogIsOpen: boolean;
   setSpendMoneyDialogIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   goalName: string;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setAmount: React.Dispatch<React.SetStateAction<string>>;
-  handleSpendFromGoal: ReturnType<typeof useHomeEvents>['handleSpendFromGoal'];
-} & HomeDialogCurrentBalanceProps;
+  handleSpendFromGoal: ReturnType<typeof useDashboardEvents>['handleSpendFromGoal'];
+} & DashboardDialogCurrentBalanceProps;
 
-const HomeSpendMoneyDialog = (props: HomeSpendMoneyDialogProps) => {
+const DashboardSpendMoneyDialog = (props: DashboardSpendMoneyDialogProps) => {
   const spendFundsFormOnSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     props.handleSpendFromGoal();
@@ -36,7 +38,8 @@ const HomeSpendMoneyDialog = (props: HomeSpendMoneyDialogProps) => {
       </DialogHeader>
 
       <form onSubmit={spendFundsFormOnSubmit} className="grid gap-4">
-        <HomeDialogCurrentBalance
+        <DashboardDialogCurrentBalance
+          authUser={props.authUser}
           currentBalance={props.currentBalance} />
 
         <div className="grid gap-3">
@@ -62,4 +65,4 @@ const HomeSpendMoneyDialog = (props: HomeSpendMoneyDialogProps) => {
   </Dialog>;
 };
 
-export default HomeSpendMoneyDialog;
+export default DashboardSpendMoneyDialog;

@@ -28,7 +28,7 @@ const deallocateFundsFromGoal = async (props: DeallocateFundsFromGoalProps) => {
       amount: props.goalCurrentAmount.value,
     },
   };
-  const newUserTotalFunds = currencyUtil.parse(props.userTotalAvailableFunds)
+  const newUserTotalFunds = currencyUtil.parse(props.userTotalAvailableFunds, props.userCurrency)
     .add(props.goalCurrentAmount)
     .value;
 
