@@ -1,19 +1,12 @@
 "use client";
 
-import { IconCirclePlusFilled, IconDashboard, IconMail, IconTargetArrow, type Icon } from "@tabler/icons-react";
-
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/atoms/sidebar";
-import Link from 'next/link';
+import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/atoms/sidebar";
 import Routes from '@/enums/routes';
+import { IconCirclePlusFilled, IconDashboard, IconTargetArrow, IconWallet } from "@tabler/icons-react";
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export function NavMain() {
+const UserLayoutSidebarMain = () => {
   const pathname = usePathname();
 
   return (
@@ -26,7 +19,7 @@ export function NavMain() {
               tooltip="Quick Transaction"
               className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear">
               <IconCirclePlusFilled />
-              {/* <span>Quick Transaction (Coming Soon)</span> */}
+              {/* <span>Quick Transaction</span> */}
               <span>QT (Coming Soon)</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -34,10 +27,13 @@ export function NavMain() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton isActive={pathname.startsWith(Routes.UserDashboard)} tooltip="Dashboard" asChild>
-              <Link href={Routes.UserDashboard}>
-                <IconDashboard />
-                <span>Dashboard</span>
-              </Link>
+              <Link href={Routes.UserDashboard}><IconDashboard /> <span>Dashboard</span></Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem >
+            <SidebarMenuButton isActive={pathname.startsWith(Routes.UserWallets)} tooltip="Wallets" asChild>
+              <Link href={Routes.UserWallets}><IconWallet /> <span>Wallets</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
@@ -53,4 +49,6 @@ export function NavMain() {
       </SidebarGroupContent>
     </SidebarGroup>
   );
-}
+};
+
+export default UserLayoutSidebarMain;

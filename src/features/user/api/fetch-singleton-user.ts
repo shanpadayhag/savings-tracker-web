@@ -1,5 +1,5 @@
 import Currency from '@/enums/currency';
-import User from '@/features/user/entities/user';
+import User from '@/features/user/entities/user-old';
 import { db } from '@/lib/utils';
 
 const SINGLETON_USER_ID = 'singleton';

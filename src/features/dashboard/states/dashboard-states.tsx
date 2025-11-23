@@ -1,7 +1,7 @@
 import { ComboboxItems } from '@/components/molecules/combobox';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
-import User from '@/features/user/entities/user';
+import User from '@/features/user/entities/user-old';
 import { useState } from 'react';
 
 const useDashboardStates = () => {

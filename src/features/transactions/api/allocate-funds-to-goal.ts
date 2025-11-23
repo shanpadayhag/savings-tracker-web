@@ -5,7 +5,7 @@ import type GoalListItem from '@/features/goals/entities/goal-list-item';
 import updateGoalAndLogTransaction from '@/features/transactions/api/update-goal-and-log-transaction';
 import type TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
-import User from '@/features/user/entities/user';
+import User from '@/features/user/entities/user-old';
 import { db } from '@/lib/utils';
 
 type AllocateFundsToGoalParameters = {

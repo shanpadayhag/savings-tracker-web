@@ -1,7 +1,7 @@
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionType from '@/features/transactions/enums/transaction-type';
-import User from '@/features/user/entities/user';
+import User from '@/features/user/entities/user-old';
 import { db } from '@/lib/utils';
 import currencyUtil from '@/utils/currency-util';
 import currency from 'currency.js';

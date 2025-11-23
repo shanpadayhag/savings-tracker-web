@@ -3,7 +3,7 @@
 import * as React from "react";
 import { IconCheck, IconSelector } from "@tabler/icons-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 import { Button } from "@/components/atoms/button";
 import {
   Command,

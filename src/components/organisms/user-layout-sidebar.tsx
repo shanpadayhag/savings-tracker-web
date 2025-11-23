@@ -11,8 +11,8 @@ import {
   SidebarMenuItem,
 } from "@/components/atoms/sidebar";
 import { NavDocuments } from "@/components/molecules/nav-documents";
-import { NavMain } from "@/components/molecules/nav-main";
 import UserLayoutProfileMenu from '@/components/molecules/user-layout-profile-menu';
+import UserLayoutSidebarMain from '@/components/molecules/user-layout-sidebar-main';
 import Routes from '@/enums/routes';
 import { IconDotsVertical, IconPigFilled } from '@tabler/icons-react';
 
@@ -37,7 +37,7 @@ const UserLayoutSidebar = (props: UserLayoutSidebarProps) => {
       </SidebarMenu>
     </SidebarHeader>
     <SidebarContent>
-      <NavMain />
+      <UserLayoutSidebarMain />
       <NavDocuments />
     </SidebarContent>
     <SidebarFooter>
