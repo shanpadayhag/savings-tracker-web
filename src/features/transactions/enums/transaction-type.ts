@@ -1,9 +1,8 @@
-// enum TransactionType {
-//   AccountAdjustment = "account_adjustment",
-//   GoalAllocation = "goal_allocation",
-//   GoalExpense = "goal_expense",
-//   GoalTransfer = "goal_transfer",
-//   GoalDeallocation = "goal_deallocation",
-// }
+enum TransactionType {
+  Allocate = "allocate",
+  Spend = "spend",
+  Transfer = "transfer",
+  Deallocate = "deallocate",
+}
 
-// export default TransactionType;
+export default TransactionType;

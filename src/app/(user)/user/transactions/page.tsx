@@ -20,11 +20,13 @@ export default () => {
           <TableHeader className="bg-muted sticky top-0 z-0">
             <TableRow>
               <TableHead><span className="sr-only">Drag</span></TableHead>
-              <TableHead>Goal Name</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Date</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>From</TableHead>
+              <TableHead>To</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead>Timestamp</TableHead>
+              <TableHead>Fee</TableHead>
+              <TableHead>Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -36,12 +38,12 @@ export default () => {
                 <TableCell>{dateUtil.formatDisplayDate(wallet.createdAt)}</TableCell>
               </TableRow>)}</>
               : <TableRow>
-                <TableCell className="h-24 text-center" colSpan={5}>
+                <TableCell className="h-24 text-center" colSpan={8}>
                   No transactions.
                 </TableCell>
               </TableRow>} */}
             <TableRow>
-              <TableCell className="h-24 text-center" colSpan={6}>
+              <TableCell className="h-24 text-center" colSpan={8}>
                 No transactions.
               </TableCell>
             </TableRow>

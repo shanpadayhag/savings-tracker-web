@@ -1,18 +1,18 @@
-// import TransactionType from '@/features/transactions/enums/transaction-type';
+import Transaction from '@/features/transactions/entities/transaction';
+import TransactionType from '@/features/transactions/enums/transaction-type';
+import currency from 'currency.js';
 
-// type TransactionListItem = {
-//   id?: number;
-//   type: TransactionType;
-//   activity: string;
-//   description: string | null;
-//   createdAt?: Date;
-//   accountAdjustment?: {
-//     amount: number;
-//   };
-//   goalActivity?: {
-//     goalID: string;
-//     amount: number;
-//   };
-// };
+type TransactionListItem = {
+  id?: Transaction['id'];
+  type: TransactionType;
+  from: string;
+  to: string;
+  amount: currency;
+  convertedAmount?: currency;
+  fee: currency;
+  notes: Transaction['notes'];
+  createdAt: Transaction['createdAt'];
+  updatedAt: Transaction['updatedAt'];
+};
 
-// export default TransactionListItem;
+export default TransactionListItem;

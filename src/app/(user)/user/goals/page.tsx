@@ -93,15 +93,15 @@ export default () => {
                     <DropdownMenuContent align="end" className="w-38">
                       <DropdownMenuLabel>Transaction</DropdownMenuLabel>
                       <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={allocateMoneyOnClick}>Allocate Money</DropdownMenuItem>
-                        <DropdownMenuItem onClick={spendMoneyOnClick}>Spend Money</DropdownMenuItem>
+                        <DropdownMenuItem disabled onClick={allocateMoneyOnClick}>Allocate Money</DropdownMenuItem>
+                        <DropdownMenuItem disabled onClick={spendMoneyOnClick}>Spend Money</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel>Goal</DropdownMenuLabel>
                       <DropdownMenuGroup>
                         <DropdownMenuItem disabled>Adjust Amount</DropdownMenuItem>
-                        <DropdownMenuItem onClick={completeGoalOnClick}>Complete Goal</DropdownMenuItem>
-                        <DropdownMenuItem onClick={archiveGoalOnClick}><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
+                        <DropdownMenuItem disabled onClick={completeGoalOnClick}>Complete Goal</DropdownMenuItem>
+                        <DropdownMenuItem disabled onClick={archiveGoalOnClick}><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>

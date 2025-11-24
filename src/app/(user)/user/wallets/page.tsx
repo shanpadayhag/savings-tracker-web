@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/atoms/dropdown-menu';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/atoms/select';
@@ -10,6 +11,7 @@ import Currency, { currencyLabel } from '@/enums/currency';
 import useWalletsEvents from '@/features/wallets/events/wallets-events';
 import useWalletsStates from '@/features/wallets/states/wallets-states';
 import dateUtil from '@/utils/date-util';
+import { IconDotsVertical } from '@tabler/icons-react';
 import { FormEvent, useCallback, useEffect } from 'react';
 
 export default () => {
@@ -24,6 +26,15 @@ export default () => {
   const createButtonOnClick = useCallback(() => {
     events.handleCreateWallet();
   }, [events.handleCreateWallet]);
+
+  const allocateFundToWalletFormOnSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    events.handleAllocateFundsToWallet();
+  }, [events.handleAllocateFundsToWallet]);
+
+  const allocateButtonOnClick = useCallback(() => {
+    events.handleAllocateFundsToWallet();
+  }, [events.handleAllocateFundsToWallet]);
 
   useEffect(() => {
     events.handleFetchWallets();
@@ -48,6 +59,7 @@ export default () => {
               <TableHead colSpan={1}><span className="sr-only">Drag</span></TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Currency</TableHead>
+              <TableHead>Current Amount</TableHead>
               <TableHead>Timestamp</TableHead>
               <TableHead><span className="sr-only">Actions</span></TableHead>
             </TableRow>
@@ -58,10 +70,35 @@ export default () => {
                 <TableCell></TableCell>
                 <TableCell className="py-4">{wallet.name}</TableCell>
                 <TableCell>{currencyLabel[wallet.currency]}</TableCell>
+                <TableCell>{wallet.currentAmount.format()}</TableCell>
                 <TableCell>{dateUtil.formatDisplayDate(wallet.createdAt)}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="data-[state=open]:bg-muted text-muted-foreground flex"
+                        variant="ghost" size="icon">
+                        <IconDotsVertical /> <span className="sr-only">Wallet Item Action</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-38">
+                      <DropdownMenuLabel>Transaction</DropdownMenuLabel>
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => {
+                          states.setSelectedWallet(wallet);
+                          states.setAllocateDialogIsOpen(true);
+                        }}>Allocate Money</DropdownMenuItem>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Wallet</DropdownMenuLabel>
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem disabled><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>)}</>
               : <TableRow>
-                <TableCell className="h-24 text-center" colSpan={5}>
+                <TableCell className="h-24 text-center" colSpan={6}>
                   No wallets.
                 </TableCell>
               </TableRow>}
@@ -107,6 +144,29 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={createButtonOnClick} type="button">Create</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.allocateDialogIsOpen} onOpenChange={states.setAllocateDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Funds</DialogTitle>
+          <DialogDescription>Add funds to this wallet to build its balance for future expenses or savings goals.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={allocateFundToWalletFormOnSubmit} className="flex flex-col gap-4">
+          <div className="grid gap-2">
+            <Label>Amount</Label>
+            <Input onChange={event => states.setAllocateAmount(event.target.value)} placeholder="Allocation's amount" />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={allocateButtonOnClick} type="button">Allocate</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
