@@ -5,6 +5,8 @@ enum Routes {
   UserDashboard = `${UserPrefix}/dashboard`,
   UserWallets = `${UserPrefix}/wallets`,
   UserGoals = `${UserPrefix}/goals`,
+  UserTransactions = `${UserPrefix}/transactions`,
+  UserActivities = `${UserPrefix}/activities`,
   UserReports = `${UserPrefix}/reports`,
   UserSettings = `${UserPrefix}/settings`,
   UserAccountSettings = `${UserPrefix}/settings/account`,

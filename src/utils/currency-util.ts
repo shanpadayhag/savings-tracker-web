@@ -17,7 +17,7 @@ const currencyUtil = {
    * @returns A currency object.
    */
   parse(value: currency.Any, code: Currency): currency {
-    const options = currencyOptions[code] || currencyOptions.EURO;
+    const options = currencyOptions[code];
     return currency(value, options);
   },
 
@@ -30,6 +30,20 @@ const currencyUtil = {
    */
   format(value: currency.Any, code: Currency): string {
     return this.parse(value, code).format();
+  },
+
+  /**
+   * Parses a value into a currency.js object configured for
+   * percentage formatting, using the number rules from a currency.
+   * @param value The number to parse.
+   * @param code The currency code to use for formatting rules.
+   * @returns A currency object.
+   */
+  parsePercent(value: currency.Any, code: Currency): currency {
+    const currencyOpts = currencyOptions[code];
+    const percentOptions = { ...currencyOpts, pattern: '# %', symbol: '%' };
+
+    return currency(value, percentOptions);
   }
 };
 

@@ -8,21 +8,25 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/atoms/sidebar";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import Routes from '@/enums/routes';
 
-export function NavDocuments() {
+const UserLayoutSidebarDocuments = () => {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Documents</SidebarGroupLabel>
       <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild>
-            <a href={"#"}>
-              <IconReport />
-              <span>Reports</span> <span className="text-muted-foreground">(Coming Soon)</span>
-            </a>
+        <SidebarMenuItem >
+          <SidebarMenuButton isActive={pathname.startsWith(Routes.UserReports)} tooltip="Reports" asChild>
+            <Link href={Routes.UserReports}><IconReport /> <span>Reports</span></Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   );
 }
+
+export default UserLayoutSidebarDocuments;

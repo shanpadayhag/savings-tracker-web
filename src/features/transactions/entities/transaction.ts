@@ -1,6 +1,6 @@
-type Transaction = {
-  id?: string;
-  
-};
+// type Transaction = {
+//   id?: string;
 
-export default Transaction;
+// };
+
+// export default Transaction;

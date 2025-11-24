@@ -2,7 +2,7 @@
 
 import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/atoms/sidebar";
 import Routes from '@/enums/routes';
-import { IconCirclePlusFilled, IconDashboard, IconTargetArrow, IconWallet } from "@tabler/icons-react";
+import { IconCirclePlusFilled, IconCreditCardPay, IconDashboard, IconTargetArrow, IconWallet } from "@tabler/icons-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -32,17 +32,20 @@ const UserLayoutSidebarMain = () => {
           </SidebarMenuItem>
 
           <SidebarMenuItem >
-            <SidebarMenuButton isActive={pathname.startsWith(Routes.UserWallets)} tooltip="Wallets" asChild>
-              <Link href={Routes.UserWallets}><IconWallet /> <span>Wallets</span></Link>
+            <SidebarMenuButton isActive={pathname.startsWith(Routes.UserTransactions)} tooltip="Transactions" asChild>
+              <Link href={Routes.UserTransactions}><IconCreditCardPay /> <span>Transactions</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
           <SidebarMenuItem >
-            <SidebarMenuButton tooltip="Goal" asChild>
-              <Link href="#">
-                <IconTargetArrow />
-                <span>Goal</span> <span className="text-muted-foreground">(Coming Soon)</span>
-              </Link>
+            <SidebarMenuButton isActive={pathname.startsWith(Routes.UserGoals)} tooltip="Goals" asChild>
+              <Link href={Routes.UserGoals}><IconTargetArrow /> <span>Goals</span></Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem >
+            <SidebarMenuButton isActive={pathname.startsWith(Routes.UserWallets)} tooltip="Wallets" asChild>
+              <Link href={Routes.UserWallets}><IconWallet /> <span>Wallets</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
