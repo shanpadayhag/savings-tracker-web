@@ -24,7 +24,7 @@ type TransactionListItem = {
     type: TransactionEntry['sourceType'];
     id: TransactionEntry['sourceID'];
     name: string | null;
-    currency: Currency | null;
+    currency: Currency;
     direction: TransactionEntry['direction'];
     amount: TransactionEntry['amount'];
   }[];

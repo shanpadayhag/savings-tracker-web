@@ -1,10 +1,10 @@
-import Currency from '@/enums/currency';
 import { AppError } from '@/errors/app-error';
 import TransactionEntry from '@/features/transactions/entities/transaction-entry';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import appDBUtil from '@/utils/app-db-util';
+import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
 import currency from 'currency.js';
 
@@ -14,19 +14,15 @@ type AllocateFundsToWalletParams = {
 };
 
 const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
-  const allocatedAmount = currency(params.amount);
-
-  if (!params.sourceID) throw new AppError(
+  const wallet = await documentDBUtil.wallet_list.get(params.sourceID || "");
+  if (!wallet || !params.sourceID) throw new AppError(
     "Hmm, Wallet Not Found... 🧐",
     "The wallet you're trying to send funds from doesn't seem to exist. Please check your selection and try again.");
-  const wallet = await documentDBUtil.wallet_list.get(params.sourceID);
 
+  const allocatedAmount = currencyUtil.parse(params.amount, wallet.currency);
   if (allocatedAmount.value <= 0) throw new AppError(
     "Whoops, Check That Amount! 🤔",
     "To allocate funds, the amount needs to be a positive number. Please enter a value greater than zero.");
-  if (!wallet) throw new AppError(
-    "Hmm, Wallet Not Found... 🧐",
-    "The wallet you're trying to send funds from doesn't seem to exist. Please check your selection and try again.");
 
   const transactionID = crypto.randomUUID();
   const now = new Date();
@@ -87,7 +83,8 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
   });
 
   documentDBUtil.wallet_list.update(params.sourceID, {
-    currentAmount: currency(wallet.currentAmount).add(transactionEntry2.amount).value
+    currentAmount: currencyUtil.parse(wallet.currentAmount, wallet.currency)
+      .add(transactionEntry2.amount).value
   });
 };
 

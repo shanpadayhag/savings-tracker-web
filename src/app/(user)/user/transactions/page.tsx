@@ -1,9 +1,22 @@
 "use client";
 
+import { Badge } from '@/components/atoms/badge';
 import { Input } from '@/components/atoms/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
+import { transactionTypeLabel } from '@/features/transactions/enums/transaction-type';
+import useTransactionsEvents from '@/features/transactions/events/use-transactions-events';
+import useTransactionsStates from '@/features/transactions/states/use-transactions-states';
+import dateUtil from '@/utils/date-util';
+import { useEffect } from 'react';
 
 export default () => {
+  const states = useTransactionsStates();
+  const events = useTransactionsEvents(states);
+
+  useEffect(() => {
+    events.handleFetchTransactions();
+  }, []);
+
   return <>
     <div className="flex flex-col overflow-auto h-full pb-2 gap-6">
       <div className="w-full px-4 pt-4">
@@ -30,23 +43,24 @@ export default () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* {states.wallets.length > 0
-              ? <>{states.wallets.map(wallet => <TableRow key={wallet.id}>
+            {states.transactions.length > 0
+              ? <>{states.transactions.map(transaction => <TableRow key={transaction.id}>
                 <TableCell></TableCell>
-                <TableCell className="py-4">{wallet.name}</TableCell>
-                <TableCell>{currencyLabel[wallet.currency]}</TableCell>
-                <TableCell>{dateUtil.formatDisplayDate(wallet.createdAt)}</TableCell>
+                <TableCell className="py-4">{dateUtil.formatDisplayDate(transaction.createdAt)}</TableCell>
+                <TableCell><Badge>{transactionTypeLabel[transaction.type]}</Badge></TableCell>
+                <TableCell>{transaction.from || "–"}</TableCell>
+                <TableCell>{transaction.to || "–"}</TableCell>
+                <TableCell>{transaction.amount.length > 1
+                  ? transaction.amount[0].format() + " → " + transaction.amount[1].format()
+                  : transaction.amount[0].format()}</TableCell>
+                <TableCell>{transaction.fee?.format() || "–"}</TableCell>
+                <TableCell>{transaction.notes || "–"}</TableCell>
               </TableRow>)}</>
               : <TableRow>
                 <TableCell className="h-24 text-center" colSpan={8}>
                   No transactions.
                 </TableCell>
-              </TableRow>} */}
-            <TableRow>
-              <TableCell className="h-24 text-center" colSpan={8}>
-                No transactions.
-              </TableCell>
-            </TableRow>
+              </TableRow>}
           </TableBody>
         </Table>
       </div>

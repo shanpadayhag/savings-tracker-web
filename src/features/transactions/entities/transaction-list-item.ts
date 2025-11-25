@@ -5,11 +5,11 @@ import currency from 'currency.js';
 type TransactionListItem = {
   id?: Transaction['id'];
   type: TransactionType;
-  from: string;
-  to: string;
-  amount: currency;
+  from: string | null;
+  to: string | null;
+  amount: currency[];
   convertedAmount?: currency;
-  fee: currency;
+  fee: currency | null;
   notes: Transaction['notes'];
   createdAt: Transaction['createdAt'];
   updatedAt: Transaction['updatedAt'];
