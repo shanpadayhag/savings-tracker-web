@@ -8,6 +8,7 @@ import { Label } from '@/components/atoms/label';
 import { Progress } from '@/components/atoms/progress';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/atoms/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
+import { Combobox } from '@/components/molecules/combobox';
 import Currency, { currencyLabel } from '@/enums/currency';
 import useGoalsEvents from '@/features/goals/events/goals-events';
 import useGoalsStates from '@/features/goals/states/goals-states';
@@ -93,7 +94,7 @@ export default () => {
                     <DropdownMenuContent align="end" className="w-38">
                       <DropdownMenuLabel>Transaction</DropdownMenuLabel>
                       <DropdownMenuGroup>
-                        <DropdownMenuItem disabled onClick={allocateMoneyOnClick}>Allocate Money</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => states.setAllocationDialogIsOpen(true)}>Allocate Money</DropdownMenuItem>
                         <DropdownMenuItem disabled onClick={spendMoneyOnClick}>Spend Money</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
@@ -159,6 +160,41 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={createButtonOnClick} type="button">Create</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* <Dialog open={states.allocationDialogIsOpen} onOpenChange={states.setAllocationDialogIsOpen}> */}
+    <Dialog open onOpenChange={states.setAllocationDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Fund Goal</DialogTitle>
+          <DialogDescription>Move money from your main Wallet to make progress on your goal.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={newGoalFormOnSubmit} className="flex flex-col gap-4">
+          <div className="grid gap-2">
+            <Label>Wallet</Label>
+            <Combobox placeholder="Select wallet" />
+            <span className="text-xs text-muted-foreground">Available: $1,250.50</span>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Notes <span className="text-xs text-muted-foreground">Optional</span></Label>
+            <Input onChange={event => states.setNewGoalTargetAmount(event.target.value)} placeholder="Goal's allocation notes" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Amount</Label>
+            <Input onChange={event => states.setNewGoalTargetAmount(event.target.value)} placeholder="Goal's allocation amount" />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={createButtonOnClick} type="button">Allocate</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
