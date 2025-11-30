@@ -3,7 +3,7 @@ import TransactionDirection from '@/features/transactions/enums/transaction-dire
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 
 type TransactionEntry = {
-  id?: string;
+  id: string;
   transactionID: Transaction['id'];
   sourceType: TransactionSourceType;
   sourceID: string | null;

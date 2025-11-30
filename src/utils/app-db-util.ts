@@ -20,7 +20,7 @@ class DB extends Dexie {
       users: "id",
       wallets: "id",
       goals: "id",
-      goal_versions: "id",
+      goal_versions: "id, [goalID+createdAt]",
       transactions: "id",
       transaction_entries: "id",
     });

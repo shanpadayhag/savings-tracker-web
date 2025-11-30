@@ -1,8 +1,7 @@
-import Currency from '@/enums/currency';
 import { AppError } from '@/errors/app-error';
 import allocateFundsToWallet from '@/features/transactions/api/allocate-funds-to-wallet';
 import createWallet from '@/features/wallets/api/create-wallet';
-import getWallets from '@/features/wallets/api/get-wallets';
+import walletRepository from '@/features/wallets/repositories/wallet-repository';
 import useWalletsStates from '@/features/wallets/states/wallets-states';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
@@ -10,7 +9,7 @@ import { toast } from 'sonner';
 const useWalletsEvents = (states: ReturnType<typeof useWalletsStates>) => {
   const handleFetchWallets = useCallback(async () => {
     try {
-      states.setWallets(await getWallets());
+      states.setWallets(await walletRepository.getWallets());
     } catch (error) {
       if (error instanceof AppError) toast.error(error.title, { description: error.description });
     }
@@ -42,7 +41,7 @@ const useWalletsEvents = (states: ReturnType<typeof useWalletsStates>) => {
       await allocateFundsToWallet({
         sourceID: states.selectedWallet?.id,
         amount: states.allocateAmount,
-      })
+      });
 
       handleFetchWallets();
       states.setAllocateDialogIsOpen(false);

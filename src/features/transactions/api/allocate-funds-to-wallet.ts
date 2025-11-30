@@ -65,14 +65,14 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     notes: null,
     entries: [{
       type: transactionEntry1.sourceType,
-      id: transactionEntry1.sourceID,
+      sourceID: transactionEntry1.sourceID,
       name: null,
       currency: wallet.currency,
       direction: transactionEntry1.direction,
       amount: transactionEntry1.amount,
     }, {
       type: transactionEntry2.sourceType,
-      id: transactionEntry2.sourceID,
+      sourceID: transactionEntry2.sourceID,
       name: wallet.name,
       currency: wallet.currency,
       direction: transactionEntry2.direction,

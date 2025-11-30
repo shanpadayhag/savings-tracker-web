@@ -1,7 +1,7 @@
 import Currency from '@/enums/currency';
 
 type GoalVersion = {
-  id?: string;
+  id: string;
   goalID: string;
   name: string;
   targetAmount: number;

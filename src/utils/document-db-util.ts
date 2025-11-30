@@ -22,7 +22,7 @@ type TransactionListItem = {
   notes: Transaction['notes'];
   entries: {
     type: TransactionEntry['sourceType'];
-    id: TransactionEntry['sourceID'];
+    sourceID: TransactionEntry['sourceID'];
     name: string | null;
     currency: Currency;
     direction: TransactionEntry['direction'];

@@ -1,7 +1,7 @@
 import GoalStatus from '@/features/goals/enums/goal-status';
 
 type Goal = {
-  id?: string;
+  id: string;
   status: GoalStatus;
   createdAt: Date;
   updatedAt: Date;

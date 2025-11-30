@@ -1,7 +1,7 @@
 import TransactionType from '@/features/transactions/enums/transaction-type';
 
 type Transaction = {
-  id?: string;
+  id: string;
   type: TransactionType;
   notes: string | null;
   createdAt: Date;
