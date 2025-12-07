@@ -32,7 +32,7 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     sourceType: TransactionSourceType.External,
     sourceID: null,
     direction: TransactionDirection.From,
-    amount: allocatedAmount.multiply(-1).value,
+    amount: allocatedAmount.value,
     createdAt: now,
     updatedAt: now,
     deletedAt: "null"

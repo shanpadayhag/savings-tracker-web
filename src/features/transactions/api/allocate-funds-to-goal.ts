@@ -63,7 +63,7 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     sourceType: TransactionSourceType.Wallet,
     sourceID: sourceWallet.id,
     direction: TransactionDirection.From,
-    amount: transactionAmount.multiply(-1).value,
+    amount: transactionAmount.value,
     createdAt: now,
     updatedAt: now,
     deletedAt: "null"
@@ -115,7 +115,7 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
 
   const sourceWalletCurrentAmount = currencyUtil.parse(
     walletListItem.currentAmount, walletListItem.currency)
-    .add(transactionEntry1.amount);
+    .subtract(transactionEntry1.amount);
   walletListItem.currentAmount = sourceWalletCurrentAmount.value;
   await documentDBUtil.wallet_list.put(walletListItem);
 
@@ -125,7 +125,8 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     goalListItem.savedAmount, goalListItem.currency)
     .add(transactionEntry2.amount);
   const destinationGoalRemainingAmount = destinationGoalTargetAmount.subtract(destinationGoalSavedAmount);
-  const destinationGoalSavedPercent = destinationGoalRemainingAmount.divide(destinationGoalTargetAmount);
+  const destinationGoalSavedPercent = destinationGoalSavedAmount.multiply(100)
+    .divide(destinationGoalTargetAmount);
   goalListItem.savedAmount = destinationGoalSavedAmount.value;
   goalListItem.remainingAmount = destinationGoalRemainingAmount.value;
   goalListItem.savedPercent = destinationGoalSavedPercent.value;

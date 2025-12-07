@@ -91,7 +91,7 @@ export default () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel>Wallet</DropdownMenuLabel>
                       <DropdownMenuGroup>
-                        <DropdownMenuItem disabled><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
+                        <DropdownMenuItem disabled><span className="text-red-700">Archive Wallet</span></DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>

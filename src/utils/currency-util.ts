@@ -2,10 +2,10 @@ import Currency from '@/enums/currency';
 import currency from 'currency.js';
 
 const currencyOptions = {
-  EURO: { symbol: '€', precision: 2, decimal: ',', separator: '.', pattern: `! #` },
-  CAD: { symbol: 'CA$', precision: 2, pattern: `! #` },
-  USD: { symbol: '$', precision: 2, pattern: `! #` },
-  PESO: { symbol: '₱', precision: 2, pattern: `! #` }
+  EURO: { symbol: '€', precision: 2, decimal: ',', separator: '.', pattern: `! #`, negativePattern: "! #" },
+  CAD: { symbol: 'CA$', precision: 2, pattern: `! #`, negativePattern: "! #" },
+  USD: { symbol: '$', precision: 2, pattern: `! #`, negativePattern: "! #" },
+  PESO: { symbol: '₱', precision: 2, pattern: `! #`, negativePattern: "! #" }
 };
 
 const currencyUtil = {

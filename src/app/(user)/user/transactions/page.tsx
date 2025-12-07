@@ -48,13 +48,14 @@ export default () => {
                 <TableCell></TableCell>
                 <TableCell className="py-4">{dateUtil.formatDisplayDate(transaction.createdAt)}</TableCell>
                 <TableCell><Badge>{transactionTypeLabel[transaction.type]}</Badge></TableCell>
-                <TableCell>{transaction.from || "–"}</TableCell>
-                <TableCell>{transaction.to || "–"}</TableCell>
-                <TableCell>{transaction.amount.length > 1
+                <TableCell>{transaction.from || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
+                <TableCell>{transaction.to || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
+                {/* <TableCell>{transaction.amount.length > 1
                   ? transaction.amount[0].format() + " → " + transaction.amount[1].format()
-                  : transaction.amount[0].format()}</TableCell>
-                <TableCell>{transaction.fee?.format() || "–"}</TableCell>
-                <TableCell>{transaction.notes || "–"}</TableCell>
+                  : transaction.amount[0].format()}</TableCell> */}
+                <TableCell>{transaction.amount[0].format()}</TableCell>
+                <TableCell>{transaction.fee?.format() || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
+                <TableCell>{transaction.notes || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
               </TableRow>)}</>
               : <TableRow>
                 <TableCell className="h-24 text-center" colSpan={8}>
