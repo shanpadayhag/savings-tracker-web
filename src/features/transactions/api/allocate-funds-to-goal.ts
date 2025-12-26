@@ -1,13 +1,10 @@
-import Currency from '@/enums/currency';
 import { AppError } from '@/errors/app-error';
-import TransactionEntry from '@/features/transactions/entities/transaction-entry';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import appDBUtil from '@/utils/app-db-util';
 import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
-import currency from 'currency.js';
 import Dexie from 'dexie';
 
 type AllocateFundToGoalParams = {
@@ -56,37 +53,27 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     "You can't allocate zero or negative funds to a goal. Please enter a value greater than zero.");
 
   const transactionID = crypto.randomUUID();
-  const now = new Date();
-  const transactionEntry1: TransactionEntry = {
+  const transactionEntry1 = {
     id: crypto.randomUUID(),
     transactionID: transactionID,
     sourceType: TransactionSourceType.Wallet,
     sourceID: sourceWallet.id,
     direction: TransactionDirection.From,
     amount: transactionAmount.value,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: "null"
   };
-  const transactionEntry2: TransactionEntry = {
+  const transactionEntry2 = {
     id: crypto.randomUUID(),
     transactionID: transactionID,
     sourceType: TransactionSourceType.Goal,
     sourceID: destinationGoal.id,
     direction: TransactionDirection.To,
     amount: transactionAmount.value,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: "null"
   };
 
   await appDBUtil.transactions.add({
     id: transactionID,
     type: TransactionType.Allocate,
     notes: params.notes,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: "null"
   });
   await appDBUtil.transaction_entries.add(transactionEntry1);
   await appDBUtil.transaction_entries.add(transactionEntry2);
@@ -109,8 +96,6 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
       direction: transactionEntry2.direction,
       amount: transactionEntry2.amount
     }],
-    createdAt: now,
-    updatedAt: now
   });
 
   const sourceWalletCurrentAmount = currencyUtil.parse(

@@ -1,10 +1,13 @@
 import Goal from '@/features/goals/entities/goal';
 import GoalVersion from '@/features/goals/entities/goal-version';
-import Transaction from '@/features/transactions/entities/transaction';
-import TransactionEntry from '@/features/transactions/entities/transaction-entry';
+import RawTransaction from '@/features/transactions/entities/transaction';
+import RawTransactionEntry from '@/features/transactions/entities/transaction-entry';
 import User from '@/features/user/entities/user-old';
 import Wallet from '@/features/wallets/entities/wallet';
 import Dexie from 'dexie';
+
+type Transaction = Omit<RawTransaction, 'createdAt' | 'updatedAt' | 'deletedAt'>;
+type TransactionEntry = Omit<RawTransactionEntry, 'createdAt' | 'updatedAt' | 'deletedAt'>;
 
 class DB extends Dexie {
   users!: Dexie.Table<User, "singleton">;
@@ -28,4 +31,18 @@ class DB extends Dexie {
 }
 
 const appDBUtil = new DB();
+
+appDBUtil.tables.forEach(table => {
+  table.hook('creating', function (_primKey, obj, _transaction) {
+    const now = new Date();
+    obj.createdAt = now;
+    obj.updatedAt = now;
+    obj.deletedAt = "null";
+  });
+
+  table.hook('updating', function (_modifications, _primKey, _obj, _transaction) {
+    return { updatedAt: new Date() };
+  });
+});
+
 export default appDBUtil;

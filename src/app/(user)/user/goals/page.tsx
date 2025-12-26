@@ -37,7 +37,7 @@ export default () => {
 
   const allocateMoneyOnClick = useCallback((goal: GoalListItem) => {
     states.setAllocationDialogIsOpen(true);
-    states.setAllocationGoal(goal);
+    states.setNewTransactionGoal(goal);
   }, []);
 
   const allocateOnClick = useCallback(() => {
@@ -49,8 +49,19 @@ export default () => {
     events.handleAllocateFundToGoal();
   }, [events.handleAllocateFundToGoal]);
 
-  const spendMoneyOnClick = useCallback(() => {
+  const spendGoalFundButtonOnClick = useCallback((goal: GoalListItem) => {
+    states.setNewTransactionGoal(goal);
+    states.setSpendDialogIsOpen(true);
   }, []);
+
+  const spendGoalFundFormOnSubmit = useCallback((event: FormEvent<HTMLElement>) => {
+    event.preventDefault();
+    events.handleSpendFundsFromGoal();
+  }, [events.handleSpendFundsFromGoal]);
+
+  const spendGoalFundSubmitButtonOnClick = useCallback(() => {
+    events.handleSpendFundsFromGoal();
+  }, [events.handleSpendFundsFromGoal]);
 
   const completeGoalOnClick = useCallback(() => {
   }, []);
@@ -108,7 +119,7 @@ export default () => {
                       <DropdownMenuLabel>Transaction</DropdownMenuLabel>
                       <DropdownMenuGroup>
                         <DropdownMenuItem onClick={() => allocateMoneyOnClick(goal)}>Allocate Money</DropdownMenuItem>
-                        <DropdownMenuItem disabled onClick={spendMoneyOnClick}>Spend Money</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => spendGoalFundButtonOnClick(goal)}>Spend Money</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel>Goal</DropdownMenuLabel>
@@ -191,21 +202,21 @@ export default () => {
               placeholder="Select wallet"
               searchPlaceholder="Search wallet name"
               emptyItemsPlaceholder="No wallets found."
-              value={states.allocationWallet}
-              onChangeValue={states.setAllocationWallet}
+              value={states.newTransactionWallet}
+              onChangeValue={states.setNewTransactionWallet}
               options={states.walletOptions} />
-            {states.allocationWallet?.data!.currentAmount
-              && <span className="text-xs text-muted-foreground">Available: {states.allocationWallet.data!.currentAmount.format()}</span>}
+            {states.newTransactionWallet?.data!.currentAmount
+              && <span className="text-xs text-muted-foreground">Available: {states.newTransactionWallet.data!.currentAmount.format()}</span>}
           </div>
 
           <div className="grid gap-2">
             <Label>Amount</Label>
-            <Input onChange={event => states.setAllocationAmount(event.target.value)} placeholder="Goal's allocation amount" />
+            <Input onChange={event => states.setNewTransactionAmount(event.target.value)} placeholder="Goal's allocation amount" />
           </div>
 
           <div className="grid gap-2">
             <Label>Notes <span className="text-xs text-muted-foreground">Optional</span></Label>
-            <Input onChange={event => states.setAllocationNotes(event.target.value)} placeholder="Goal's allocation notes" />
+            <Input onChange={event => states.setNewTransactionNotes(event.target.value)} placeholder="Goal's allocation notes" />
           </div>
 
           <button className="hidden" type="submit">Submit</button>
@@ -214,6 +225,39 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={allocateOnClick} type="button">Allocate</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.spendDialogIsOpen} onOpenChange={states.setSpendDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Spend from Goal</DialogTitle>
+          <DialogDescription>Deduct money from your selected goal to record a purchase.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={spendGoalFundFormOnSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center">
+            <p className="text-xs text-muted-foreground">Current Balance:</p>
+            <p className="text-2xl font-semibold">{states.newTransactionGoal?.savedAmount.format()}</p>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Amount</Label>
+            <Input onChange={event => states.setNewTransactionAmount(event.target.value)} placeholder="Goal's allocation amount" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Notes <span className="text-xs text-muted-foreground">Optional</span></Label>
+            <Input onChange={event => states.setNewTransactionNotes(event.target.value)} placeholder="Goal's allocation notes" />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={spendGoalFundSubmitButtonOnClick} type="button">Allocate</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

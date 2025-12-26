@@ -3,7 +3,9 @@ import createGoal from '@/features/goals/api/create-goal';
 import fetchGoals from '@/features/goals/api/fetch-goals';
 import useGoalsStates from "@/features/goals/states/goals-states";
 import allocateFundToGoal from '@/features/transactions/api/allocate-funds-to-goal';
+import spendFundsFromGoal from '@/features/transactions/usecases/spend-funds-from-goal';
 import walletRepository from '@/features/wallets/repositories/wallet-repository';
+import useAppCallback from '@/hooks/use-app-callback';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
@@ -52,18 +54,19 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
   const handleAllocateFundToGoal = useCallback(async () => {
     try {
       await allocateFundToGoal({
-        sourceID: states.allocationWallet?.value,
-        destinationID: states.allocationGoal?.id,
-        amount: states.allocationAmount,
-        notes: states.allocationNotes,
+        sourceID: states.newTransactionWallet?.value,
+        destinationID: states.newTransactionGoal?.id,
+        amount: states.newTransactionAmount,
+        notes: states.newTransactionNotes,
       });
 
       handleFetchGoals();
+      handleFetchWalletOptions();
       states.setAllocationDialogIsOpen(false);
-      states.setAllocationGoal(undefined);
-      states.setAllocationWallet(undefined);
-      states.setAllocationNotes("");
-      states.setAllocationAmount("");
+      states.setNewTransactionGoal(undefined);
+      states.setNewTransactionWallet(undefined);
+      states.setNewTransactionNotes("");
+      states.setNewTransactionAmount("");
 
       toast.success("Goal Funded! 🎯", {
         description: "Successfully moved funds from your wallet to your goal."
@@ -73,10 +76,33 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
       else toast.error("Oh no, something went wrong 🤔", { description: "We couldn't allocate the goal. Please try again in a moment." });
     }
   }, [
-    states.allocationWallet,
-    states.allocationGoal,
-    states.allocationAmount,
-    states.allocationNotes,
+    states.newTransactionWallet,
+    states.newTransactionGoal,
+    states.newTransactionAmount,
+    states.newTransactionNotes,
+  ]);
+
+  const handleSpendFundsFromGoal = useAppCallback(async () => {
+    await spendFundsFromGoal({
+      goalID: states.newTransactionGoal?.id,
+      notes: states.newTransactionNotes,
+      amount: states.newTransactionAmount,
+    });
+
+    handleFetchGoals();
+    states.setSpendDialogIsOpen(false);
+    states.setNewTransactionGoal(undefined);
+    states.setNewTransactionWallet(undefined);
+    states.setNewTransactionNotes("");
+    states.setNewTransactionAmount("");
+
+    toast.success("Transaction Complete ✅", {
+      description: "We successfully deducted the amount from your selected goal."
+    });
+  }, [
+    states.newTransactionGoal,
+    states.newTransactionNotes,
+    states.newTransactionAmount,
   ]);
 
   return {
@@ -84,6 +110,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     handleCreateGoal,
     handleFetchWalletOptions,
     handleAllocateFundToGoal,
+    handleSpendFundsFromGoal,
   };
 };
 

@@ -28,8 +28,6 @@ type TransactionListItem = {
     direction: TransactionEntry['direction'];
     amount: TransactionEntry['amount'];
   }[];
-  createdAt: Transaction['createdAt'];
-  updatedAt: Transaction['updatedAt'];
 };
 
 class DB extends Dexie {
@@ -48,4 +46,17 @@ class DB extends Dexie {
 }
 
 const documentDBUtil = new DB();
+
+documentDBUtil.tables.forEach(table => {
+  table.hook('creating', function (_primKey, obj, _transaction) {
+    const now = new Date();
+    obj.createdAt = now;
+    obj.updatedAt = now;
+  });
+
+  table.hook('updating', function (_modifications, _primKey, _obj, _transaction) {
+    return { updatedAt: new Date() };
+  });
+});
+
 export default documentDBUtil;

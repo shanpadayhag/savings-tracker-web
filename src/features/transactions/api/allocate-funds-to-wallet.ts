@@ -1,12 +1,10 @@
 import { AppError } from '@/errors/app-error';
-import TransactionEntry from '@/features/transactions/entities/transaction-entry';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import appDBUtil from '@/utils/app-db-util';
 import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
-import currency from 'currency.js';
 
 type AllocateFundsToWalletParams = {
   sourceID?: string;
@@ -25,37 +23,27 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     "To allocate funds, the amount needs to be a positive number. Please enter a value greater than zero.");
 
   const transactionID = crypto.randomUUID();
-  const now = new Date();
-  const transactionEntry1: TransactionEntry = {
+  const transactionEntry1 = {
     id: crypto.randomUUID(),
     transactionID: transactionID,
     sourceType: TransactionSourceType.External,
     sourceID: null,
     direction: TransactionDirection.From,
     amount: allocatedAmount.value,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: "null"
   };
-  const transactionEntry2: TransactionEntry = {
+  const transactionEntry2 = {
     id: crypto.randomUUID(),
     transactionID: transactionID,
     sourceType: TransactionSourceType.Wallet,
     sourceID: params.sourceID,
     direction: TransactionDirection.To,
     amount: allocatedAmount.value,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: "null"
   };
 
   await appDBUtil.transactions.add({
     id: transactionID,
     type: TransactionType.Allocate,
     notes: null,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: "null"
   });
   await appDBUtil.transaction_entries.add(transactionEntry1);
   await appDBUtil.transaction_entries.add(transactionEntry2);
@@ -78,8 +66,6 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
       direction: transactionEntry2.direction,
       amount: transactionEntry2.amount,
     }],
-    createdAt: now,
-    updatedAt: now
   });
 
   documentDBUtil.wallet_list.update(params.sourceID, {
