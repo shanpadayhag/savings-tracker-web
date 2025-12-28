@@ -17,8 +17,6 @@ type SpendFundsFromGoalParams = {
 };
 
 const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
-  if (!params.notes?.trim()) throw new AppError("Add a Note ✍️", "A quick description will help you remember this transaction later.");
-
   const existingGoal = await documentDBUtil.goal_list.get(params.goalID || "");
   if (!existingGoal) throw new AppError("Goal Not Found 🔍", "We couldn't find this goal. It may have been deleted. Please try refreshing your list.");
 
@@ -32,7 +30,7 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
   const transaction = {
     id: crypto.randomUUID(),
     type: TransactionType.Spend,
-    notes: params.notes,
+    notes: params.notes?.trim() || null,
   };
   const transactionEntry1 = {
     id: crypto.randomUUID(),

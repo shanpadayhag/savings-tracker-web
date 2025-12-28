@@ -29,7 +29,7 @@ export default (props: { children: React.ReactNode; }) => {
               <IconBell className="size-5" /> Notifications <span className="text-muted-foreground text-xs">(Coming Soon)</span>
             </Link>
             <Link href={Routes.UserDisplaySettings} data-active={pathname.startsWith(Routes.UserDisplaySettings)} className="data-[active=true]:bg-sidebar-accent hover:bg-muted rounded-lg px-4 py-2 text-sm flex items-center gap-2">
-              <IconPercentage50 className="size-5" /> Display
+              <IconPercentage50 className="size-5" /> Display <span className="text-muted-foreground text-xs">(Coming Soon)</span>
             </Link>
           </CardContent>
         </Card>

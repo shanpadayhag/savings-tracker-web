@@ -16,6 +16,9 @@ type WalletListItem = Omit<RawWalletListItem, 'currentAmount'> & {
   currentAmount: number;
 };
 
+// Add new properties, which should follow
+// the transaction list item object. So that there's no need
+// for unnecessary formatting.
 type TransactionListItem = {
   id?: Transaction['id'];
   type: Transaction['type'];
@@ -28,6 +31,8 @@ type TransactionListItem = {
     direction: TransactionEntry['direction'];
     amount: TransactionEntry['amount'];
   }[];
+  createdAt?: Transaction['createdAt'];
+  updatedAt?: Transaction['updatedAt'];
 };
 
 class DB extends Dexie {
@@ -40,7 +45,7 @@ class DB extends Dexie {
     this.version(1).stores({
       wallet_list: "id",
       goal_list: "id, status",
-      transaction_list: "id, createdAt",
+      transaction_list: "id, [createdAt+id]",
     });
   }
 }

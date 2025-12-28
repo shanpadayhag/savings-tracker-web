@@ -3,7 +3,7 @@
 import { Badge } from '@/components/atoms/badge';
 import { Input } from '@/components/atoms/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
-import { transactionTypeLabel } from '@/features/transactions/enums/transaction-type';
+import TransactionType, { transactionTypeLabel } from '@/features/transactions/enums/transaction-type';
 import useTransactionsEvents from '@/features/transactions/events/use-transactions-events';
 import useTransactionsStates from '@/features/transactions/states/use-transactions-states';
 import dateUtil from '@/utils/date-util';
@@ -47,7 +47,10 @@ export default () => {
               ? <>{states.transactions.map(transaction => <TableRow key={transaction.id}>
                 <TableCell></TableCell>
                 <TableCell className="py-4">{dateUtil.formatDisplayDate(transaction.createdAt)}</TableCell>
-                <TableCell><Badge>{transactionTypeLabel[transaction.type]}</Badge></TableCell>
+                <TableCell>
+                  {transaction.type === TransactionType.Allocate && <Badge variant="default">{transactionTypeLabel[transaction.type]}</Badge>}
+                  {transaction.type === TransactionType.Spend && <Badge variant="secondary">{transactionTypeLabel[transaction.type]}</Badge>}
+                </TableCell>
                 <TableCell>{transaction.from || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
                 <TableCell>{transaction.to || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
                 {/* <TableCell>{transaction.amount.length > 1
