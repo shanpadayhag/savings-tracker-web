@@ -8,7 +8,7 @@ import currency from 'currency.js';
 import Dexie from 'dexie';
 
 type Cursor = {
-  createdAt: Date;
+  reversedCreatedAt: number;
   id: TransactionListItem['id'];
   direction: 'next' | 'prev';
 };
@@ -25,27 +25,47 @@ type GetTransactionsResult = {
   nextCursor?: Cursor | null;
 };
 
+// queryTransactionRepository
+// mapToTransactionListItem
+// calculatePaginationCursors
+// parseTransactionEntries
+// isFeeEntry
+
+// const getTransactions = async (params) => {
+//   // 1. Fetch
+//   const { rawItems, hasMore } = await queryTransactionRepository(params);
+
+//   // 2. Map (Business Logic)
+//   const items = rawItems.map(mapToTransactionListItem);
+
+//   // 3. Calculate State
+//   const cursors = calculatePaginationCursors(rawItems, params, hasMore);
+
+//   return { items, ...cursors };
+// };
+
 const isSystemType = (type: TransactionEntry['sourceType']) =>
   type === TransactionSourceType.Internal ||
   type === TransactionSourceType.External;
 
 const getTransactions = async (params: GetTransactionsParams): Promise<GetTransactionsResult> => {
   const direction = params.cursor?.direction || "next";
+  const reversedCreatedAt = params.cursor?.reversedCreatedAt;
   const collection = await documentDBUtil.transaction_list
-    .where("[createdAt+id]");
+    .where("[reversedCreatedAt+id]");
 
   let query;
   if (params.cursor && params.cursor.direction === "prev") {
     query = collection.between(
       [Dexie.minKey, Dexie.minKey],
-      [params.cursor.createdAt, params.cursor.id],
+      [reversedCreatedAt, params.cursor.id],
       true, false
     ).reverse();
   }
   else {
     query = collection.between(
       params.cursor
-        ? [params.cursor.createdAt, params.cursor.id]
+        ? [reversedCreatedAt, params.cursor.id]
         : [Dexie.minKey, Dexie.minKey],
       [Dexie.maxKey, Dexie.maxKey],
       !params.cursor, true
@@ -116,14 +136,14 @@ const getTransactions = async (params: GetTransactionsParams): Promise<GetTransa
     const hasPrev = !!params.cursor;
     if (hasNext) {
       nextCursor = {
-        createdAt: rawTransactionList[rawTransactionList.length - 1].createdAt!,
+        reversedCreatedAt: rawTransactionList[rawTransactionList.length - 1].reversedCreatedAt!,
         id: rawTransactionList[rawTransactionList.length - 1].id,
         direction: "next",
       };
     }
     if (hasPrev) {
       prevCursor = {
-        createdAt: rawTransactionList[0].createdAt!,
+        reversedCreatedAt: rawTransactionList[0].reversedCreatedAt!,
         id: rawTransactionList[0].id,
         direction: "prev",
       };
@@ -135,14 +155,14 @@ const getTransactions = async (params: GetTransactionsParams): Promise<GetTransa
     const hasPrev = hasMore;
     if (hasNext) {
       nextCursor = {
-        createdAt: rawTransactionList[rawTransactionList.length - 1].createdAt!,
+        reversedCreatedAt: rawTransactionList[rawTransactionList.length - 1].reversedCreatedAt!,
         id: rawTransactionList[rawTransactionList.length - 1].id!,
         direction: "next",
       };
     }
     if (hasPrev) {
       prevCursor = {
-        createdAt: rawTransactionList[0].createdAt!,
+        reversedCreatedAt: rawTransactionList[0].reversedCreatedAt!,
         id: rawTransactionList[0].id!,
         direction: "prev",
       };

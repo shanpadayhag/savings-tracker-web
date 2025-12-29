@@ -33,6 +33,7 @@ type TransactionListItem = {
   }[];
   createdAt?: Transaction['createdAt'];
   updatedAt?: Transaction['updatedAt'];
+  reversedCreatedAt?: number;
 };
 
 class DB extends Dexie {
@@ -45,7 +46,7 @@ class DB extends Dexie {
     this.version(1).stores({
       wallet_list: "id",
       goal_list: "id, status",
-      transaction_list: "id, [createdAt+id]",
+      transaction_list: "id, [reversedCreatedAt+id]",
     });
   }
 }
@@ -55,8 +56,9 @@ const documentDBUtil = new DB();
 documentDBUtil.tables.forEach(table => {
   table.hook('creating', function (_primKey, obj, _transaction) {
     const now = new Date();
-    obj.createdAt = now;
-    obj.updatedAt = now;
+    if (!obj.createdAt) obj.createdAt = now;
+    if (!obj.updatedAt) obj.updatedAt = now;
+    if (table.name === "transaction_list") obj.reversedCreatedAt = now.getTime() * -1;
   });
 
   table.hook('updating', function (_modifications, _primKey, _obj, _transaction) {
