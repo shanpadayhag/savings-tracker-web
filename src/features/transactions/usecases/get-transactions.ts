@@ -25,6 +25,7 @@ type GetTransactionsResult = {
   nextCursor?: Cursor | null;
 };
 
+// For future reference when doing cleanup:
 // queryTransactionRepository
 // mapToTransactionListItem
 // calculatePaginationCursors
