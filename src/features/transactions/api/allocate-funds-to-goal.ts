@@ -60,6 +60,7 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     sourceID: sourceWallet.id,
     direction: TransactionDirection.From,
     amount: transactionAmount.value,
+    currency: sourceWallet.currency,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -68,6 +69,7 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     sourceID: destinationGoal.id,
     direction: TransactionDirection.To,
     amount: transactionAmount.value,
+    currency: sourceWallet.currency,
   };
 
   await appDBUtil.transactions.add({

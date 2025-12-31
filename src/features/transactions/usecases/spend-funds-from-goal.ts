@@ -39,6 +39,7 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
     sourceID: existingGoal.id,
     direction: TransactionDirection.From,
     amount: paramsAmount.value,
+    currency: existingGoal.currency,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -47,6 +48,7 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
     sourceID: null,
     direction: TransactionDirection.To,
     amount: paramsAmount.value,
+    currency: existingGoal.currency,
   };
 
   await appDBUtil.transactions.add(transaction);

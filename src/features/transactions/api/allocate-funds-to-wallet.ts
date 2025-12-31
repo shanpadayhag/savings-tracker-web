@@ -30,6 +30,7 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     sourceID: null,
     direction: TransactionDirection.From,
     amount: allocatedAmount.value,
+    currency: wallet.currency,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -38,6 +39,7 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     sourceID: params.sourceID,
     direction: TransactionDirection.To,
     amount: allocatedAmount.value,
+    currency: wallet.currency,
   };
 
   await appDBUtil.transactions.add({

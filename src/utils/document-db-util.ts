@@ -58,7 +58,7 @@ documentDBUtil.tables.forEach(table => {
     const now = new Date();
     if (!obj.createdAt) obj.createdAt = now;
     if (!obj.updatedAt) obj.updatedAt = now;
-    if (table.name === "transaction_list") obj.reversedCreatedAt = now.getTime() * -1;
+    if (table.name === "transaction_list" && !obj.reversedCreatedAt) obj.reversedCreatedAt = now.getTime() * -1;
   });
 
   table.hook('updating', function (_modifications, _primKey, _obj, _transaction) {

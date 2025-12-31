@@ -6,8 +6,14 @@ import User from '@/features/user/entities/user-old';
 import Wallet from '@/features/wallets/entities/wallet';
 import Dexie from 'dexie';
 
-type Transaction = Omit<RawTransaction, 'createdAt' | 'updatedAt' | 'deletedAt'>;
-type TransactionEntry = Omit<RawTransactionEntry, 'createdAt' | 'updatedAt' | 'deletedAt'>;
+type Transaction = Omit<RawTransaction, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+type TransactionEntry = Omit<RawTransactionEntry, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 
 class DB extends Dexie {
   users!: Dexie.Table<User, "singleton">;
@@ -25,7 +31,7 @@ class DB extends Dexie {
       goals: "id",
       goal_versions: "id, [goalID+createdAt]",
       transactions: "id",
-      transaction_entries: "id",
+      transaction_entries: "id, transactionID",
     });
   }
 }
