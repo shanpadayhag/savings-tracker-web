@@ -6,9 +6,11 @@ import documentDBUtil from '@/utils/document-db-util';
 import currency from 'currency.js';
 
 type CreateGoalParameters = {
-  name: string,
-  targetAmount: string,
+  name: string;
+  targetAmount: string;
   currency: Currency | undefined;
+  status?: GoalStatus;
+  createdAt?: Date;
 };
 
 const createGoal = async (params: CreateGoalParameters): Promise<void> => {
@@ -20,14 +22,12 @@ const createGoal = async (params: CreateGoalParameters): Promise<void> => {
 
   const goalID = crypto.randomUUID();
   const goalVersionID = crypto.randomUUID();
-  const now = new Date();
 
   await appDBUtil.goals.add({
     id: goalID,
-    status: GoalStatus.Active,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: "null"
+    status: params.status || GoalStatus.Active,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   });
   await appDBUtil.goal_versions.add({
     id: goalVersionID,
@@ -35,9 +35,8 @@ const createGoal = async (params: CreateGoalParameters): Promise<void> => {
     name: params.name,
     targetAmount: targetAmount.value,
     currency: params.currency,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: "null"
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   });
   await documentDBUtil.goal_list.add({
     id: goalID,
@@ -47,10 +46,10 @@ const createGoal = async (params: CreateGoalParameters): Promise<void> => {
     savedAmount: 0,
     savedPercent: 0,
     remainingAmount: 0,
-    status: GoalStatus.Active,
+    status: params.status || GoalStatus.Active,
     currency: params.currency,
-    createdAt: now,
-    updatedAt: now
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   });
 };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/atoms/dropdown-menu';
@@ -11,8 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import Combobox from '@/components/molecules/combobox';
 import Currency, { currencyLabel } from '@/enums/currency';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
+import GoalStatus, { goalStatusLabel } from '@/features/goals/enums/goal-status';
 import useGoalsEvents from '@/features/goals/events/goals-events';
 import useGoalsStates from '@/features/goals/states/goals-states';
+import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { FormEvent, useCallback, useEffect } from 'react';
@@ -88,6 +91,7 @@ export default () => {
               <TableHead><span className="sr-only">Drag</span></TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Target Amount</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Progress</TableHead>
               <TableHead>Saved Amount</TableHead>
               <TableHead>Remaining Amount</TableHead>
@@ -100,6 +104,18 @@ export default () => {
                 <TableCell></TableCell>
                 <TableCell className="py-4">{goal.name}</TableCell>
                 <TableCell className="py-4">{goal.targetAmount.format()}</TableCell>
+                <TableCell className="py-4">
+                  <Badge className={cn('border-none focus-visible:outline-none',
+                    goal.status === GoalStatus.Active && 'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
+                    goal.status === GoalStatus.Completed && 'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5',
+                    goal.status === GoalStatus.Archived && 'bg-red-600/10 text-red-600 focus-visible:ring-red-600/20 dark:focus-visible:ring-red-600/40 [a&]:hover:bg-red-600/5',)}>
+                    <span className={cn('size-1.5 rounded-full',
+                      goal.status === GoalStatus.Active && 'bg-green-600 dark:bg-green-400',
+                      goal.status === GoalStatus.Completed && 'bg-amber-600 dark:bg-amber-400',
+                      goal.status === GoalStatus.Archived && 'bg-red-600 dark:bg-red-400')} aria-hidden='true' />
+                    {goalStatusLabel[goal.status]}
+                  </Badge>
+                </TableCell>
                 <TableCell className="py-4"><span className="flex items-center gap-2">
                   <Progress value={goal.savedPercent.value} className="w-30" />
                   {goal.savedPercent.format()}

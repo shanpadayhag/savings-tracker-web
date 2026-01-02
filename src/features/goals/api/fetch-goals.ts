@@ -7,6 +7,7 @@ const fetchGoals = async (): Promise<GoalListItem[]> => {
   const goalList = await documentDBUtil.goal_list
     .where('status').anyOf([GoalStatus.Active, GoalStatus.Completed])
     .reverse().sortBy("updatedAt");
+  const now = new Date();
 
   return goalList.map(goalListItem => ({
     id: goalListItem.id,
@@ -18,8 +19,8 @@ const fetchGoals = async (): Promise<GoalListItem[]> => {
     remainingAmount: currencyUtil.parse(goalListItem.remainingAmount, goalListItem.currency),
     status: goalListItem.status,
     currency: goalListItem.currency,
-    createdAt: goalListItem.createdAt,
-    updatedAt: goalListItem.createdAt,
+    createdAt: goalListItem.createdAt || now,
+    updatedAt: goalListItem.createdAt || now,
   }));
 };
 

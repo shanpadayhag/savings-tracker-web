@@ -5,15 +5,19 @@ import TransactionEntry from '@/features/transactions/entities/transaction-entry
 import RawWalletListItem from '@/features/wallets/entities/wallet-list-item';
 import Dexie from 'dexie';
 
-type GoalListItem = Omit<RawGoalListItem, 'targetAmount' | 'savedAmount' | 'savedPercent' | 'remainingAmount'> & {
+type GoalListItem = Omit<RawGoalListItem, 'targetAmount' | 'savedAmount' | 'savedPercent' | 'remainingAmount' | 'createdAt' | 'updatedAt'> & {
   targetAmount: number;
   savedAmount: number;
   savedPercent: number;
   remainingAmount: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
-type WalletListItem = Omit<RawWalletListItem, 'currentAmount'> & {
+type WalletListItem = Omit<RawWalletListItem, 'currentAmount' | 'createdAt' | 'updatedAt'> & {
   currentAmount: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 // Add new properties, which should follow
