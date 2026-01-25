@@ -39,7 +39,7 @@ const useWalletsEvents = (states: ReturnType<typeof useWalletsStates>) => {
   const handleAllocateFundsToWallet = useCallback(async () => {
     try {
       await allocateFundsToWallet({
-        sourceID: states.selectedWallet?.id,
+        walletID: states.selectedWallet?.id,
         amount: states.allocateAmount,
       });
 

@@ -2,8 +2,11 @@
 
 import Currency from '@/enums/currency';
 import createGoal from '@/features/goals/api/create-goal';
+import allocateFundsToGoal from '@/features/transactions/api/allocate-funds-to-goal';
+import allocateFundsToWallet from '@/features/transactions/api/allocate-funds-to-wallet';
 import createWallet from '@/features/wallets/api/create-wallet';
 import appDBUtil from '@/utils/app-db-util';
+import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
 import Dexie from 'dexie';
 import { useSearchParams } from 'next/navigation';
@@ -74,7 +77,7 @@ export default () => {
       await appDBUtil.goal_versions.clear();
       await documentDBUtil.goal_list.clear();
 
-      await createWallet({
+      const walletID = await createWallet({
         name: walletName,
         currency: walletCurrency,
       });
@@ -86,7 +89,36 @@ export default () => {
           targetAmount: goal.targetAmount.toString(),
           status: goal.status,
           currency: walletCurrency,
+          createdAt: goal.createdAt
         });
+      }
+
+      let currencyUtilParseFormatSetttings;
+      if (walletCurrency === 'EURO') {
+        currencyUtilParseFormatSetttings = { pattern: "#", negativePattern: "#", decimal: ',', separator: '.' };
+      } else {
+        currencyUtilParseFormatSetttings = { pattern: "#", negativePattern: "#", decimal: '.', separator: ',' };
+      }
+
+      const transactions = await tempDB.transactionList.toCollection().toArray();
+      for (const transaction of transactions) {
+        if (transaction.type === 'account_adjustment') {
+          await allocateFundsToWallet({
+            walletID: walletID,
+            amount: currencyUtil.parse(transaction.accountAdjustment!.amount, walletCurrency).format(currencyUtilParseFormatSetttings),
+            createdAt: new Date(transaction.createdAt!),
+          });
+        } else if (transaction.type === 'goal_allocation') {
+        //   await allocateFundsToGoal({
+        //     sourceID: walletID,
+        //     destinationID: ,
+        //     amount: currencyUtil.parse(transaction.accountAdjustment!.amount, walletCurrency).format(currencyUtilParseFormatSetttings),
+        //     notes: transaction.description || '',
+        //     createdAt: ,
+        //   })
+        } else { // goal_expense
+
+        }
       }
     })();
   }, []);

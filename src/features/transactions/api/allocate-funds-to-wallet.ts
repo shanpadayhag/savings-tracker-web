@@ -7,13 +7,14 @@ import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
 
 type AllocateFundsToWalletParams = {
-  sourceID?: string;
+  walletID?: string;
   amount: string;
+  createdAt?: Date;
 };
 
 const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
-  const wallet = await documentDBUtil.wallet_list.get(params.sourceID || "");
-  if (!wallet || !params.sourceID) throw new AppError(
+  const wallet = await documentDBUtil.wallet_list.get(params.walletID || "");
+  if (!wallet || !params.walletID) throw new AppError(
     "Hmm, Wallet Not Found... 🧐",
     "The wallet you're trying to send funds from doesn't seem to exist. Please check your selection and try again.");
 
@@ -31,21 +32,27 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     direction: TransactionDirection.From,
     amount: allocatedAmount.value,
     currency: wallet.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
     transactionID: transactionID,
     sourceType: TransactionSourceType.Wallet,
-    sourceID: params.sourceID,
+    sourceID: params.walletID,
     direction: TransactionDirection.To,
     amount: allocatedAmount.value,
     currency: wallet.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   };
 
   await appDBUtil.transactions.add({
     id: transactionID,
     type: TransactionType.Allocate,
     notes: null,
+    createdAt: params?.createdAt,
+    updatedAt: params.createdAt,
   });
   await appDBUtil.transaction_entries.add(transactionEntry1);
   await appDBUtil.transaction_entries.add(transactionEntry2);
@@ -68,9 +75,13 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
       direction: transactionEntry2.direction,
       amount: transactionEntry2.amount,
     }],
+    createdAt: params.createdAt,
+    reversedCreatedAt: params?.createdAt
+      ? params.createdAt.getTime() * -1
+      : undefined
   });
 
-  documentDBUtil.wallet_list.update(params.sourceID, {
+  documentDBUtil.wallet_list.update(params.walletID, {
     currentAmount: currencyUtil.parse(wallet.currentAmount, wallet.currency)
       .add(transactionEntry2.amount).value
   });

@@ -91,7 +91,7 @@ export default () => {
               <TableHead><span className="sr-only">Drag</span></TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Target Amount</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="text-center">Status</TableHead>
               <TableHead>Progress</TableHead>
               <TableHead>Saved Amount</TableHead>
               <TableHead>Remaining Amount</TableHead>
@@ -104,7 +104,7 @@ export default () => {
                 <TableCell></TableCell>
                 <TableCell className="py-4">{goal.name}</TableCell>
                 <TableCell className="py-4">{goal.targetAmount.format()}</TableCell>
-                <TableCell className="py-4">
+                <TableCell className="py-4 text-center">
                   <Badge className={cn('border-none focus-visible:outline-none',
                     goal.status === GoalStatus.Active && 'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
                     goal.status === GoalStatus.Completed && 'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5',

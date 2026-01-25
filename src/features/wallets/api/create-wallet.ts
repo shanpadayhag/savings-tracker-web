@@ -9,7 +9,7 @@ type CreateWalletParams = {
   currency: Currency | undefined;
 };
 
-const createWallet = async (params: CreateWalletParams) => {
+const createWallet = async (params: CreateWalletParams): Promise<Wallet['id']> => {
   const walletName = params.name.trim();
 
   if (!walletName) throw new AppError(
@@ -38,6 +38,8 @@ const createWallet = async (params: CreateWalletParams) => {
     createdAt: now,
     updatedAt: now,
   });
+
+  return walletID;
 };
 
 export default createWallet;

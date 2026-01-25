@@ -12,6 +12,7 @@ type AllocateFundToGoalParams = {
   destinationID?: string;
   amount: string;
   notes: string;
+  createdAt?: Date;
 };
 
 const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
@@ -61,6 +62,8 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     direction: TransactionDirection.From,
     amount: transactionAmount.value,
     currency: sourceWallet.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -70,12 +73,16 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     direction: TransactionDirection.To,
     amount: transactionAmount.value,
     currency: sourceWallet.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   };
 
   await appDBUtil.transactions.add({
     id: transactionID,
     type: TransactionType.Allocate,
     notes: params.notes,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   });
   await appDBUtil.transaction_entries.add(transactionEntry1);
   await appDBUtil.transaction_entries.add(transactionEntry2);
@@ -98,6 +105,10 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
       direction: transactionEntry2.direction,
       amount: transactionEntry2.amount
     }],
+    createdAt: params.createdAt,
+    reversedCreatedAt: params?.createdAt
+      ? params.createdAt.getTime() * -1
+      : undefined
   });
 
   const sourceWalletCurrentAmount = currencyUtil.parse(

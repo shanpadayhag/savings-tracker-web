@@ -53,9 +53,9 @@ const appDBUtil = new DB();
 appDBUtil.tables.forEach(table => {
   table.hook('creating', function (_primKey, obj, _transaction) {
     const now = new Date();
-    obj.createdAt = now;
-    obj.updatedAt = now;
-    obj.deletedAt = "null";
+    if (!obj.createdAt) obj.createdAt = now;
+    if (!obj.updatedAt) obj.updatedAt = now;
+    if (!obj.deletedAt) obj.deletedAt = "null";
   });
 
   table.hook('updating', function (_modifications, _primKey, _obj, _transaction) {
