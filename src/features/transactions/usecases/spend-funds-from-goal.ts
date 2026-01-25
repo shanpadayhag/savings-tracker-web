@@ -13,7 +13,7 @@ type SpendFundsFromGoalParams = {
   goalID?: Goal['id'];
   notes: Transaction['notes'];
   amount: string;
-  dateTime?: Date;
+  createdAt?: Date;
 };
 
 const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
@@ -31,6 +31,8 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
     id: crypto.randomUUID(),
     type: TransactionType.Spend,
     notes: params.notes?.trim() || null,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   };
   const transactionEntry1 = {
     id: crypto.randomUUID(),
@@ -40,6 +42,8 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
     direction: TransactionDirection.From,
     amount: paramsAmount.value,
     currency: existingGoal.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -49,6 +53,8 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
     direction: TransactionDirection.To,
     amount: paramsAmount.value,
     currency: existingGoal.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   };
 
   await appDBUtil.transactions.add(transaction);
@@ -74,6 +80,11 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
       direction: transactionEntry2.direction,
       amount: transactionEntry2.amount,
     }],
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+    reversedCreatedAt: params?.createdAt
+      ? params.createdAt.getTime() * -1
+      : undefined
   });
 
   await documentDBUtil.goal_list.update(existingGoal.id!, {

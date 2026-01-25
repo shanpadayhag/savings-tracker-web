@@ -106,6 +106,7 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
       amount: transactionEntry2.amount
     }],
     createdAt: params.createdAt,
+    updatedAt: params.createdAt,
     reversedCreatedAt: params?.createdAt
       ? params.createdAt.getTime() * -1
       : undefined

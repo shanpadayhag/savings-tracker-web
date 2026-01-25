@@ -4,9 +4,11 @@ import Currency from '@/enums/currency';
 import createGoal from '@/features/goals/api/create-goal';
 import allocateFundsToGoal from '@/features/transactions/api/allocate-funds-to-goal';
 import allocateFundsToWallet from '@/features/transactions/api/allocate-funds-to-wallet';
+import spendFundsFromGoal from '@/features/transactions/usecases/spend-funds-from-goal';
 import createWallet from '@/features/wallets/api/create-wallet';
 import appDBUtil from '@/utils/app-db-util';
 import currencyUtil from '@/utils/currency-util';
+import dateUtil from '@/utils/date-util';
 import documentDBUtil from '@/utils/document-db-util';
 import Dexie from 'dexie';
 import { useSearchParams } from 'next/navigation';
@@ -76,16 +78,27 @@ export default () => {
       await appDBUtil.goals.clear();
       await appDBUtil.goal_versions.clear();
       await documentDBUtil.goal_list.clear();
+      await documentDBUtil.transaction_list.clear();
 
       const walletID = await createWallet({
         name: walletName,
         currency: walletCurrency,
       });
 
+      const goalNameMap = new Map();
       const goals = await tempDB.goalList.toCollection().toArray();
+      let goalName = '';
       for (const goal of goals) {
+        if (goalNameMap.has(goal.name)) {
+          goalNameMap.set(`${goal.name} [${dateUtil.toTimestampString(goal.createdAt)}]`, goal.id);
+          goalName = `${goal.name} [${dateUtil.toTimestampString(goal.createdAt)}]`;
+        } else {
+          goalNameMap.set(goal.name, goal.id);
+          goalName = goal.name;
+        }
+
         await createGoal({
-          name: goal.name,
+          name: goalName,
           targetAmount: goal.targetAmount.toString(),
           status: goal.status,
           currency: walletCurrency,
@@ -109,15 +122,26 @@ export default () => {
             createdAt: new Date(transaction.createdAt!),
           });
         } else if (transaction.type === 'goal_allocation') {
-        //   await allocateFundsToGoal({
-        //     sourceID: walletID,
-        //     destinationID: ,
-        //     amount: currencyUtil.parse(transaction.accountAdjustment!.amount, walletCurrency).format(currencyUtilParseFormatSetttings),
-        //     notes: transaction.description || '',
-        //     createdAt: ,
-        //   })
-        } else { // goal_expense
+          const goalNameKey = [...goalNameMap].find(([k, v]) => v === transaction.goalActivity!.goalID)?.[0];
+          const newGoal = (await appDBUtil.goal_versions.where("name").equals(goalNameKey).toArray())[0];
 
+          await allocateFundsToGoal({
+            sourceID: walletID,
+            destinationID: newGoal.goalID,
+            amount: currencyUtil.parse(transaction.goalActivity!.amount, walletCurrency).format(currencyUtilParseFormatSetttings),
+            notes: transaction.description || '',
+            createdAt: new Date(transaction.createdAt!),
+          });
+        } else { // goal_expense
+          const goalNameKey = [...goalNameMap].find(([k, v]) => v === transaction.goalActivity!.goalID)?.[0];
+          const newGoal = (await appDBUtil.goal_versions.where("name").equals(goalNameKey).toArray())[0];
+
+          await spendFundsFromGoal({
+            goalID: newGoal.goalID,
+            notes: transaction.description || '',
+            amount: currencyUtil.parse(transaction.goalActivity!.amount, walletCurrency).format(currencyUtilParseFormatSetttings),
+            createdAt: new Date(transaction.createdAt!),
+          })
         }
       }
     })();
