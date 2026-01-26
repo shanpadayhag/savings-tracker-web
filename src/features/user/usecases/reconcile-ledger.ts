@@ -65,8 +65,8 @@ const reconcileLedger = async () => {
             if (goalListItem && transactionEntry.direction === "to") {
               const newSavedAmount = currencyUtil.parse(transactionEntry.amount, goalListItem.currency)
                 .add(goalListItem.savedAmount);
-              const newSavedPercent = newSavedAmount.divide(goalListItem.targetAmount)
-                .multiply(100);
+              const newSavedPercent = newSavedAmount.multiply(100)
+                .divide(goalListItem.targetAmount);
               const newRemainingAmount = newSavedAmount.subtract(goalListItem.targetAmount)
                 .multiply(-1);
 
@@ -79,8 +79,8 @@ const reconcileLedger = async () => {
               const newSavedAmount = currencyUtil.parse(transactionEntry.amount, goalListItem.currency)
                 .multiply(-1)
                 .add(goalListItem.savedAmount);
-              const newSavedPercent = newSavedAmount.divide(goalListItem.targetAmount)
-                .multiply(100);
+              const newSavedPercent = newSavedAmount.multiply(100)
+                .divide(goalListItem.targetAmount);
               const newRemainingAmount = newSavedAmount.subtract(goalListItem.targetAmount)
                 .multiply(-1);
 

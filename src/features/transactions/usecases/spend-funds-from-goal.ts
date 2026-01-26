@@ -1,4 +1,3 @@
-import Currency from '@/enums/currency';
 import { AppError } from '@/errors/app-error';
 import Goal from '@/features/goals/entities/goal';
 import Transaction from '@/features/transactions/entities/transaction';
@@ -89,7 +88,7 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
 
   await documentDBUtil.goal_list.update(existingGoal.id!, {
     savedAmount: newSavedAmount.value,
-    savedPercent: newSavedAmount.divide(existingGoal.targetAmount).multiply(100).value,
+    savedPercent: newSavedAmount.multiply(100).divide(existingGoal.targetAmount).value,
     remainingAmount: newSavedAmount.subtract(existingGoal.targetAmount).multiply(-1).value,
   });
 };
