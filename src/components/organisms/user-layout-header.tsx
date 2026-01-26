@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { Separator } from "@/components/atoms/separator";
 import { SidebarTrigger } from "@/components/atoms/sidebar";
-import { Combobox } from '@/components/molecules/combobox';
+import Combobox from '@/components/molecules/combobox';
 import UserLayoutProfileMenu from '@/components/molecules/user-layout-profile-menu';
 import Routes from '@/enums/routes';
 import { IconBell, IconMoon, IconSettings } from '@tabler/icons-react';

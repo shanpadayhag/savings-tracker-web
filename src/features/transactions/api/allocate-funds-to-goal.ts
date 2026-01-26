@@ -1,84 +1,135 @@
 import { AppError } from '@/errors/app-error';
-import calculateAllocatedBalance from '@/features/calculations/api/calculate-allocated-balance';
-import calculateRemainingBalance from '@/features/calculations/api/calculate-remaining-balance';
-import type GoalListItem from '@/features/goals/entities/goal-list-item';
-import updateGoalAndLogTransaction from '@/features/transactions/api/update-goal-and-log-transaction';
-import type TransactionListItem from '@/features/transactions/entities/transaction-list-item';
+import TransactionDirection from '@/features/transactions/enums/transaction-direction';
+import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import TransactionType from '@/features/transactions/enums/transaction-type';
-import User from '@/features/user/entities/user';
-import { db } from '@/lib/utils';
+import appDBUtil from '@/utils/app-db-util';
+import currencyUtil from '@/utils/currency-util';
+import documentDBUtil from '@/utils/document-db-util';
+import Dexie from 'dexie';
 
-type AllocateFundsToGoalParameters = {
-  goalID: GoalListItem['id'];
-  description: TransactionListItem['description'];
-  amount: number;
-  transactionDate?: Date;
+type AllocateFundToGoalParams = {
+  sourceID?: string;
+  destinationID?: string;
+  amount: string;
+  notes: string;
+  createdAt?: Date;
 };
 
-type UpdateUserFundsParameters = {
-  user: User;
-};
+const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
+  const sourceWallet = await appDBUtil.wallets.get(params.sourceID || "");
+  if (!sourceWallet) throw new AppError(
+    "Source Wallet Not Found... 🕵️",
+    "We couldn't locate the wallet you are trying to pull funds from. Please select a valid wallet.");
+  const destinationGoal = await appDBUtil.goals.get(params.destinationID || "");
+  if (!destinationGoal) throw new AppError(
+    "Goal Not Found... 🔭",
+    "The goal you are trying to fund doesn't seem to exist anymore.");
+  const destinationGoalVersion = await appDBUtil.goal_versions
+    .where("[goalID+createdAt]").between(
+      [destinationGoal.id, Dexie.minKey],
+      [destinationGoal.id, Dexie.maxKey]
+    ).last();
+  if (!destinationGoalVersion) throw new AppError(
+    "Goal History Missing 📉",
+    "We found the goal, but we can't retrieve its currency details. Please try again.");
+  const walletListItem = await documentDBUtil.wallet_list.get(sourceWallet.id);
+  if (!walletListItem) throw new AppError(
+    "Wallet Data Glitch 👾",
+    "We found the wallet, but some details are missing. Please try refreshing or re-syncing.");
+  if (walletListItem.currency !== destinationGoalVersion.currency)
+    throw new AppError(
+      "Currencies Don't Match 💱",
+      "The wallet and the goal use different currencies. You can only allocate funds between matching currencies.");
+  if (walletListItem.currentAmount < currencyUtil.parse(params.amount, destinationGoalVersion.currency).value)
+    throw new AppError(
+      "Short on Funds... 😬",
+      "You don't have enough balance in this wallet for this transaction. Please lower the amount.");
+  const goalListItem = await documentDBUtil.goal_list.get(destinationGoal.id);
+  if (!goalListItem) throw new AppError(
+    "Goal Data Glitch 🧩",
+    "We see the goal, but the display data is incomplete. Please try refreshing.");
+  const transactionAmount = currencyUtil.parse(params.amount, destinationGoalVersion.currency);
+  if (transactionAmount.value <= 0) throw new AppError(
+    "Need a Positive Amount! 🪙",
+    "You can't allocate zero or negative funds to a goal. Please enter a value greater than zero.");
 
-/**
- * This is a private helper function designed to update the user's financial
- * summary within a larger database transaction to ensure data integrity.
- * @private
- * @param {UpdateUserFundsParameters} params - The parameters for the update.
- * @param {User} params.user - The user with updated financial summary details.
- * @returns {Promise<number>} A promise that resolves with the number of updated records (typically 1).
- * @throws {Error} If the singleton user record cannot be found.
- */
-const updateUserFunds = async ({ user }: UpdateUserFundsParameters) => {
-  return db.user.update('singleton', {
-    financialSummary: user.financialSummary,
+  const transactionID = crypto.randomUUID();
+  const transactionEntry1 = {
+    id: crypto.randomUUID(),
+    transactionID: transactionID,
+    sourceType: TransactionSourceType.Wallet,
+    sourceID: sourceWallet.id,
+    direction: TransactionDirection.From,
+    amount: transactionAmount.value,
+    currency: sourceWallet.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+  };
+  const transactionEntry2 = {
+    id: crypto.randomUUID(),
+    transactionID: transactionID,
+    sourceType: TransactionSourceType.Goal,
+    sourceID: destinationGoal.id,
+    direction: TransactionDirection.To,
+    amount: transactionAmount.value,
+    currency: sourceWallet.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+  };
+
+  await appDBUtil.transactions.add({
+    id: transactionID,
+    type: TransactionType.Allocate,
+    notes: params.notes,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
   });
-};
-
-
-/**
- * Allocates funds to a savings goal by logging the transaction, updating the
- * goal's balance, and adjusting the user's total available funds.
- * All operations are performed within a single atomic transaction.
- *
- * @param {AllocateFundsToGoalParameters} params - The details for the allocation.
- * @returns {Promise<void>} A promise that resolves when the allocation is complete.
- * @throws {Error} If the description is empty, the amount is not positive, or a database error occurs.
- */
-const allocateFundsToGoal = async ({
-  goalID,
-  description,
-  amount,
-  transactionDate = new Date(),
-}: AllocateFundsToGoalParameters): Promise<void> => {
-  if (amount <= 0) throw new AppError("Boost Your Goal 📈", "Please enter an amount greater than zero to move closer to your target.");
-
-  const user = await db.user.get('singleton');
-  if (!user)throw new AppError("Let's Find You 🤔", "We can't find an account with those details. Please check them and try again.");
-
-  const existingGoal = await db.goalList.get(goalID!);
-  if (!existingGoal) throw new AppError("Goal Not Found 🔍", "We couldn't find this goal. It may have been deleted. Please try refreshing your list.");
-
-  const newSavedAmount = calculateAllocatedBalance(existingGoal.currentAmount, amount).value;
-  if (newSavedAmount > existingGoal.targetAmount) throw new AppError("Not Enough to Move 😬", "There aren't enough funds available to make this allocation. Please adjust the amount or add funds to your main account first.");
-
-  const newAvailableFunds = calculateRemainingBalance(user.financialSummary.totalAvailableFunds, amount).value;
-  if (newAvailableFunds < 0) throw new AppError("A Little Short 🤏", "It looks like your funds are a little short for this amount. Please adjust the amount or add funds to your account.");
-
-  user.financialSummary.totalAvailableFunds = newAvailableFunds;
-  user.financialSummary.lastUpdated = transactionDate;
-
-  await db.transaction('rw', db.transactionList, db.goalList, db.user, async () => {
-    await updateGoalAndLogTransaction({
-      goal: existingGoal,
-      description: description || null,
-      amount,
-      currency: user.financialSummary.currency,
-      newSavedAmount,
-      transactionDate,
-    }, TransactionType.GoalAllocation);
-
-    await updateUserFunds({ user });
+  await appDBUtil.transaction_entries.add(transactionEntry1);
+  await appDBUtil.transaction_entries.add(transactionEntry2);
+  await documentDBUtil.transaction_list.add({
+    id: transactionID,
+    type: TransactionType.Allocate,
+    notes: params.notes,
+    entries: [{
+      type: transactionEntry1.sourceType,
+      sourceID: transactionEntry1.sourceID,
+      name: sourceWallet.name,
+      currency: sourceWallet.currency,
+      direction: transactionEntry1.direction,
+      amount: transactionEntry1.amount,
+    }, {
+      type: transactionEntry2.sourceType,
+      sourceID: transactionEntry2.sourceID,
+      name: destinationGoalVersion.name,
+      currency: destinationGoalVersion.currency,
+      direction: transactionEntry2.direction,
+      amount: transactionEntry2.amount
+    }],
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+    reversedCreatedAt: params?.createdAt
+      ? params.createdAt.getTime() * -1
+      : undefined
   });
+
+  const sourceWalletCurrentAmount = currencyUtil.parse(
+    walletListItem.currentAmount, walletListItem.currency)
+    .subtract(transactionEntry1.amount);
+  walletListItem.currentAmount = sourceWalletCurrentAmount.value;
+  await documentDBUtil.wallet_list.put(walletListItem);
+
+  const destinationGoalTargetAmount = currencyUtil.parse(
+    goalListItem.targetAmount, goalListItem.currency);
+  const destinationGoalSavedAmount = currencyUtil.parse(
+    goalListItem.savedAmount, goalListItem.currency)
+    .add(transactionEntry2.amount);
+  const destinationGoalRemainingAmount = destinationGoalTargetAmount.subtract(destinationGoalSavedAmount);
+  const destinationGoalSavedPercent = destinationGoalSavedAmount.multiply(100)
+    .divide(destinationGoalTargetAmount);
+  goalListItem.savedAmount = destinationGoalSavedAmount.value;
+  goalListItem.remainingAmount = destinationGoalRemainingAmount.value;
+  goalListItem.savedPercent = destinationGoalSavedPercent.value;
+  await documentDBUtil.goal_list.put(goalListItem);
 };
 
-export default allocateFundsToGoal;
+export default allocateFundToGoal;

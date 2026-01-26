@@ -9,7 +9,7 @@ import type { NameType, ValueType } from "recharts/types/component/DefaultToolti
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/cn"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const

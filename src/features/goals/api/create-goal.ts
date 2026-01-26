@@ -1,44 +1,56 @@
+import Currency from '@/enums/currency';
 import { AppError } from '@/errors/app-error';
-import GoalListItem from '@/features/goals/entities/goal-list-item';
 import GoalStatus from '@/features/goals/enums/goal-status';
-import { db } from '@/lib/utils';
+import appDBUtil from '@/utils/app-db-util';
+import documentDBUtil from '@/utils/document-db-util';
+import currency from 'currency.js';
 
-/**
- * Defines the parameters for creating a new goal.
- * It requires a name and target amount, while ID and groupID are optional.
- */
-type CreateGoalParameters = Pick<GoalListItem, 'name' | 'targetAmount'> &
-  Partial<Pick<GoalListItem, 'id' | 'groupID'>>;
+type CreateGoalParameters = {
+  name: string;
+  targetAmount: string;
+  currency: Currency | undefined;
+  status?: GoalStatus;
+  createdAt?: Date;
+};
 
-/**
- * Creates a new savings goal and adds it to the database.
- *
- * @param {CreateGoalParameters} params - The details for the new goal.
- * @returns {Promise<Goal>} A promise that resolves with the newly created goal object.
- * @throws {Error} If the name is empty or the target amount is not positive.
- */
-const createGoal = async ({
-  id = crypto.randomUUID(),
-  groupID = crypto.randomUUID(),
-  name,
-  targetAmount,
-}: CreateGoalParameters): Promise<GoalListItem> => {
-  if (!name?.trim()) throw new AppError("Name Your Goal 🎯", "Every great goal needs a name. What will you call this one?");
-  if (targetAmount <= 0) throw new AppError("Set a Target 📈", "What number are you aiming for? Please enter an amount greater than zero.");
+const createGoal = async (params: CreateGoalParameters): Promise<void> => {
+  const targetAmount = currency(params.targetAmount);
 
-  const newGoal: GoalListItem = {
-    id,
-    groupID,
-    name,
-    targetAmount,
-    currentAmount: 0,
-    status: GoalStatus.Active,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  if (!params.name?.trim()) throw new AppError("Name Your Goal 🎯", "Every great goal needs a name. What will you call this one?");
+  if (targetAmount.value <= 0) throw new AppError("Set a Target 📈", "What number are you aiming for? Please enter an amount greater than zero.");
+  if (!params.currency) throw new AppError("Select a Currency 💰", "Please choose the currency for your target amount (e.g., USD, EUR).");
 
-  await db.goalList.add(newGoal);
-  return newGoal;
+  const goalID = crypto.randomUUID();
+  const goalVersionID = crypto.randomUUID();
+
+  await appDBUtil.goals.add({
+    id: goalID,
+    status: params.status || GoalStatus.Active,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+  });
+  await appDBUtil.goal_versions.add({
+    id: goalVersionID,
+    goalID: goalID,
+    name: params.name,
+    targetAmount: targetAmount.value,
+    currency: params.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+  });
+  await documentDBUtil.goal_list.add({
+    id: goalID,
+    versionID: goalVersionID,
+    name: params.name,
+    targetAmount: targetAmount.value,
+    savedAmount: 0,
+    savedPercent: 0,
+    remainingAmount: 0,
+    status: params.status || GoalStatus.Active,
+    currency: params.currency,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+  });
 };
 
 export default createGoal;

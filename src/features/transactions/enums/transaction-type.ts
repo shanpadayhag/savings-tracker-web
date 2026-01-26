@@ -1,9 +1,15 @@
 enum TransactionType {
-  AccountAdjustment = "account_adjustment",
-  GoalAllocation = "goal_allocation",
-  GoalExpense = "goal_expense",
-  GoalTransfer = "goal_transfer",
-  GoalDeallocation = "goal_deallocation",
+  Allocate = "allocate",
+  Spend = "spend",
+  Transfer = "transfer",
+  Deallocate = "deallocate",
 }
+
+export const transactionTypeLabel = {
+  [TransactionType.Allocate]: "Allocate",
+  [TransactionType.Spend]: "Spend",
+  [TransactionType.Transfer]: "Transfer",
+  [TransactionType.Deallocate]: "Deallocate",
+};
 
 export default TransactionType;
