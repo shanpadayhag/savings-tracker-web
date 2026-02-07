@@ -3,7 +3,7 @@ import GoalStatus from '@/features/goals/enums/goal-status';
 import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
 
-const fetchGoals = async (): Promise<GoalListItem[]> => {
+const getCachedGoals = async (): Promise<GoalListItem[]> => {
   const goalList = await documentDBUtil.goal_list
     .where('status').anyOf([GoalStatus.Active, GoalStatus.Completed])
     .reverse().sortBy("updatedAt");
@@ -24,4 +24,4 @@ const fetchGoals = async (): Promise<GoalListItem[]> => {
   }));
 };
 
-export default fetchGoals;
+export default getCachedGoals;

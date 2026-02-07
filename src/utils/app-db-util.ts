@@ -1,4 +1,4 @@
-import RawGoal from '@/features/goals/entities/goal';
+import Goal from '@/features/goals/entities/goal';
 import RawGoalVersion from '@/features/goals/entities/goal-version';
 import RawTransaction from '@/features/transactions/entities/transaction';
 import RawTransactionEntry from '@/features/transactions/entities/transaction-entry';
@@ -12,11 +12,6 @@ type Transaction = Omit<RawTransaction, 'createdAt' | 'updatedAt' | 'deletedAt'>
   deletedAt?: Date | "null";
 };
 type TransactionEntry = Omit<RawTransactionEntry, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date | "null";
-};
-type Goal = Omit<RawGoal, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | "null";

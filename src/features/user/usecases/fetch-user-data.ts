@@ -1,16 +1,15 @@
 import JsonObj from '@/configs/types/json';
+import getGoals from '@/features/goals/api/get-goals';
 import fetchCurrentUser from '@/features/user/api/fetch-current-user';
 import getWallets from '@/features/wallets/api/get-wallets';
 
 const fetchUserData = async () => {
   const userData: JsonObj = {};
 
-  const user = await fetchCurrentUser();
-  userData.user.id = user.id;
-  const wallets = await getWallets();
-  userData.wallets = wallets;
+  userData.user = await fetchCurrentUser();
+  userData.wallets = await getWallets();
+  userData.goals = await getGoals();
 
-  // fetch goals
   // fetch goal_versions
   // fetch transactions
   // fetch transaction_entries

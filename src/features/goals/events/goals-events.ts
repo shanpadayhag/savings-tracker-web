@@ -1,6 +1,6 @@
 import { AppError } from '@/errors/app-error';
 import createGoal from '@/features/goals/api/create-goal';
-import fetchGoals from '@/features/goals/api/fetch-goals';
+import getCachedGoals from '@/features/goals/api/get-cached-goals';
 import useGoalsStates from "@/features/goals/states/goals-states";
 import allocateFundToGoal from '@/features/transactions/api/allocate-funds-to-goal';
 import spendFundsFromGoal from '@/features/transactions/usecases/spend-funds-from-goal';
@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
   const handleFetchGoals = useCallback(async () => {
     try {
-      states.setGoals(await fetchGoals());
+      states.setGoals(await getCachedGoals());
     } catch (error) {
       if (error instanceof AppError) toast.error(error.title, { description: error.description });
     }
