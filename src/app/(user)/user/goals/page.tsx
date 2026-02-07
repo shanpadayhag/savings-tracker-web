@@ -121,8 +121,8 @@ export default () => {
                   {goal.savedPercent.format()}
                 </span></TableCell>
                 <TableCell className="py-4">{goal.savedAmount.format()}</TableCell>
-                <TableCell className="py-4">{goal.remainingAmount.format()}</TableCell>
-                <TableCell className="py-4">
+                <TableCell className="py-4" colSpan={goal.status !== GoalStatus.Active ? 2 : 1}>{goal.remainingAmount.format()}</TableCell>
+                {goal.status === GoalStatus.Active && <TableCell className="py-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button className="data-[state=open]:bg-muted text-muted-foreground flex"
@@ -146,7 +146,7 @@ export default () => {
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </TableCell>
+                </TableCell>}
               </TableRow>)}</>
               : <TableRow>
                 <TableCell className="h-24 text-center" colSpan={7}>
