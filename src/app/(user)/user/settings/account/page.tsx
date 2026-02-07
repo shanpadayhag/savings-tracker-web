@@ -20,9 +20,23 @@ export default () => {
         <Button onClick={events.handleReconcileLedger}>Reconcile</Button>
       </CardFooter>
     </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Data Management</CardTitle>
+        <CardDescription>
+          Export your data for backup, or import data from another source.
+        </CardDescription>
+      </CardHeader>
+
+      <CardFooter className="justify-end gap-2">
+        <Button variant="secondary">
+          Export
+        </Button>
+        <Button variant="destructive">
+          Import
+        </Button>
+      </CardFooter>
+    </Card>
   </div>;
 };
-
-// Data Management
-//    - Recalculate All Totals
-//      - This will re-process all transactions to ensure your totals are accurate. This may take a moment. Do you want to continue?
