@@ -30,12 +30,8 @@ export default () => {
       </CardHeader>
 
       <CardFooter className="justify-end gap-2">
-        <Button variant="secondary">
-          Export
-        </Button>
-        <Button variant="destructive">
-          Import
-        </Button>
+        <Button onClick={events.handleExport} variant="secondary">Export</Button>
+        <Button onClick={events.handleImport} disabled variant="destructive">Import</Button>
       </CardFooter>
     </Card>
   </div>;
