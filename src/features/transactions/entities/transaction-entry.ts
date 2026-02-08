@@ -11,9 +11,9 @@ type TransactionEntry = {
   direction: TransactionDirection;
   amount: number;
   currency: Currency;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt: Date | "null";
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date | "null";
 };
 
 export default TransactionEntry;

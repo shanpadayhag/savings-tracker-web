@@ -11,7 +11,6 @@ const fetchUserData = async () => {
   userData.wallets = await getWallets();
   userData.goals = await getGoals();
   userData.goalVersions = await getGoalVersions();
-  // fetch goal_versions
   // fetch transactions
   // fetch transaction_entries
 
