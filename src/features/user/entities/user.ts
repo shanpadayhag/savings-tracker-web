@@ -1,5 +1,5 @@
 type User = {
-  id?: "singleton";
+  id?: string;
 };
 
 export default User;

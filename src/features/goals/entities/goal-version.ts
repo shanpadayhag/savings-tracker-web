@@ -6,9 +6,9 @@ type GoalVersion = {
   name: string;
   targetAmount: number;
   currency: Currency;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt: Date | "null";
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date | "null";
 };
 
 export default GoalVersion;

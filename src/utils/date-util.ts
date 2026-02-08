@@ -20,7 +20,7 @@ const dateUtil = {
     return `${year}_${month}_${day}_${hours}_${minutes}_${seconds}`;
   },
 
-  formatDisplayDate(startDate: Date, endDate?: Date) {
+  formatDisplayDate(startDate: Date = new Date(), endDate?: Date) {
     const currentYear = getYear(new Date());
 
     if (!endDate) {

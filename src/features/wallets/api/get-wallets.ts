@@ -1,9 +1,8 @@
-import JsonObj from '@/configs/types/json';
-import documentDBUtil from '@/utils/document-db-util';
+import Wallet from '@/features/wallets/entities/wallet';
+import appDBUtil from '@/utils/app-db-util';
 
-const getWallets = async (): Promise<JsonObj[]> => {
-  return documentDBUtil.wallet_list
-    .reverse().sortBy("updatedAt");
+const getWallets = async (): Promise<Wallet[]> => {
+  return appDBUtil.wallets.toArray();
 };
 
 export default getWallets;

@@ -1,31 +1,10 @@
-import RawGoal from '@/features/goals/entities/goal';
-import RawGoalVersion from '@/features/goals/entities/goal-version';
-import RawTransaction from '@/features/transactions/entities/transaction';
-import RawTransactionEntry from '@/features/transactions/entities/transaction-entry';
+import Goal from '@/features/goals/entities/goal';
+import GoalVersion from '@/features/goals/entities/goal-version';
+import Transaction from '@/features/transactions/entities/transaction';
+import TransactionEntry from '@/features/transactions/entities/transaction-entry';
 import User from '@/features/user/entities/user-old';
 import Wallet from '@/features/wallets/entities/wallet';
 import Dexie from 'dexie';
-
-type Transaction = Omit<RawTransaction, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date | "null";
-};
-type TransactionEntry = Omit<RawTransactionEntry, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date | "null";
-};
-type Goal = Omit<RawGoal, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date | "null";
-};
-type GoalVersion = Omit<RawGoalVersion, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date | "null";
-};
 
 class DB extends Dexie {
   users!: Dexie.Table<User, "singleton">;
