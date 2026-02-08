@@ -1,6 +1,8 @@
 import JsonObj from '@/configs/types/json';
 import getGoalVersions from '@/features/goals/api/get-goal-versions';
 import getGoals from '@/features/goals/api/get-goals';
+import getTransactionEntries from '@/features/transactions/api/get-transaction-entries';
+import getTransactions from '@/features/transactions/api/get-transactions';
 import fetchCurrentUser from '@/features/user/api/fetch-current-user';
 import getWallets from '@/features/wallets/api/get-wallets';
 
@@ -11,8 +13,8 @@ const fetchUserData = async () => {
   userData.wallets = await getWallets();
   userData.goals = await getGoals();
   userData.goalVersions = await getGoalVersions();
-  // fetch transactions
-  // fetch transaction_entries
+  userData.transactions = await getTransactions();
+  userData.transactionEntries = await getTransactionEntries();
 
   return userData;
 };
