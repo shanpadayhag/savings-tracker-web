@@ -1,5 +1,11 @@
+import { useRef } from 'react';
+
 const useAccountSettingsStates = () => {
-  return {};
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  return {
+    importFileInputRef,
+  };
 };
 
 export default useAccountSettingsStates;
