@@ -3,86 +3,120 @@ import appDBUtil from '@/utils/app-db-util';
 import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
 
-// will improve the logic in the future. this is only quick solution
 const reconcileLedger = async () => {
-  await documentDBUtil.wallet_list.toCollection().modify({ currentAmount: 0 });
-  await documentDBUtil.goal_list.toCollection().modify({
-    savedAmount: 0,
-    savedPercent: 0,
-    remainingAmount: 0,
-  });
-  documentDBUtil.transaction_list.clear();
-  const transactions = await appDBUtil.transactions.toArray();
-  let transactionListItemTransactionEntries = [];
-  let goalOrWallet = null;
-  let goal = null;
-  let walletListItem = null;
-  let goalListItem = null;
+  // Step 1: Clear all documentDB data
+  await documentDBUtil.wallet_list.clear();
+  await documentDBUtil.goal_list.clear();
+  await documentDBUtil.transaction_list.clear();
+
+  // Step 2: Initialize all wallets from appDB
+  const wallets = await appDBUtil.wallets
+    .filter(w => w.deletedAt === "null" || w.deletedAt === null)
+    .toArray();
+
+  for (const wallet of wallets) {
+    await documentDBUtil.wallet_list.add({
+      id: wallet.id,
+      name: wallet.name,
+      currency: wallet.currency,
+      currentAmount: 0,
+      createdAt: wallet.createdAt,
+      updatedAt: wallet.updatedAt,
+    });
+  }
+
+  // Step 3: Initialize all goals from appDB
+  const goals = await appDBUtil.goals
+    .filter(g => g.deletedAt === "null" || g.deletedAt === null)
+    .toArray();
+
+  for (const goal of goals) {
+    const goalVersion = (await appDBUtil.goal_versions
+      .where("goalID").equals(goal.id)
+      .filter(gv => gv.deletedAt === "null" || gv.deletedAt === null)
+      .toArray())[0];
+
+    if (goalVersion) {
+      await documentDBUtil.goal_list.add({
+        id: goal.id,
+        versionID: goalVersion.id,
+        name: goalVersion.name,
+        targetAmount: goalVersion.targetAmount,
+        savedAmount: 0,
+        savedPercent: 0,
+        remainingAmount: goalVersion.targetAmount,
+        status: goal.status,
+        currency: goalVersion.currency,
+        createdAt: goal.createdAt,
+        updatedAt: goal.updatedAt,
+      });
+    }
+  }
+
+  // Step 4: Process all transactions and recalculate balances
+  const transactions = await appDBUtil.transactions
+    .filter(t => t.deletedAt === "null" || t.deletedAt === null)
+    .toArray();
 
   for (const transaction of transactions) {
     const transactionEntries = await appDBUtil.transaction_entries
-      .where("transactionID").equals(transaction.id).toArray();
+      .where("transactionID").equals(transaction.id)
+      .filter(te => te.deletedAt === "null" || te.deletedAt === null)
+      .toArray();
+
+    const transactionListItemTransactionEntries = [];
 
     for (const transactionEntry of transactionEntries) {
-      if (transactionEntry.sourceType === TransactionSourceType.Wallet) {
-        if (transactionEntry.sourceID) {
-          goalOrWallet = (await appDBUtil.wallets
-            .where("id").equals(transactionEntry.sourceID)
-            .toArray())[0];
+      let sourceName: string | null = null;
 
-          if (transactionEntry.direction === "to") {
-            walletListItem = await documentDBUtil.wallet_list.get(goalOrWallet.id);
-            if (walletListItem) {
-              await documentDBUtil.wallet_list.update(walletListItem.id, {
-                currentAmount: currencyUtil.parse(walletListItem.currentAmount, walletListItem.currency)
-                  .add(transactionEntry.amount).value
-              });
-            }
-            walletListItem = null;
-          } else if (transactionEntry.direction === "from") { // else is okay here
-            walletListItem = await documentDBUtil.wallet_list.get(goalOrWallet.id);
-            if (walletListItem) {
-              await documentDBUtil.wallet_list.update(walletListItem.id, {
-                currentAmount: currencyUtil.parse(walletListItem.currentAmount, walletListItem.currency)
-                  .subtract(transactionEntry.amount).value
-              });
-            }
-            walletListItem = null;
+      // Process Wallet entries
+      if (transactionEntry.sourceType === TransactionSourceType.Wallet && transactionEntry.sourceID) {
+        const wallet = (await appDBUtil.wallets
+          .where("id").equals(transactionEntry.sourceID)
+          .toArray())[0];
+
+        if (wallet) {
+          sourceName = wallet.name;
+          const walletListItem = await documentDBUtil.wallet_list.get(wallet.id);
+
+          if (walletListItem) {
+            const currentAmount = currencyUtil.parse(walletListItem.currentAmount, walletListItem.currency);
+            const newAmount = transactionEntry.direction === "to"
+              ? currentAmount.add(transactionEntry.amount)
+              : currentAmount.subtract(transactionEntry.amount);
+
+            await documentDBUtil.wallet_list.update(walletListItem.id, {
+              currentAmount: newAmount.value
+            });
           }
         }
-      } else if (transactionEntry.sourceType === TransactionSourceType.Goal) {
-        if (transactionEntry.sourceID) {
-          goal = (await appDBUtil.goals
-            .where("id").equals(transactionEntry.sourceID)
+      }
+      // Process Goal entries
+      else if (transactionEntry.sourceType === TransactionSourceType.Goal && transactionEntry.sourceID) {
+        const goal = (await appDBUtil.goals
+          .where("id").equals(transactionEntry.sourceID)
+          .toArray())[0];
+
+        if (goal) {
+          const goalVersion = (await appDBUtil.goal_versions
+            .where("goalID").equals(goal.id)
             .toArray())[0];
 
-          if (goal) {
-            goalOrWallet = (await appDBUtil.goal_versions
-              .where("goalID").equals(goal.id)
-              .toArray())[0];
+          if (goalVersion) {
+            sourceName = goalVersion.name;
+            const goalListItem = await documentDBUtil.goal_list.get(goal.id);
 
-            goalListItem = await documentDBUtil.goal_list.get(goal.id);
-            if (goalListItem && transactionEntry.direction === "to") {
-              const newSavedAmount = currencyUtil.parse(transactionEntry.amount, goalListItem.currency)
-                .add(goalListItem.savedAmount);
+            if (goalListItem) {
+              const amountDelta = transactionEntry.direction === "to"
+                ? transactionEntry.amount
+                : -transactionEntry.amount;
+
+              const newSavedAmount = currencyUtil.parse(goalListItem.savedAmount, goalListItem.currency)
+                .add(amountDelta);
               const newSavedPercent = newSavedAmount.multiply(100)
                 .divide(goalListItem.targetAmount);
-              const newRemainingAmount = newSavedAmount.subtract(goalListItem.targetAmount)
-                .multiply(-1);
-
-              await documentDBUtil.goal_list.update(goalListItem.id, {
-                savedAmount: newSavedAmount.value,
-                savedPercent: newSavedPercent.value,
-                remainingAmount: newRemainingAmount.value,
-              });
-            } else if (goalListItem && transactionEntry.direction === "from") {
-              const newSavedAmount = currencyUtil.parse(transactionEntry.amount, goalListItem.currency)
-                .multiply(-1)
-                .add(goalListItem.savedAmount);
-              const newSavedPercent = newSavedAmount.multiply(100)
-                .divide(goalListItem.targetAmount);
-              const newRemainingAmount = newSavedAmount.subtract(goalListItem.targetAmount)
-                .multiply(-1);
+              const newRemainingAmount = currencyUtil.parse(goalListItem.targetAmount, goalListItem.currency)
+                .subtract(newSavedAmount);
 
               await documentDBUtil.goal_list.update(goalListItem.id, {
                 savedAmount: newSavedAmount.value,
@@ -90,7 +124,6 @@ const reconcileLedger = async () => {
                 remainingAmount: newRemainingAmount.value,
               });
             }
-            goalListItem = null;
           }
         }
       }
@@ -98,14 +131,11 @@ const reconcileLedger = async () => {
       transactionListItemTransactionEntries.push({
         type: transactionEntry.sourceType,
         sourceID: transactionEntry.sourceID,
-        name: goalOrWallet?.name || null,
+        name: sourceName,
         currency: transactionEntry.currency,
         direction: transactionEntry.direction,
         amount: transactionEntry.amount,
       });
-
-      goalOrWallet = null;
-      goal = null;
     }
 
     await documentDBUtil.transaction_list.add({
@@ -117,7 +147,6 @@ const reconcileLedger = async () => {
       updatedAt: transaction.updatedAt,
       reversedCreatedAt: (transaction.createdAt || new Date()).getTime() * -1,
     });
-    transactionListItemTransactionEntries = [] as any;
   }
 };
 
