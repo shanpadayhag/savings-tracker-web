@@ -2,8 +2,8 @@ import Currency from '@/enums/currency';
 import { AppError } from '@/errors/app-error';
 import GoalStatus from '@/features/goals/enums/goal-status';
 import appDBUtil from '@/utils/app-db-util';
+import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
-import currency from 'currency.js';
 
 type CreateGoalParameters = {
   name: string;
@@ -14,11 +14,11 @@ type CreateGoalParameters = {
 };
 
 const createGoal = async (params: CreateGoalParameters): Promise<void> => {
-  const targetAmount = currency(params.targetAmount);
+  if (!params.currency) throw new AppError("Select a Currency 💰", "Please choose the currency for your target amount (e.g., USD, EUR).");
+  const targetAmount = currencyUtil.parse(params.targetAmount, params.currency);
 
   if (!params.name?.trim()) throw new AppError("Name Your Goal 🎯", "Every great goal needs a name. What will you call this one?");
   if (targetAmount.value <= 0) throw new AppError("Set a Target 📈", "What number are you aiming for? Please enter an amount greater than zero.");
-  if (!params.currency) throw new AppError("Select a Currency 💰", "Please choose the currency for your target amount (e.g., USD, EUR).");
 
   const goalID = crypto.randomUUID();
   const goalVersionID = crypto.randomUUID();
