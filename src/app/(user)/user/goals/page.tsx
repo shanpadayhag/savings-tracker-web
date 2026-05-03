@@ -69,8 +69,23 @@ export default () => {
   const completeGoalOnClick = useCallback(() => {
   }, []);
 
-  const archiveGoalOnClick = useCallback(() => {
+  const archiveGoalOnClick = useCallback((goal: GoalListItem) => {
+    states.setNewTransactionGoal(goal);
+    states.setNewTransactionWallet(undefined);
+    states.setArchiveDialogIsOpen(true);
   }, []);
+
+  const archiveGoalConfirmOnClick = useCallback(() => {
+    events.handleArchiveGoal();
+  }, [events.handleArchiveGoal]);
+
+  const archiveGoalFormOnSubmit = useCallback((event: FormEvent<HTMLElement>) => {
+    event.preventDefault();
+    events.handleArchiveGoal();
+  }, [events.handleArchiveGoal]);
+
+  const archiveWalletOptions = states.walletOptions.filter(
+    option => option.data?.currency === states.newTransactionGoal?.currency);
 
   return <>
     <div className="flex flex-col overflow-auto h-full pb-2 gap-6">
@@ -142,7 +157,7 @@ export default () => {
                       <DropdownMenuGroup>
                         <DropdownMenuItem disabled>Adjust Amount</DropdownMenuItem>
                         <DropdownMenuItem disabled onClick={completeGoalOnClick}>Complete Goal</DropdownMenuItem>
-                        <DropdownMenuItem disabled onClick={archiveGoalOnClick}><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => archiveGoalOnClick(goal)}><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -241,6 +256,40 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={allocateOnClick} type="button">Allocate</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.archiveDialogIsOpen} onOpenChange={states.setArchiveDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Archive Goal</DialogTitle>
+          <DialogDescription>The goal's remaining balance will be returned to the wallet you choose. Only wallets with the same currency are listed.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={archiveGoalFormOnSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center">
+            <p className="text-xs text-muted-foreground">Returning to wallet:</p>
+            <p className="text-2xl font-semibold">{states.newTransactionGoal?.savedAmount.format()}</p>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Wallet</Label>
+            <Combobox
+              placeholder="Select wallet"
+              searchPlaceholder="Search wallet name"
+              emptyItemsPlaceholder="No matching-currency wallets found."
+              value={states.newTransactionWallet}
+              onChangeValue={states.setNewTransactionWallet}
+              options={archiveWalletOptions} />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={archiveGoalConfirmOnClick} type="button">Archive</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

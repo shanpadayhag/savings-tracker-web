@@ -10,6 +10,7 @@ const walletOptionModel = {
         currentAmount: currencyUtil.parse(
           json.currentAmount,
           json.currency),
+        currency: json.currency,
       }
     };
   },
