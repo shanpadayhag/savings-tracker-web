@@ -1,4 +1,5 @@
 import Currency from '@/enums/currency';
+import Category from '@/features/categories/entities/category';
 import RawGoalListItem from '@/features/goals/entities/goal-list-item';
 import Transaction from '@/features/transactions/entities/transaction';
 import TransactionEntry from '@/features/transactions/entities/transaction-entry';
@@ -35,6 +36,13 @@ type TransactionListItem = {
     direction: TransactionEntry['direction'];
     amount: TransactionEntry['amount'];
   }[];
+  // Category snapshot is denormalized onto the row so list rendering doesn't
+  // need to join against `categories`. If the user later renames a category,
+  // historical rows keep showing the name as it was at the time — which is
+  // usually what the user wants in a transaction log.
+  categoryID?: Category['id'];
+  categoryName?: Category['name'];
+  categoryColor?: Category['color'];
   createdAt?: Transaction['createdAt'];
   updatedAt?: Transaction['updatedAt'];
   reversedCreatedAt?: number;

@@ -1,3 +1,4 @@
+import Category from '@/features/categories/entities/category';
 import Transaction from '@/features/transactions/entities/transaction';
 import TransactionType from '@/features/transactions/enums/transaction-type';
 import currency from 'currency.js';
@@ -20,6 +21,14 @@ type TransactionListItem = {
   convertedAmount?: currency;
   fee: currency | null;
   notes: Transaction['notes'];
+  /** Resolved category — the read-side resolver fills this with the system
+   * "Others" entry whenever the underlying transaction has no categoryID,
+   * so the UI can always render a badge. */
+  category?: {
+    id: Category['id'];
+    name: Category['name'];
+    color: Category['color'];
+  };
   createdAt: Transaction['createdAt'];
   updatedAt: Transaction['updatedAt'];
 };

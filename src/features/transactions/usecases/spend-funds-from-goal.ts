@@ -1,4 +1,6 @@
 import { AppError } from '@/errors/app-error';
+import ensureDefaultCategory from '@/features/categories/api/ensure-default-category';
+import Category from '@/features/categories/entities/category';
 import Goal from '@/features/goals/entities/goal';
 import Transaction from '@/features/transactions/entities/transaction';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
@@ -12,6 +14,9 @@ type SpendFundsFromGoalParams = {
   goalID?: Goal['id'];
   notes: Transaction['notes'];
   amount: string;
+  /** Optional category ID. Falls back to the system "Others" category so a
+   * user who skips the picker still produces a categorized row. */
+  categoryID?: Category['id'];
   createdAt?: Date;
 };
 
@@ -26,10 +31,22 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
   const newSavedAmount = goalSavedAmount.subtract(params.amount);
   if (newSavedAmount.value < 0) throw new AppError("Goal is a Little Short 🤏", "This goal doesn't have enough funds to cover this expense. Please adjust the amount or allocate more funds to this goal first.");
 
+  // Resolve the category. If the caller passed an ID we look it up; otherwise
+  // (or if the lookup misses) fall back to the seeded "Others" row so every
+  // spend transaction is always categorized at write time.
+  const fallbackCategory = await ensureDefaultCategory();
+  const pickedCategory = params.categoryID
+    ? await appDBUtil.categories.get(params.categoryID)
+    : null;
+  const category = pickedCategory && pickedCategory.deletedAt === 'null'
+    ? pickedCategory
+    : fallbackCategory;
+
   const transaction = {
     id: crypto.randomUUID(),
     type: TransactionType.Spend,
     notes: params.notes?.trim() || null,
+    categoryID: category.id,
     createdAt: params.createdAt,
     updatedAt: params.createdAt,
   };
@@ -79,6 +96,9 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
       direction: transactionEntry2.direction,
       amount: transactionEntry2.amount,
     }],
+    categoryID: category.id,
+    categoryName: category.name,
+    categoryColor: category.color,
     createdAt: params.createdAt,
     updatedAt: params.createdAt,
     reversedCreatedAt: params?.createdAt

@@ -2,7 +2,7 @@
 
 import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/atoms/sidebar";
 import Routes from '@/enums/routes';
-import { IconCirclePlusFilled, IconCreditCardPay, IconDashboard, IconTargetArrow, IconWallet } from "@tabler/icons-react";
+import { IconCategory, IconCirclePlusFilled, IconCreditCardPay, IconDashboard, IconTargetArrow, IconWallet } from "@tabler/icons-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -46,6 +46,12 @@ const UserLayoutSidebarMain = () => {
           <SidebarMenuItem >
             <SidebarMenuButton isActive={pathname.startsWith(Routes.UserWallets)} tooltip="Wallets" asChild>
               <Link href={Routes.UserWallets}><IconWallet /> <span>Wallets</span></Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem >
+            <SidebarMenuButton isActive={pathname.startsWith(Routes.UserCategories)} tooltip="Categories" asChild>
+              <Link href={Routes.UserCategories}><IconCategory /> <span>Categories</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -1,7 +1,9 @@
+import ensureDefaultCategory from '@/features/categories/api/ensure-default-category';
 import TransactionEntry from '@/features/transactions/entities/transaction-entry';
 import TransactionListItem from '@/features/transactions/entities/transaction-list-item';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
+import TransactionType from '@/features/transactions/enums/transaction-type';
 import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
 import currency from 'currency.js';
@@ -82,6 +84,11 @@ const getTransactions = async (params: GetTransactionsParams): Promise<GetTransa
   if (hasMore) rawTransactionList.pop();
   if (direction === 'prev') rawTransactionList.reverse();
 
+  // Pre-resolve the system "Others" row once per query so legacy spend rows
+  // (no denormalized category fields) still render with a category badge.
+  // Allocate / deallocate / transfer aren't categorized by design.
+  const fallbackCategory = await ensureDefaultCategory();
+
   const transactionList = rawTransactionList.map(transactionListItem => {
     const entries = transactionListItem.entries;
 
@@ -118,6 +125,24 @@ const getTransactions = async (params: GetTransactionsParams): Promise<GetTransa
 
     const amount = [...mainFrom, ...mainTo];
 
+    // Spend transactions always carry a category. Allocate / Deallocate /
+    // Transfer move money between the user's own accounts and stay
+    // unlabeled — no category badge for those rows.
+    const isCategorizable = transactionListItem.type === TransactionType.Spend;
+    const category = isCategorizable
+      ? (transactionListItem.categoryID && transactionListItem.categoryName && transactionListItem.categoryColor
+        ? {
+          id: transactionListItem.categoryID,
+          name: transactionListItem.categoryName,
+          color: transactionListItem.categoryColor,
+        }
+        : {
+          id: fallbackCategory.id,
+          name: fallbackCategory.name,
+          color: fallbackCategory.color,
+        })
+      : undefined;
+
     return {
       id: transactionListItem.id,
       type: transactionListItem.type,
@@ -127,6 +152,7 @@ const getTransactions = async (params: GetTransactionsParams): Promise<GetTransa
       convertedAmount: undefined,
       fee: fees.length ? fees[0] : null,
       notes: transactionListItem.notes,
+      category,
       createdAt: transactionListItem.createdAt,
       updatedAt: transactionListItem.updatedAt,
     };

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
 import Combobox from '@/components/molecules/combobox';
 import Currency, { currencyLabel } from '@/enums/currency';
+import CategoryCombobox from '@/features/categories/components/category-combobox';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import GoalStatus, { goalStatusLabel } from '@/features/goals/enums/goal-status';
 import useGoalsEvents from '@/features/goals/events/goals-events';
@@ -310,6 +311,13 @@ export default () => {
           <div className="grid gap-2">
             <Label>Amount</Label>
             <Input onChange={event => states.setNewTransactionAmount(event.target.value)} placeholder="Goal's allocation amount" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Category <span className="text-xs text-muted-foreground">Defaults to "Others"</span></Label>
+            <CategoryCombobox
+              value={states.newTransactionCategory}
+              onChange={states.setNewTransactionCategory} />
           </div>
 
           <div className="grid gap-2">
