@@ -1,21 +1,22 @@
 "use client";
 
 // Net worth trend chart.
-// Shows the long-term direction of total net worth as a smoothed area chart.
-// Range tabs (3M / 6M / 12M / All) let the user reframe the time window
-// without leaving the dashboard.
+// Shows the long-term direction of total net worth as a smoothed area chart,
+// scoped to the active currency. Range tabs (3M / 6M / 12M / All) reframe
+// the time window without leaving the dashboard.
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
 import { Tabs, TabsList, TabsTrigger } from '@/components/atoms/tabs';
-import { dashboardCurrency, mockNetWorthTrend } from '@/features/dashboard/data/mock-dashboard-data';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
+import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
 import { NetWorthRange } from '@/features/dashboard/states/dashboard-states';
 import currencyUtil from '@/utils/currency-util';
 import { useMemo } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 const rangeToMonths: Record<NetWorthRange, number> = {
-  '3m': 3, '6m': 6, '12m': 12, 'all': mockNetWorthTrend.length,
+  '3m': 3, '6m': 6, '12m': 12, 'all': Infinity,
 };
 
 const chartConfig = {
@@ -28,10 +29,13 @@ type DashboardNetWorthChartProps = {
 };
 
 const DashboardNetWorthChart = (props: DashboardNetWorthChartProps) => {
+  const { activeCurrency } = useActiveCurrency();
+
   const data = useMemo(() => {
+    const series = dashboardData.netWorthTrend(activeCurrency);
     const months = rangeToMonths[props.range];
-    return mockNetWorthTrend.slice(-months);
-  }, [props.range]);
+    return months === Infinity ? series : series.slice(-months);
+  }, [props.range, activeCurrency]);
 
   return (
     <Card>
@@ -63,14 +67,14 @@ const DashboardNetWorthChart = (props: DashboardNetWorthChartProps) => {
             <CartesianGrid vertical={false} />
             <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} width={80}
-              tickFormatter={value => currencyUtil.format(value, dashboardCurrency)} />
+              tickFormatter={value => currencyUtil.format(value, activeCurrency)} />
             <ChartTooltip cursor={false} content={
               <ChartTooltipContent
                 formatter={value => (
                   <div className="flex w-full items-center justify-between gap-4">
                     <span className="text-muted-foreground">Net Worth</span>
                     <span className="font-mono font-medium tabular-nums">
-                      {currencyUtil.format(value as number, dashboardCurrency)}
+                      {currencyUtil.format(value as number, activeCurrency)}
                     </span>
                   </div>
                 )} />

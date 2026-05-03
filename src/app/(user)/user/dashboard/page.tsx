@@ -24,7 +24,8 @@ export default () => {
       <DashboardInsightStrip
         index={states.activeInsightIndex}
         onPrev={events.handlePrevInsight}
-        onNext={events.handleNextInsight} />
+        onNext={events.handleNextInsight}
+        onReset={events.handleResetInsight} />
 
       <div className="grid gap-4 px-4 grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-2">

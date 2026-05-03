@@ -1,15 +1,16 @@
 "use client";
 
 // Top goals leaderboard.
-// Highlights the active goals closest to completion so the user sees their
-// near-term wins. Each row pairs a progress bar with a forecasted ETA in
-// months — the dashboard's value-add over the raw goals page table.
+// Highlights active goals closest to completion within the active currency.
+// Each row pairs a progress bar with a forecasted ETA in months — the
+// dashboard's value-add over the raw goals page table.
 
 import { Button } from '@/components/atoms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { Progress } from '@/components/atoms/progress';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
 import Routes from '@/enums/routes';
-import { mockTopGoals } from '@/features/dashboard/data/mock-dashboard-data';
+import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
 import currencyUtil from '@/utils/currency-util';
 import { IconArrowRight } from '@tabler/icons-react';
 import Link from 'next/link';
@@ -25,12 +26,15 @@ const formatEta = (months: number) => {
 };
 
 const DashboardTopGoals = () => {
+  const { activeCurrency } = useActiveCurrency();
+
   // Sort by progress descending so the goals nearest the finish line surface
   // first — that's the motivating view, not a flat list.
   const sortedGoals = useMemo(() => {
-    return [...mockTopGoals].sort((a, b) =>
+    const goals = dashboardData.topGoals(activeCurrency);
+    return [...goals].sort((a, b) =>
       (b.saved / b.target) - (a.saved / a.target));
-  }, []);
+  }, [activeCurrency]);
 
   return (
     <Card>
@@ -46,6 +50,9 @@ const DashboardTopGoals = () => {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {sortedGoals.length === 0 && (
+          <p className="text-sm text-muted-foreground">No goals in this currency yet.</p>
+        )}
         {sortedGoals.map(goal => {
           const percent = Math.min(100, (goal.saved / goal.target) * 100);
           return (

@@ -1,13 +1,14 @@
 "use client";
 
 // Monthly cashflow comparison.
-// Side-by-side income vs. expense bars per month so the user can spot
-// over-spend months at a glance. The footer surfaces the average net cashflow
-// to give the bars a single-number summary.
+// Side-by-side income vs. expense bars per month for the active currency, so
+// the user can spot over-spend months at a glance. The footer surfaces the
+// average net cashflow to give the bars a single-number summary.
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
-import { dashboardCurrency, mockCashflow } from '@/features/dashboard/data/mock-dashboard-data';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
+import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
@@ -20,10 +21,14 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 const DashboardCashflowChart = () => {
+  const { activeCurrency } = useActiveCurrency();
+  const data = useMemo(() => dashboardData.cashflow(activeCurrency), [activeCurrency]);
+
   const averageNet = useMemo(() => {
-    const total = mockCashflow.reduce((sum, m) => sum + (m.income - m.expense), 0);
-    return total / mockCashflow.length;
-  }, []);
+    if (data.length === 0) return 0;
+    const total = data.reduce((sum, m) => sum + (m.income - m.expense), 0);
+    return total / data.length;
+  }, [data]);
 
   const isPositive = averageNet >= 0;
 
@@ -35,18 +40,18 @@ const DashboardCashflowChart = () => {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[260px] w-full">
-          <BarChart data={mockCashflow} margin={{ left: 12, right: 12 }}>
+          <BarChart data={data} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} width={80}
-              tickFormatter={value => currencyUtil.format(value, dashboardCurrency)} />
+              tickFormatter={value => currencyUtil.format(value, activeCurrency)} />
             <ChartTooltip cursor={false} content={
               <ChartTooltipContent
                 formatter={(value, name) => (
                   <div className="flex w-full items-center justify-between gap-4">
                     <span className="text-muted-foreground capitalize">{name as string}</span>
                     <span className="font-mono font-medium tabular-nums">
-                      {currencyUtil.format(value as number, dashboardCurrency)}
+                      {currencyUtil.format(value as number, activeCurrency)}
                     </span>
                   </div>
                 )} />
@@ -62,7 +67,7 @@ const DashboardCashflowChart = () => {
           {isPositive
             ? <IconTrendingUp className="size-4" />
             : <IconTrendingDown className="size-4" />}
-          Avg. net {isPositive ? '+' : '-'}{currencyUtil.format(Math.abs(averageNet), dashboardCurrency)} / mo
+          Avg. net {isPositive ? '+' : '-'}{currencyUtil.format(Math.abs(averageNet), activeCurrency)} / mo
         </span>
       </CardFooter>
     </Card>

@@ -2,11 +2,13 @@
 
 // Headline metrics for the selected reporting window.
 // Total income, total spending, savings rate, and net change — these four
-// numbers anchor the rest of the page. Each tile shows a delta vs. the prior
-// equivalent period so the user knows whether things got better or worse.
+// numbers anchor the rest of the page. All values are scoped to the active
+// currency; deltas compare against the prior equivalent period in the same
+// currency.
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/card';
-import { ReportRange, reportsCurrency, reportsData } from '@/features/reports/data/mock-reports-data';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
+import { ReportRange, reportsData } from '@/features/reports/data/mock-reports-data';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { IconCashBanknote, IconCreditCardPay, IconPercentage, IconPigMoney, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
@@ -56,24 +58,27 @@ type ReportsSummaryCardsProps = {
 };
 
 const ReportsSummaryCards = (props: ReportsSummaryCardsProps) => {
-  const summary = useMemo(() => reportsData.summary(props.range), [props.range]);
+  const { activeCurrency } = useActiveCurrency();
+  const summary = useMemo(
+    () => reportsData.summary(activeCurrency, props.range),
+    [activeCurrency, props.range]);
 
   return (
     <div className="grid gap-4 px-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
       <MetricCard
         label="Total Income"
-        value={currencyUtil.format(summary.totalIncome, reportsCurrency)}
+        value={currencyUtil.format(summary.totalIncome, activeCurrency)}
         changePercent={summary.incomeChangePercent}
         icon={<IconCashBanknote className="size-4" />} />
       <MetricCard
         label="Total Spending"
-        value={currencyUtil.format(summary.totalExpense, reportsCurrency)}
+        value={currencyUtil.format(summary.totalExpense, activeCurrency)}
         changePercent={summary.expenseChangePercent}
         invertSentiment
         icon={<IconCreditCardPay className="size-4" />} />
       <MetricCard
         label="Net Saved"
-        value={currencyUtil.format(summary.netSaved, reportsCurrency)}
+        value={currencyUtil.format(summary.netSaved, activeCurrency)}
         changePercent={summary.netChangePercent}
         icon={<IconPigMoney className="size-4" />} />
       <MetricCard

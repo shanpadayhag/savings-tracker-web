@@ -1,13 +1,14 @@
 "use client";
 
 // Spending breakdown donut.
-// Splits the period's expenses across mocked categories so the user can see
-// the shape of their spending in one glance. Pairs with the top-categories
-// table to the right, which carries the per-category deltas.
+// Splits the period's expenses across mocked categories within the active
+// currency. Pairs with the top-categories table to the right, which carries
+// the per-category deltas.
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
-import { ReportRange, reportsCurrency, reportsData } from '@/features/reports/data/mock-reports-data';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
+import { ReportRange, reportsData } from '@/features/reports/data/mock-reports-data';
 import currencyUtil from '@/utils/currency-util';
 import { useMemo } from 'react';
 import { Cell, Pie, PieChart } from 'recharts';
@@ -28,13 +29,15 @@ type ReportsSpendingByCategoryProps = {
 };
 
 const ReportsSpendingByCategory = (props: ReportsSpendingByCategoryProps) => {
+  const { activeCurrency } = useActiveCurrency();
+
   const data = useMemo(() => {
-    const categories = reportsData.spendingByCategory(props.range);
+    const categories = reportsData.spendingByCategory(activeCurrency, props.range);
     return categories.map((cat, index) => ({
       ...cat,
       fill: palette[index % palette.length],
     }));
-  }, [props.range]);
+  }, [activeCurrency, props.range]);
 
   const total = useMemo(
     () => data.reduce((sum, cat) => sum + cat.amount, 0),
@@ -64,7 +67,7 @@ const ReportsSpendingByCategory = (props: ReportsSpendingByCategoryProps) => {
                     <div className="flex w-full items-center justify-between gap-4">
                       <span className="text-muted-foreground">{name as string}</span>
                       <span className="font-mono font-medium tabular-nums">
-                        {currencyUtil.format(value as number, reportsCurrency)}
+                        {currencyUtil.format(value as number, activeCurrency)}
                       </span>
                     </div>
                   )} />
@@ -77,7 +80,7 @@ const ReportsSpendingByCategory = (props: ReportsSpendingByCategoryProps) => {
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-xs text-muted-foreground">Total spent</span>
             <span className="text-lg font-semibold tabular-nums">
-              {currencyUtil.format(total, reportsCurrency)}
+              {currencyUtil.format(total, activeCurrency)}
             </span>
           </div>
         </div>
@@ -88,7 +91,7 @@ const ReportsSpendingByCategory = (props: ReportsSpendingByCategoryProps) => {
               <span className="size-2.5 rounded-[2px] shrink-0" style={{ backgroundColor: slice.fill }} />
               <span className="truncate flex-1">{slice.name}</span>
               <span className="text-muted-foreground tabular-nums">
-                {((slice.amount / total) * 100).toFixed(0)}%
+                {total === 0 ? '0%' : `${((slice.amount / total) * 100).toFixed(0)}%`}
               </span>
             </div>
           ))}

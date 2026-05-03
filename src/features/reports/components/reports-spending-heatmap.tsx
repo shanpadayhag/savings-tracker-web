@@ -2,13 +2,14 @@
 
 // Daily spending heatmap.
 // GitHub-style 12-week × 7-day grid where cell intensity reflects how much
-// was spent that day. Helps spot habits the bar charts don't show — e.g.,
-// "I always overspend on weekends" or "every other Friday is a big day".
-// The window stays fixed at 12 weeks regardless of the global range so the
-// grid stays legible.
+// was spent that day in the active currency. Helps spot habits the bar
+// charts don't show — e.g., "I always overspend on weekends" or "every
+// other Friday is a big day". Window stays fixed at 12 weeks regardless of
+// the global range so the grid stays legible.
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
-import { reportsCurrency, reportsData } from '@/features/reports/data/mock-reports-data';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
+import { reportsData } from '@/features/reports/data/mock-reports-data';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { format } from 'date-fns';
@@ -29,11 +30,13 @@ type Cell =
   | { kind: 'day'; date: Date; amount: number; intensity: number; };
 
 const ReportsSpendingHeatmap = () => {
+  const { activeCurrency } = useActiveCurrency();
+
   // Pre-compute the grid: pad the start with empty cells so the first day
   // lands on its actual weekday row, then bucket each day's amount into one
   // of five intensity tiers based on the period max.
   const { cells, totals } = useMemo(() => {
-    const days = reportsData.heatmap();
+    const days = reportsData.heatmap(activeCurrency);
     const max = Math.max(...days.map(d => d.amount), 1);
 
     const intensityFor = (amount: number) => {
@@ -62,7 +65,7 @@ const ReportsSpendingHeatmap = () => {
     const dailyAvg = activeDays === 0 ? 0 : total / activeDays;
 
     return { cells: grid, totals: { total, dailyAvg, activeDays } };
-  }, []);
+  }, [activeCurrency]);
 
   return (
     <Card>
@@ -76,13 +79,13 @@ const ReportsSpendingHeatmap = () => {
             <div className="flex flex-col items-end">
               <span className="text-muted-foreground">Total</span>
               <span className="font-medium tabular-nums">
-                {currencyUtil.format(totals.total, reportsCurrency)}
+                {currencyUtil.format(totals.total, activeCurrency)}
               </span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-muted-foreground">Avg / active day</span>
               <span className="font-medium tabular-nums">
-                {currencyUtil.format(totals.dailyAvg, reportsCurrency)}
+                {currencyUtil.format(totals.dailyAvg, activeCurrency)}
               </span>
             </div>
           </div>
@@ -102,7 +105,7 @@ const ReportsSpendingHeatmap = () => {
                   intensityClass[cell.intensity])}
                 title={`${format(cell.date, 'EEE, MMM d')} — ${cell.amount === 0
                   ? 'no spend'
-                  : currencyUtil.format(cell.amount, reportsCurrency)}`} />)}
+                  : currencyUtil.format(cell.amount, activeCurrency)}`} />)}
           </div>
         </div>
 

@@ -2,12 +2,14 @@
 
 // Allocation breakdown donut.
 // Answers "where is my money right now?" by splitting net worth across each
-// goal and wallet. The center label shows the total so the chart doubles as a
-// summary tile.
+// goal and wallet — within the active currency. The center label shows the
+// total so the chart doubles as a summary tile. Cross-currency comparison
+// would be misleading, so this view is always single-currency.
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
-import { dashboardCurrency, mockAllocation } from '@/features/dashboard/data/mock-dashboard-data';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
+import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
 import currencyUtil from '@/utils/currency-util';
 import { useMemo } from 'react';
 import { Cell, Pie, PieChart } from 'recharts';
@@ -22,10 +24,15 @@ const palette = [
 ];
 
 const DashboardAllocationChart = () => {
-  const data = useMemo(() => mockAllocation.map((slice, index) => ({
-    ...slice,
-    fill: palette[index % palette.length],
-  })), []);
+  const { activeCurrency } = useActiveCurrency();
+
+  const data = useMemo(() => {
+    const slices = dashboardData.allocation(activeCurrency);
+    return slices.map((slice, index) => ({
+      ...slice,
+      fill: palette[index % palette.length],
+    }));
+  }, [activeCurrency]);
 
   const total = useMemo(
     () => data.reduce((sum, slice) => sum + slice.amount, 0),
@@ -55,7 +62,7 @@ const DashboardAllocationChart = () => {
                     <div className="flex w-full items-center justify-between gap-4">
                       <span className="text-muted-foreground">{name as string}</span>
                       <span className="font-mono font-medium tabular-nums">
-                        {currencyUtil.format(value as number, dashboardCurrency)}
+                        {currencyUtil.format(value as number, activeCurrency)}
                       </span>
                     </div>
                   )} />
@@ -68,7 +75,7 @@ const DashboardAllocationChart = () => {
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-xs text-muted-foreground">Total</span>
             <span className="text-lg font-semibold tabular-nums">
-              {currencyUtil.format(total, dashboardCurrency)}
+              {currencyUtil.format(total, activeCurrency)}
             </span>
           </div>
         </div>
@@ -79,7 +86,7 @@ const DashboardAllocationChart = () => {
               <span className="size-2.5 rounded-[2px] shrink-0" style={{ backgroundColor: slice.fill }} />
               <span className="truncate flex-1">{slice.name}</span>
               <span className="text-muted-foreground tabular-nums">
-                {((slice.amount / total) * 100).toFixed(0)}%
+                {total === 0 ? '0%' : `${((slice.amount / total) * 100).toFixed(0)}%`}
               </span>
             </div>
           ))}

@@ -2,11 +2,12 @@
 
 // Page header for the reports view.
 // Hosts the title/subtitle on the left and the global controls on the right
-// (date-range presets + export). The range selector here drives every other
-// component on the page.
+// (currency switcher + date-range presets + export). The range and currency
+// here drive every other component on the page.
 
 import { Button } from '@/components/atoms/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/atoms/toggle-group';
+import CurrencySwitcher from '@/components/molecules/currency-switcher';
 import { ReportRange } from '@/features/reports/data/mock-reports-data';
 import { IconDownload } from '@tabler/icons-react';
 
@@ -27,6 +28,8 @@ const ReportsHeader = (props: ReportsHeaderProps) => {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <CurrencySwitcher />
+
         <ToggleGroup type="single" variant="outline" size="sm" value={props.range}
           onValueChange={value => { if (value) props.onRangeChange(value as ReportRange); }}>
           <ToggleGroupItem value="1m">1M</ToggleGroupItem>

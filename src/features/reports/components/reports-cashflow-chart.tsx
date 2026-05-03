@@ -2,13 +2,14 @@
 
 // Composed cashflow chart.
 // Income and expense bars share the axis with a savings-rate line on a
-// secondary axis, so the user can correlate "we earned more" with "we saved
-// more" — or notice when a high-income month was wiped out by a high-expense
-// one. This single chart replaces three separate views.
+// secondary axis, scoped to the active currency. The user can correlate
+// "we earned more" with "we saved more" — or notice when a high-income month
+// was wiped out by a high-expense one.
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
-import { ReportRange, reportsCurrency, reportsData } from '@/features/reports/data/mock-reports-data';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
+import { ReportRange, reportsData } from '@/features/reports/data/mock-reports-data';
 import currencyUtil from '@/utils/currency-util';
 import { useMemo } from 'react';
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts';
@@ -24,7 +25,10 @@ type ReportsCashflowChartProps = {
 };
 
 const ReportsCashflowChart = (props: ReportsCashflowChartProps) => {
-  const data = useMemo(() => reportsData.cashflow(props.range), [props.range]);
+  const { activeCurrency } = useActiveCurrency();
+  const data = useMemo(
+    () => reportsData.cashflow(activeCurrency, props.range),
+    [activeCurrency, props.range]);
 
   return (
     <Card>
@@ -38,7 +42,7 @@ const ReportsCashflowChart = (props: ReportsCashflowChartProps) => {
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
             <YAxis yAxisId="amount" tickLine={false} axisLine={false} tickMargin={8} width={80}
-              tickFormatter={value => currencyUtil.format(value, reportsCurrency)} />
+              tickFormatter={value => currencyUtil.format(value, activeCurrency)} />
             <YAxis yAxisId="rate" orientation="right" tickLine={false} axisLine={false} tickMargin={8}
               width={50} domain={[0, 100]} tickFormatter={value => `${value}%`} />
             <ChartTooltip cursor={false} content={
@@ -51,7 +55,7 @@ const ReportsCashflowChart = (props: ReportsCashflowChartProps) => {
                     <span className="font-mono font-medium tabular-nums">
                       {name === 'savingsRate'
                         ? `${(value as number).toFixed(1)}%`
-                        : currencyUtil.format(value as number, reportsCurrency)}
+                        : currencyUtil.format(value as number, activeCurrency)}
                     </span>
                   </div>
                 )} />

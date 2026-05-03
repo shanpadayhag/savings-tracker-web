@@ -5,14 +5,18 @@
 // net worth, money sitting in wallets, money committed to goals, and how much
 // they spent this month. Each tile shows a percentage delta with an up/down
 // arrow so trend direction is readable without parsing numbers.
+//
+// All numbers are scoped to the active currency from `useActiveCurrency()` —
+// switching currency reflows every tile.
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/card';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
 import Currency from '@/enums/currency';
-import { dashboardCurrency, mockSummary } from '@/features/dashboard/data/mock-dashboard-data';
+import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { IconCoinFilled, IconCreditCardPay, IconTargetArrow, IconTrendingDown, IconTrendingUp, IconWallet } from '@tabler/icons-react';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 type KpiCardProps = {
   label: string;
@@ -55,31 +59,34 @@ const KpiCard = (props: KpiCardProps) => {
 };
 
 const DashboardKpiCards = () => {
+  const { activeCurrency } = useActiveCurrency();
+  const summary = useMemo(() => dashboardData.summary(activeCurrency), [activeCurrency]);
+
   return (
     <div className="grid gap-4 px-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
       <KpiCard
         label="Net Worth"
-        amount={mockSummary.netWorth}
-        currency={dashboardCurrency}
-        changePercent={mockSummary.netWorthChangePercent}
+        amount={summary.netWorth}
+        currency={activeCurrency}
+        changePercent={summary.netWorthChangePercent}
         icon={<IconCoinFilled className="size-4" />} />
       <KpiCard
         label="In Wallets"
-        amount={mockSummary.walletsBalance}
-        currency={dashboardCurrency}
-        changePercent={mockSummary.walletsBalanceChangePercent}
+        amount={summary.walletsBalance}
+        currency={activeCurrency}
+        changePercent={summary.walletsBalanceChangePercent}
         icon={<IconWallet className="size-4" />} />
       <KpiCard
         label="In Goals"
-        amount={mockSummary.goalsBalance}
-        currency={dashboardCurrency}
-        changePercent={mockSummary.goalsBalanceChangePercent}
+        amount={summary.goalsBalance}
+        currency={activeCurrency}
+        changePercent={summary.goalsBalanceChangePercent}
         icon={<IconTargetArrow className="size-4" />} />
       <KpiCard
         label="Spent This Month"
-        amount={mockSummary.monthlySpend}
-        currency={dashboardCurrency}
-        changePercent={mockSummary.monthlySpendChangePercent}
+        amount={summary.monthlySpend}
+        currency={activeCurrency}
+        changePercent={summary.monthlySpendChangePercent}
         invertSentiment
         icon={<IconCreditCardPay className="size-4" />} />
     </div>

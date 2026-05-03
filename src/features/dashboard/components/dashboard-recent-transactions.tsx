@@ -1,14 +1,16 @@
 "use client";
 
 // Recent activity feed.
-// Shows the last few transactions with a per-type icon and color so the user
-// can scan their recent money movement at a glance. Mirrors the shape used on
-// the transactions page so it's a drop-in once live data is wired.
+// Shows the last few transactions in the active currency with a per-type icon
+// and color so the user can scan recent money movement at a glance. Filtering
+// by currency keeps the feed coherent — mixing $500 and €410 entries would
+// invite false comparisons.
 
 import { Button } from '@/components/atoms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
+import { useActiveCurrency } from '@/contexts/active-currency-context';
 import Routes from '@/enums/routes';
-import { DashboardTransaction, mockRecentTransactions } from '@/features/dashboard/data/mock-dashboard-data';
+import { DashboardTransaction, dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import dateUtil from '@/utils/date-util';
@@ -50,13 +52,16 @@ const visualFor = (type: DashboardTransaction['type']): Visual => {
 };
 
 const DashboardRecentTransactions = () => {
+  const { activeCurrency } = useActiveCurrency();
+  const transactions = dashboardData.recentTransactions(activeCurrency);
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div>
             <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Last 5 transactions.</CardDescription>
+            <CardDescription>Last 5 transactions in this currency.</CardDescription>
           </div>
           <Button asChild variant="ghost" size="sm" className="text-xs">
             <Link href={Routes.UserTransactions}>View all <IconArrowRight className="size-3.5" /></Link>
@@ -64,7 +69,10 @@ const DashboardRecentTransactions = () => {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        {mockRecentTransactions.map(transaction => {
+        {transactions.length === 0 && (
+          <p className="text-sm text-muted-foreground">No recent activity in this currency.</p>
+        )}
+        {transactions.map(transaction => {
           const visual = visualFor(transaction.type);
           return (
             <div key={transaction.id} className="flex items-center gap-3">
