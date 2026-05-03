@@ -1,4 +1,5 @@
 import { AppError } from '@/errors/app-error';
+import archiveGoal from '@/features/goals/api/archive-goal';
 import createGoal from '@/features/goals/api/create-goal';
 import getCachedGoals from '@/features/goals/api/get-cached-goals';
 import useGoalsStates from "@/features/goals/states/goals-states";
@@ -105,12 +106,33 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     states.newTransactionAmount,
   ]);
 
+  const handleArchiveGoal = useAppCallback(async () => {
+    await archiveGoal({
+      goalID: states.newTransactionGoal?.id,
+      walletID: states.newTransactionWallet?.value,
+    });
+
+    handleFetchGoals();
+    handleFetchWalletOptions();
+    states.setArchiveDialogIsOpen(false);
+    states.setNewTransactionGoal(undefined);
+    states.setNewTransactionWallet(undefined);
+
+    toast.success("Goal Archived 📦", {
+      description: "We returned the goal's balance to your wallet and archived the goal."
+    });
+  }, [
+    states.newTransactionGoal,
+    states.newTransactionWallet,
+  ]);
+
   return {
     handleFetchGoals,
     handleCreateGoal,
     handleFetchWalletOptions,
     handleAllocateFundToGoal,
     handleSpendFundsFromGoal,
+    handleArchiveGoal,
   };
 };
 
