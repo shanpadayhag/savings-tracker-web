@@ -1,0 +1,89 @@
+"use client";
+
+// Headline metrics for the selected reporting window.
+// Total income, total spending, savings rate, and net change — these four
+// numbers anchor the rest of the page. Each tile shows a delta vs. the prior
+// equivalent period so the user knows whether things got better or worse.
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/card';
+import { ReportRange, reportsCurrency, reportsData } from '@/features/reports/data/mock-reports-data';
+import { cn } from '@/utils/cn';
+import currencyUtil from '@/utils/currency-util';
+import { IconCashBanknote, IconCreditCardPay, IconPercentage, IconPigMoney, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
+import { ReactNode, useMemo } from 'react';
+
+type MetricCardProps = {
+  label: string;
+  value: string;
+  changePercent: number;
+  /** When true a positive delta is bad (e.g., spending). */
+  invertSentiment?: boolean;
+  /** Show "pp" instead of "%" — for changes that are themselves percentages. */
+  changeUnit?: '%' | 'pp';
+  icon: ReactNode;
+};
+
+const MetricCard = (props: MetricCardProps) => {
+  const isPositive = props.changePercent >= 0;
+  const isGood = props.invertSentiment ? !isPositive : isPositive;
+  const unit = props.changeUnit ?? '%';
+
+  return (
+    <Card className="gap-2 py-5">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm text-muted-foreground font-medium">{props.label}</CardTitle>
+          <span className="text-muted-foreground">{props.icon}</span>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-1">
+        <span className="text-2xl font-semibold tabular-nums">{props.value}</span>
+        <span className={cn('flex items-center gap-1 text-xs font-medium',
+          isGood ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
+          {isPositive
+            ? <IconTrendingUp className="size-3.5" />
+            : <IconTrendingDown className="size-3.5" />}
+          {Math.abs(props.changePercent).toFixed(1)}{unit}
+          <span className="text-muted-foreground font-normal">vs prior period</span>
+        </span>
+      </CardContent>
+    </Card>
+  );
+};
+
+type ReportsSummaryCardsProps = {
+  range: ReportRange;
+};
+
+const ReportsSummaryCards = (props: ReportsSummaryCardsProps) => {
+  const summary = useMemo(() => reportsData.summary(props.range), [props.range]);
+
+  return (
+    <div className="grid gap-4 px-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <MetricCard
+        label="Total Income"
+        value={currencyUtil.format(summary.totalIncome, reportsCurrency)}
+        changePercent={summary.incomeChangePercent}
+        icon={<IconCashBanknote className="size-4" />} />
+      <MetricCard
+        label="Total Spending"
+        value={currencyUtil.format(summary.totalExpense, reportsCurrency)}
+        changePercent={summary.expenseChangePercent}
+        invertSentiment
+        icon={<IconCreditCardPay className="size-4" />} />
+      <MetricCard
+        label="Net Saved"
+        value={currencyUtil.format(summary.netSaved, reportsCurrency)}
+        changePercent={summary.netChangePercent}
+        icon={<IconPigMoney className="size-4" />} />
+      <MetricCard
+        label="Savings Rate"
+        value={`${summary.savingsRate.toFixed(1)}%`}
+        changePercent={summary.savingsRateChangePercent}
+        changeUnit="pp"
+        icon={<IconPercentage className="size-4" />} />
+    </div>
+  );
+};
+
+export default ReportsSummaryCards;
