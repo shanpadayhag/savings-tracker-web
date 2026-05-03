@@ -1,4 +1,5 @@
 import Currency from '@/enums/currency';
+import { CategoryOption } from '@/features/categories/components/category-combobox';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import WalletOption from '@/features/wallets/entities/wallet-option';
 import { useState } from 'react';
@@ -19,6 +20,7 @@ const useGoalsStates = () => {
   const [newTransactionWallet, setNewTransactionWallet] = useState<WalletOption>();
   const [newTransactionNotes, setNewTransactionNotes] = useState("");
   const [newTransactionAmount, setNewTransactionAmount] = useState("");
+  const [newTransactionCategory, setNewTransactionCategory] = useState<CategoryOption>();
 
   return {
     goals, setGoals,
@@ -34,6 +36,7 @@ const useGoalsStates = () => {
     newTransactionWallet, setNewTransactionWallet,
     newTransactionNotes, setNewTransactionNotes,
     newTransactionAmount, setNewTransactionAmount,
+    newTransactionCategory, setNewTransactionCategory,
   };
 };
 

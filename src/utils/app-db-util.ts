@@ -1,3 +1,4 @@
+import Category from '@/features/categories/entities/category';
 import Goal from '@/features/goals/entities/goal';
 import GoalVersion from '@/features/goals/entities/goal-version';
 import Transaction from '@/features/transactions/entities/transaction';
@@ -13,6 +14,7 @@ class DB extends Dexie {
   goal_versions!: Dexie.Table<GoalVersion, GoalVersion['id']>;
   transactions!: Dexie.Table<Transaction, Transaction['id']>;
   transaction_entries!: Dexie.Table<TransactionEntry, TransactionEntry['id']>;
+  categories!: Dexie.Table<Category, Category['id']>;
 
   constructor() {
     super("savings_tracker_app");
@@ -23,6 +25,11 @@ class DB extends Dexie {
       goal_versions: "id, [goalID+createdAt], name",
       transactions: "id",
       transaction_entries: "id, transactionID",
+    });
+    // v2 adds the categories table. Indexed on `name` so the seed lookup
+    // (find-or-create the system "Others" row) is cheap.
+    this.version(2).stores({
+      categories: "id, name",
     });
   }
 }

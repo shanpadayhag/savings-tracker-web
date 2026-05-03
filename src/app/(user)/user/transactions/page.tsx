@@ -35,6 +35,7 @@ export default () => {
               <TableHead><span className="sr-only">Drag</span></TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>From</TableHead>
               <TableHead>To</TableHead>
               <TableHead>Amount</TableHead>
@@ -51,6 +52,14 @@ export default () => {
                   {transaction.type === TransactionType.Allocate && <Badge variant="default">{transactionTypeLabel[transaction.type]}</Badge>}
                   {transaction.type === TransactionType.Spend && <Badge variant="secondary">{transactionTypeLabel[transaction.type]}</Badge>}
                 </TableCell>
+                <TableCell>
+                  {transaction.category
+                    ? <Badge variant="outline" className="gap-1.5">
+                      <span className="size-2 rounded-full" style={{ backgroundColor: transaction.category.color }} aria-hidden="true" />
+                      {transaction.category.name}
+                    </Badge>
+                    : <span className="text-muted-foreground text-xs opacity-50">—</span>}
+                </TableCell>
                 <TableCell>{transaction.from || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
                 <TableCell>{transaction.to || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
                 {/* <TableCell>{transaction.amount.length > 1
@@ -61,7 +70,7 @@ export default () => {
                 <TableCell>{transaction.notes || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
               </TableRow>)}</>
               : <TableRow>
-                <TableCell className="h-24 text-center" colSpan={8}>
+                <TableCell className="h-24 text-center" colSpan={9}>
                   No transactions.
                 </TableCell>
               </TableRow>}

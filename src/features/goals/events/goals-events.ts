@@ -88,6 +88,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
       goalID: states.newTransactionGoal?.id,
       notes: states.newTransactionNotes,
       amount: states.newTransactionAmount,
+      categoryID: states.newTransactionCategory?.value,
     });
 
     handleFetchGoals();
@@ -96,6 +97,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     states.setNewTransactionWallet(undefined);
     states.setNewTransactionNotes("");
     states.setNewTransactionAmount("");
+    states.setNewTransactionCategory(undefined);
 
     toast.success("Transaction Complete ✅", {
       description: "We successfully deducted the amount from your selected goal."
@@ -104,6 +106,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     states.newTransactionGoal,
     states.newTransactionNotes,
     states.newTransactionAmount,
+    states.newTransactionCategory,
   ]);
 
   const handleArchiveGoal = useAppCallback(async () => {
