@@ -87,6 +87,21 @@ export default () => {
     states.setArchiveDialogIsOpen(true);
   }, []);
 
+  const transferMoneyOnClick = useCallback((goal: GoalListItem) => {
+    states.setNewTransactionGoal(goal);
+    states.setNewTransactionDestinationGoal(undefined);
+    states.setTransferDialogIsOpen(true);
+  }, []);
+
+  const transferConfirmOnClick = useCallback(() => {
+    events.handleTransferFundsBetweenGoals();
+  }, [events.handleTransferFundsBetweenGoals]);
+
+  const transferFormOnSubmit = useCallback((event: FormEvent<HTMLElement>) => {
+    event.preventDefault();
+    events.handleTransferFundsBetweenGoals();
+  }, [events.handleTransferFundsBetweenGoals]);
+
   const archiveGoalConfirmOnClick = useCallback(() => {
     events.handleArchiveGoal();
   }, [events.handleArchiveGoal]);
@@ -98,6 +113,19 @@ export default () => {
 
   const archiveWalletOptions = states.walletOptions.filter(
     option => option.data?.currency === states.newTransactionGoal?.currency);
+
+  const transferGoalOptions = states.goals
+    .filter(goal => goal.status === GoalStatus.Active
+      && goal.id !== states.newTransactionGoal?.id
+      && goal.currency === states.newTransactionGoal?.currency)
+    .map(goal => ({ value: goal.id, label: goal.name, data: goal }));
+  const transferDestinationOption = states.newTransactionDestinationGoal
+    ? {
+      value: states.newTransactionDestinationGoal.id,
+      label: states.newTransactionDestinationGoal.name,
+      data: states.newTransactionDestinationGoal,
+    }
+    : undefined;
 
   return <>
     <div className="flex flex-col overflow-auto h-full pb-2 gap-6">
@@ -162,6 +190,7 @@ export default () => {
                       <DropdownMenuLabel>Transaction</DropdownMenuLabel>
                       <DropdownMenuGroup>
                         <DropdownMenuItem onClick={() => allocateMoneyOnClick(goal)}>Allocate Money</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => transferMoneyOnClick(goal)}>Transfer Money</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => spendGoalFundButtonOnClick(goal)}>Spend Money</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
@@ -325,6 +354,52 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={archiveGoalConfirmOnClick} type="button">Archive</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.transferDialogIsOpen} onOpenChange={states.setTransferDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Transfer Money</DialogTitle>
+          <DialogDescription>Move funds from this goal to another goal with the same currency.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={transferFormOnSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center">
+            <p className="text-xs text-muted-foreground">Transferring from:</p>
+            <p className="text-2xl font-semibold">{states.newTransactionGoal?.name}</p>
+            {states.newTransactionGoal?.savedAmount
+              && <span className="text-xs text-muted-foreground">Available: {states.newTransactionGoal.savedAmount.format()}</span>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Destination Goal</Label>
+            <Combobox
+              placeholder="Select goal"
+              searchPlaceholder="Search goal name"
+              emptyItemsPlaceholder="No matching-currency goals found."
+              value={transferDestinationOption}
+              onChangeValue={option => states.setNewTransactionDestinationGoal(option.data)}
+              options={transferGoalOptions} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Amount</Label>
+            <Input onChange={event => states.setNewTransactionAmount(event.target.value)} placeholder="Goal's transfer amount" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Notes <span className="text-xs text-muted-foreground">Optional</span></Label>
+            <Input onChange={event => states.setNewTransactionNotes(event.target.value)} placeholder="Goal's transfer notes" />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={transferConfirmOnClick} type="button">Transfer</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

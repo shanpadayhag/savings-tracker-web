@@ -51,6 +51,9 @@ export default () => {
                 <TableCell>
                   {transaction.type === TransactionType.Allocate && <Badge variant="default">{transactionTypeLabel[transaction.type]}</Badge>}
                   {transaction.type === TransactionType.Spend && <Badge variant="secondary">{transactionTypeLabel[transaction.type]}</Badge>}
+                  {transaction.type === TransactionType.Transfer && <Badge variant="outline">{transactionTypeLabel[transaction.type]}</Badge>}
+                  {transaction.type === TransactionType.Deallocate && <Badge variant="outline">{transactionTypeLabel[transaction.type]}</Badge>}
+                  {transaction.type === TransactionType.Convert && <Badge variant="outline">{transactionTypeLabel[transaction.type]}</Badge>}
                 </TableCell>
                 <TableCell>
                   {transaction.category
@@ -62,10 +65,9 @@ export default () => {
                 </TableCell>
                 <TableCell>{transaction.from || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
                 <TableCell>{transaction.to || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
-                {/* <TableCell>{transaction.amount.length > 1
-                  ? transaction.amount[0].format() + " → " + transaction.amount[1].format()
-                  : transaction.amount[0].format()}</TableCell> */}
-                <TableCell>{transaction.amount[0].format()}</TableCell>
+                <TableCell>{transaction.type === TransactionType.Convert && transaction.amount.length > 1
+                  ? `${transaction.amount[0].format()} → ${transaction.amount[1].format()}`
+                  : transaction.amount[0].format()}</TableCell>
                 <TableCell>{transaction.fee?.format() || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
                 <TableCell>{transaction.notes || <span className="text-muted-foreground text-xs opacity-50">None</span>}</TableCell>
               </TableRow>)}</>

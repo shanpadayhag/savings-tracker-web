@@ -5,6 +5,7 @@ import createGoal from '@/features/goals/api/create-goal';
 import getCachedGoals from '@/features/goals/api/get-cached-goals';
 import useGoalsStates from "@/features/goals/states/goals-states";
 import allocateFundToGoal from '@/features/transactions/api/allocate-funds-to-goal';
+import transferFundsBetweenGoals from '@/features/transactions/api/transfer-funds-between-goals';
 import spendFundsFromGoal from '@/features/transactions/usecases/spend-funds-from-goal';
 import walletRepository from '@/features/wallets/repositories/wallet-repository';
 import useAppCallback from '@/hooks/use-app-callback';
@@ -124,6 +125,31 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     states.newTransactionGoal,
   ]);
 
+  const handleTransferFundsBetweenGoals = useAppCallback(async () => {
+    await transferFundsBetweenGoals({
+      sourceID: states.newTransactionGoal?.id,
+      destinationID: states.newTransactionDestinationGoal?.id,
+      amount: states.newTransactionAmount,
+      notes: states.newTransactionNotes,
+    });
+
+    handleFetchGoals();
+    states.setTransferDialogIsOpen(false);
+    states.setNewTransactionGoal(undefined);
+    states.setNewTransactionDestinationGoal(undefined);
+    states.setNewTransactionNotes("");
+    states.setNewTransactionAmount("");
+
+    toast.success("Funds Transferred 🔁", {
+      description: "We moved the funds between your goals."
+    });
+  }, [
+    states.newTransactionGoal,
+    states.newTransactionDestinationGoal,
+    states.newTransactionAmount,
+    states.newTransactionNotes,
+  ]);
+
   const handleArchiveGoal = useAppCallback(async () => {
     await archiveGoal({
       goalID: states.newTransactionGoal?.id,
@@ -152,6 +178,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     handleSpendFundsFromGoal,
     handleCompleteGoal,
     handleArchiveGoal,
+    handleTransferFundsBetweenGoals,
   };
 };
 
