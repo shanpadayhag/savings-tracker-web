@@ -1,5 +1,6 @@
 import { AppError } from '@/errors/app-error';
 import archiveGoal from '@/features/goals/api/archive-goal';
+import completeGoal from '@/features/goals/api/complete-goal';
 import createGoal from '@/features/goals/api/create-goal';
 import getCachedGoals from '@/features/goals/api/get-cached-goals';
 import useGoalsStates from "@/features/goals/states/goals-states";
@@ -88,6 +89,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
       goalID: states.newTransactionGoal?.id,
       notes: states.newTransactionNotes,
       amount: states.newTransactionAmount,
+      categoryID: states.newTransactionCategory?.value,
     });
 
     handleFetchGoals();
@@ -96,6 +98,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     states.setNewTransactionWallet(undefined);
     states.setNewTransactionNotes("");
     states.setNewTransactionAmount("");
+    states.setNewTransactionCategory(undefined);
 
     toast.success("Transaction Complete ✅", {
       description: "We successfully deducted the amount from your selected goal."
@@ -104,6 +107,21 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     states.newTransactionGoal,
     states.newTransactionNotes,
     states.newTransactionAmount,
+    states.newTransactionCategory,
+  ]);
+
+  const handleCompleteGoal = useAppCallback(async () => {
+    await completeGoal({ goalID: states.newTransactionGoal?.id });
+
+    handleFetchGoals();
+    states.setCompleteDialogIsOpen(false);
+    states.setNewTransactionGoal(undefined);
+
+    toast.success("Goal Completed 🏆", {
+      description: "Nice work! We marked this goal as completed."
+    });
+  }, [
+    states.newTransactionGoal,
   ]);
 
   const handleArchiveGoal = useAppCallback(async () => {
@@ -132,6 +150,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     handleFetchWalletOptions,
     handleAllocateFundToGoal,
     handleSpendFundsFromGoal,
+    handleCompleteGoal,
     handleArchiveGoal,
   };
 };

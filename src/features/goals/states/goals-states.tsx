@@ -1,4 +1,5 @@
 import Currency from '@/enums/currency';
+import { CategoryOption } from '@/features/categories/components/category-combobox';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import WalletOption from '@/features/wallets/entities/wallet-option';
 import { useState } from 'react';
@@ -14,11 +15,13 @@ const useGoalsStates = () => {
 
   const [allocationDialogIsOpen, setAllocationDialogIsOpen] = useState(false);
   const [spendDialogIsOpen, setSpendDialogIsOpen] = useState(false);
+  const [completeDialogIsOpen, setCompleteDialogIsOpen] = useState(false);
   const [archiveDialogIsOpen, setArchiveDialogIsOpen] = useState(false);
   const [newTransactionGoal, setNewTransactionGoal] = useState<GoalListItem>();
   const [newTransactionWallet, setNewTransactionWallet] = useState<WalletOption>();
   const [newTransactionNotes, setNewTransactionNotes] = useState("");
   const [newTransactionAmount, setNewTransactionAmount] = useState("");
+  const [newTransactionCategory, setNewTransactionCategory] = useState<CategoryOption>();
 
   return {
     goals, setGoals,
@@ -29,11 +32,13 @@ const useGoalsStates = () => {
     newGoalCurrency, setNewGoalCurrency,
     allocationDialogIsOpen, setAllocationDialogIsOpen,
     spendDialogIsOpen, setSpendDialogIsOpen,
+    completeDialogIsOpen, setCompleteDialogIsOpen,
     archiveDialogIsOpen, setArchiveDialogIsOpen,
     newTransactionGoal, setNewTransactionGoal,
     newTransactionWallet, setNewTransactionWallet,
     newTransactionNotes, setNewTransactionNotes,
     newTransactionAmount, setNewTransactionAmount,
+    newTransactionCategory, setNewTransactionCategory,
   };
 };
 
