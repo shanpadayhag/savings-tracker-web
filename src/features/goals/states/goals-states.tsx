@@ -15,6 +15,7 @@ const useGoalsStates = () => {
 
   const [allocationDialogIsOpen, setAllocationDialogIsOpen] = useState(false);
   const [spendDialogIsOpen, setSpendDialogIsOpen] = useState(false);
+  const [completeDialogIsOpen, setCompleteDialogIsOpen] = useState(false);
   const [archiveDialogIsOpen, setArchiveDialogIsOpen] = useState(false);
   const [newTransactionGoal, setNewTransactionGoal] = useState<GoalListItem>();
   const [newTransactionWallet, setNewTransactionWallet] = useState<WalletOption>();
@@ -31,6 +32,7 @@ const useGoalsStates = () => {
     newGoalCurrency, setNewGoalCurrency,
     allocationDialogIsOpen, setAllocationDialogIsOpen,
     spendDialogIsOpen, setSpendDialogIsOpen,
+    completeDialogIsOpen, setCompleteDialogIsOpen,
     archiveDialogIsOpen, setArchiveDialogIsOpen,
     newTransactionGoal, setNewTransactionGoal,
     newTransactionWallet, setNewTransactionWallet,

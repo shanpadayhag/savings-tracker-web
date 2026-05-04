@@ -1,5 +1,6 @@
 import { AppError } from '@/errors/app-error';
 import archiveGoal from '@/features/goals/api/archive-goal';
+import completeGoal from '@/features/goals/api/complete-goal';
 import createGoal from '@/features/goals/api/create-goal';
 import getCachedGoals from '@/features/goals/api/get-cached-goals';
 import useGoalsStates from "@/features/goals/states/goals-states";
@@ -109,6 +110,20 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     states.newTransactionCategory,
   ]);
 
+  const handleCompleteGoal = useAppCallback(async () => {
+    await completeGoal({ goalID: states.newTransactionGoal?.id });
+
+    handleFetchGoals();
+    states.setCompleteDialogIsOpen(false);
+    states.setNewTransactionGoal(undefined);
+
+    toast.success("Goal Completed 🏆", {
+      description: "Nice work! We marked this goal as completed."
+    });
+  }, [
+    states.newTransactionGoal,
+  ]);
+
   const handleArchiveGoal = useAppCallback(async () => {
     await archiveGoal({
       goalID: states.newTransactionGoal?.id,
@@ -135,6 +150,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     handleFetchWalletOptions,
     handleAllocateFundToGoal,
     handleSpendFundsFromGoal,
+    handleCompleteGoal,
     handleArchiveGoal,
   };
 };

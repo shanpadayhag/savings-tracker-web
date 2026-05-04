@@ -67,8 +67,19 @@ export default () => {
     events.handleSpendFundsFromGoal();
   }, [events.handleSpendFundsFromGoal]);
 
-  const completeGoalOnClick = useCallback(() => {
+  const completeGoalOnClick = useCallback((goal: GoalListItem) => {
+    states.setNewTransactionGoal(goal);
+    states.setCompleteDialogIsOpen(true);
   }, []);
+
+  const completeGoalConfirmOnClick = useCallback(() => {
+    events.handleCompleteGoal();
+  }, [events.handleCompleteGoal]);
+
+  const completeGoalFormOnSubmit = useCallback((event: FormEvent<HTMLElement>) => {
+    event.preventDefault();
+    events.handleCompleteGoal();
+  }, [events.handleCompleteGoal]);
 
   const archiveGoalOnClick = useCallback((goal: GoalListItem) => {
     states.setNewTransactionGoal(goal);
@@ -157,7 +168,7 @@ export default () => {
                       <DropdownMenuLabel>Goal</DropdownMenuLabel>
                       <DropdownMenuGroup>
                         <DropdownMenuItem disabled>Adjust Amount</DropdownMenuItem>
-                        <DropdownMenuItem disabled onClick={completeGoalOnClick}>Complete Goal</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => completeGoalOnClick(goal)}>Complete Goal</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => archiveGoalOnClick(goal)}><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
@@ -257,6 +268,29 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={allocateOnClick} type="button">Allocate</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.completeDialogIsOpen} onOpenChange={states.setCompleteDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Complete Goal</DialogTitle>
+          <DialogDescription>Mark this goal as completed. Its saved balance stays put — you can still spend from it later.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={completeGoalFormOnSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center">
+            <p className="text-xs text-muted-foreground">Completing:</p>
+            <p className="text-2xl font-semibold">{states.newTransactionGoal?.name}</p>
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={completeGoalConfirmOnClick} type="button">Complete</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
