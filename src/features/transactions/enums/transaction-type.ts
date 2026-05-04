@@ -3,6 +3,7 @@ enum TransactionType {
   Spend = "spend",
   Transfer = "transfer",
   Deallocate = "deallocate",
+  Convert = "convert",
 }
 
 export const transactionTypeLabel = {
@@ -10,6 +11,7 @@ export const transactionTypeLabel = {
   [TransactionType.Spend]: "Spend",
   [TransactionType.Transfer]: "Transfer",
   [TransactionType.Deallocate]: "Deallocate",
+  [TransactionType.Convert]: "Convert",
 };
 
 export default TransactionType;

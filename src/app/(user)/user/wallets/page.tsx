@@ -7,6 +7,7 @@ import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/atoms/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
+import Combobox from '@/components/molecules/combobox';
 import Currency, { currencyLabel } from '@/enums/currency';
 import useWalletsEvents from '@/features/wallets/events/wallets-events';
 import useWalletsStates from '@/features/wallets/states/wallets-states';
@@ -35,6 +36,26 @@ export default () => {
   const allocateButtonOnClick = useCallback(() => {
     events.handleAllocateFundsToWallet();
   }, [events.handleAllocateFundsToWallet]);
+
+  const convertButtonOnClick = useCallback(() => {
+    events.handleConvertFundsBetweenWallets();
+  }, [events.handleConvertFundsBetweenWallets]);
+
+  const convertFormOnSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    events.handleConvertFundsBetweenWallets();
+  }, [events.handleConvertFundsBetweenWallets]);
+
+  const convertDestinationOption = states.convertDestinationWallet
+    ? {
+      value: states.convertDestinationWallet.id,
+      label: states.convertDestinationWallet.name,
+      data: states.convertDestinationWallet,
+    }
+    : undefined;
+  const convertDestinationOptions = states.wallets
+    .filter(wallet => wallet.id !== states.selectedWallet?.id)
+    .map(wallet => ({ value: wallet.id, label: wallet.name, data: wallet }));
 
   useEffect(() => {
     events.handleFetchWallets();
@@ -87,6 +108,15 @@ export default () => {
                           states.setSelectedWallet(wallet);
                           states.setAllocateDialogIsOpen(true);
                         }}>Allocate Money</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          states.setSelectedWallet(wallet);
+                          states.setConvertDestinationWallet(undefined);
+                          states.setConvertAmountSent("");
+                          states.setConvertFee("");
+                          states.setConvertAmountReceived("");
+                          states.setConvertNotes("");
+                          states.setConvertDialogIsOpen(true);
+                        }}>Convert Money</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel>Wallet</DropdownMenuLabel>
@@ -144,6 +174,64 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={createButtonOnClick} type="button">Create</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.convertDialogIsOpen} onOpenChange={states.setConvertDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Convert Money</DialogTitle>
+          <DialogDescription>Move funds between wallets, accounting for the fee charged and the amount that lands in the destination currency.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={convertFormOnSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center">
+            <p className="text-xs text-muted-foreground">Converting from:</p>
+            <p className="text-2xl font-semibold">{states.selectedWallet?.name}</p>
+            {states.selectedWallet?.currentAmount
+              && <span className="text-xs text-muted-foreground">Available: {states.selectedWallet.currentAmount.format()}</span>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Destination Wallet</Label>
+            <Combobox
+              placeholder="Select wallet"
+              searchPlaceholder="Search wallet name"
+              emptyItemsPlaceholder="No wallets found."
+              value={convertDestinationOption}
+              onChangeValue={option => states.setConvertDestinationWallet(option.data)}
+              options={convertDestinationOptions} />
+            {states.convertDestinationWallet
+              && <span className="text-xs text-muted-foreground">Currency: {currencyLabel[states.convertDestinationWallet.currency]}</span>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Amount Transferred {states.selectedWallet && <span className="text-xs text-muted-foreground">in {currencyLabel[states.selectedWallet.currency]}</span>}</Label>
+            <Input value={states.convertAmountSent} onChange={event => states.setConvertAmountSent(event.target.value)} placeholder="Amount being sent" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Fee {states.selectedWallet && <span className="text-xs text-muted-foreground">in {currencyLabel[states.selectedWallet.currency]}</span>}</Label>
+            <Input value={states.convertFee} onChange={event => states.setConvertFee(event.target.value)} placeholder="Conversion fee" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Amount Received {states.convertDestinationWallet && <span className="text-xs text-muted-foreground">in {currencyLabel[states.convertDestinationWallet.currency]}</span>}</Label>
+            <Input value={states.convertAmountReceived} onChange={event => states.setConvertAmountReceived(event.target.value)} placeholder="Amount landing in destination wallet" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Notes <span className="text-xs text-muted-foreground">Optional</span></Label>
+            <Input value={states.convertNotes} onChange={event => states.setConvertNotes(event.target.value)} placeholder="Conversion notes" />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={convertButtonOnClick} type="button">Convert</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

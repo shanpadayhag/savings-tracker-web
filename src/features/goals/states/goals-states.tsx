@@ -17,7 +17,9 @@ const useGoalsStates = () => {
   const [spendDialogIsOpen, setSpendDialogIsOpen] = useState(false);
   const [completeDialogIsOpen, setCompleteDialogIsOpen] = useState(false);
   const [archiveDialogIsOpen, setArchiveDialogIsOpen] = useState(false);
+  const [transferDialogIsOpen, setTransferDialogIsOpen] = useState(false);
   const [newTransactionGoal, setNewTransactionGoal] = useState<GoalListItem>();
+  const [newTransactionDestinationGoal, setNewTransactionDestinationGoal] = useState<GoalListItem>();
   const [newTransactionWallet, setNewTransactionWallet] = useState<WalletOption>();
   const [newTransactionNotes, setNewTransactionNotes] = useState("");
   const [newTransactionAmount, setNewTransactionAmount] = useState("");
@@ -34,7 +36,9 @@ const useGoalsStates = () => {
     spendDialogIsOpen, setSpendDialogIsOpen,
     completeDialogIsOpen, setCompleteDialogIsOpen,
     archiveDialogIsOpen, setArchiveDialogIsOpen,
+    transferDialogIsOpen, setTransferDialogIsOpen,
     newTransactionGoal, setNewTransactionGoal,
+    newTransactionDestinationGoal, setNewTransactionDestinationGoal,
     newTransactionWallet, setNewTransactionWallet,
     newTransactionNotes, setNewTransactionNotes,
     newTransactionAmount, setNewTransactionAmount,

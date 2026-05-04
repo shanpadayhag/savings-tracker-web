@@ -13,6 +13,13 @@ const useWalletsStates = () => {
   const [selectedWallet, setSelectedWallet] = useState<WalletListItem>();
   const [allocateAmount, setAllocateAmount] = useState("");
 
+  const [convertDialogIsOpen, setConvertDialogIsOpen] = useState(false);
+  const [convertDestinationWallet, setConvertDestinationWallet] = useState<WalletListItem>();
+  const [convertAmountSent, setConvertAmountSent] = useState("");
+  const [convertFee, setConvertFee] = useState("");
+  const [convertAmountReceived, setConvertAmountReceived] = useState("");
+  const [convertNotes, setConvertNotes] = useState("");
+
   return {
     wallets, setWallets,
     createWalletDialogIsOpen, setCreateWalletDialogIsOpen,
@@ -21,6 +28,12 @@ const useWalletsStates = () => {
     allocateDialogIsOpen, setAllocateDialogIsOpen,
     selectedWallet, setSelectedWallet,
     allocateAmount, setAllocateAmount,
+    convertDialogIsOpen, setConvertDialogIsOpen,
+    convertDestinationWallet, setConvertDestinationWallet,
+    convertAmountSent, setConvertAmountSent,
+    convertFee, setConvertFee,
+    convertAmountReceived, setConvertAmountReceived,
+    convertNotes, setConvertNotes,
   };
 };
 

@@ -1,8 +1,10 @@
 import { AppError } from '@/errors/app-error';
 import allocateFundsToWallet from '@/features/transactions/api/allocate-funds-to-wallet';
+import convertFundsBetweenWallets from '@/features/transactions/api/convert-funds-between-wallets';
 import createWallet from '@/features/wallets/api/create-wallet';
 import walletRepository from '@/features/wallets/repositories/wallet-repository';
 import useWalletsStates from '@/features/wallets/states/wallets-states';
+import useAppCallback from '@/hooks/use-app-callback';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
@@ -57,10 +59,42 @@ const useWalletsEvents = (states: ReturnType<typeof useWalletsStates>) => {
     }
   }, [states.allocateAmount, states.selectedWallet]);
 
+  const handleConvertFundsBetweenWallets = useAppCallback(async () => {
+    await convertFundsBetweenWallets({
+      sourceID: states.selectedWallet?.id,
+      destinationID: states.convertDestinationWallet?.id,
+      amountSent: states.convertAmountSent,
+      fee: states.convertFee,
+      amountReceived: states.convertAmountReceived,
+      notes: states.convertNotes,
+    });
+
+    handleFetchWallets();
+    states.setConvertDialogIsOpen(false);
+    states.setSelectedWallet(undefined);
+    states.setConvertDestinationWallet(undefined);
+    states.setConvertAmountSent("");
+    states.setConvertFee("");
+    states.setConvertAmountReceived("");
+    states.setConvertNotes("");
+
+    toast.success("Conversion Complete 💱", {
+      description: "We moved the converted funds into your destination wallet."
+    });
+  }, [
+    states.selectedWallet,
+    states.convertDestinationWallet,
+    states.convertAmountSent,
+    states.convertFee,
+    states.convertAmountReceived,
+    states.convertNotes,
+  ]);
+
   return {
     handleFetchWallets,
     handleCreateWallet,
     handleAllocateFundsToWallet,
+    handleConvertFundsBetweenWallets,
   };
 };
 
