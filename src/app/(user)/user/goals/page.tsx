@@ -17,7 +17,6 @@ import GoalStatus, { goalStatusLabel } from '@/features/goals/enums/goal-status'
 import useGoalsEvents from '@/features/goals/events/goals-events';
 import useGoalsStates from '@/features/goals/states/goals-states';
 import { cn } from '@/utils/cn';
-import currencyUtil from '@/utils/currency-util';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { FormEvent, useCallback, useEffect } from 'react';
 
