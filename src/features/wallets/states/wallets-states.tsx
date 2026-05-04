@@ -20,6 +20,12 @@ const useWalletsStates = () => {
   const [convertAmountReceived, setConvertAmountReceived] = useState("");
   const [convertNotes, setConvertNotes] = useState("");
 
+  const [transferDialogIsOpen, setTransferDialogIsOpen] = useState(false);
+  const [transferDestinationWallet, setTransferDestinationWallet] = useState<WalletListItem>();
+  const [transferAmount, setTransferAmount] = useState("");
+  const [transferFee, setTransferFee] = useState("");
+  const [transferNotes, setTransferNotes] = useState("");
+
   return {
     wallets, setWallets,
     createWalletDialogIsOpen, setCreateWalletDialogIsOpen,
@@ -34,6 +40,11 @@ const useWalletsStates = () => {
     convertFee, setConvertFee,
     convertAmountReceived, setConvertAmountReceived,
     convertNotes, setConvertNotes,
+    transferDialogIsOpen, setTransferDialogIsOpen,
+    transferDestinationWallet, setTransferDestinationWallet,
+    transferAmount, setTransferAmount,
+    transferFee, setTransferFee,
+    transferNotes, setTransferNotes,
   };
 };
 

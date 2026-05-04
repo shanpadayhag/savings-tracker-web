@@ -1,6 +1,7 @@
 import { AppError } from '@/errors/app-error';
 import allocateFundsToWallet from '@/features/transactions/api/allocate-funds-to-wallet';
 import convertFundsBetweenWallets from '@/features/transactions/api/convert-funds-between-wallets';
+import transferFundsBetweenWallets from '@/features/transactions/api/transfer-funds-between-wallets';
 import createWallet from '@/features/wallets/api/create-wallet';
 import walletRepository from '@/features/wallets/repositories/wallet-repository';
 import useWalletsStates from '@/features/wallets/states/wallets-states';
@@ -90,11 +91,40 @@ const useWalletsEvents = (states: ReturnType<typeof useWalletsStates>) => {
     states.convertNotes,
   ]);
 
+  const handleTransferFundsBetweenWallets = useAppCallback(async () => {
+    await transferFundsBetweenWallets({
+      sourceID: states.selectedWallet?.id,
+      destinationID: states.transferDestinationWallet?.id,
+      amount: states.transferAmount,
+      fee: states.transferFee,
+      notes: states.transferNotes,
+    });
+
+    handleFetchWallets();
+    states.setTransferDialogIsOpen(false);
+    states.setSelectedWallet(undefined);
+    states.setTransferDestinationWallet(undefined);
+    states.setTransferAmount("");
+    states.setTransferFee("");
+    states.setTransferNotes("");
+
+    toast.success("Transfer Complete 🏦", {
+      description: "We moved the funds into your destination wallet."
+    });
+  }, [
+    states.selectedWallet,
+    states.transferDestinationWallet,
+    states.transferAmount,
+    states.transferFee,
+    states.transferNotes,
+  ]);
+
   return {
     handleFetchWallets,
     handleCreateWallet,
     handleAllocateFundsToWallet,
     handleConvertFundsBetweenWallets,
+    handleTransferFundsBetweenWallets,
   };
 };
 

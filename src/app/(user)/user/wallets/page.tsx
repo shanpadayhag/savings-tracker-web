@@ -46,6 +46,15 @@ export default () => {
     events.handleConvertFundsBetweenWallets();
   }, [events.handleConvertFundsBetweenWallets]);
 
+  const transferButtonOnClick = useCallback(() => {
+    events.handleTransferFundsBetweenWallets();
+  }, [events.handleTransferFundsBetweenWallets]);
+
+  const transferFormOnSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    events.handleTransferFundsBetweenWallets();
+  }, [events.handleTransferFundsBetweenWallets]);
+
   const convertDestinationOption = states.convertDestinationWallet
     ? {
       value: states.convertDestinationWallet.id,
@@ -55,6 +64,18 @@ export default () => {
     : undefined;
   const convertDestinationOptions = states.wallets
     .filter(wallet => wallet.id !== states.selectedWallet?.id)
+    .map(wallet => ({ value: wallet.id, label: wallet.name, data: wallet }));
+
+  const transferDestinationOption = states.transferDestinationWallet
+    ? {
+      value: states.transferDestinationWallet.id,
+      label: states.transferDestinationWallet.name,
+      data: states.transferDestinationWallet,
+    }
+    : undefined;
+  const transferDestinationOptions = states.wallets
+    .filter(wallet => wallet.id !== states.selectedWallet?.id
+      && wallet.currency === states.selectedWallet?.currency)
     .map(wallet => ({ value: wallet.id, label: wallet.name, data: wallet }));
 
   useEffect(() => {
@@ -117,6 +138,14 @@ export default () => {
                           states.setConvertNotes("");
                           states.setConvertDialogIsOpen(true);
                         }}>Convert Money</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          states.setSelectedWallet(wallet);
+                          states.setTransferDestinationWallet(undefined);
+                          states.setTransferAmount("");
+                          states.setTransferFee("");
+                          states.setTransferNotes("");
+                          states.setTransferDialogIsOpen(true);
+                        }}>Bank Transfer</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel>Wallet</DropdownMenuLabel>
@@ -232,6 +261,57 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={convertButtonOnClick} type="button">Convert</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.transferDialogIsOpen} onOpenChange={states.setTransferDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Bank Transfer</DialogTitle>
+          <DialogDescription>Move funds between wallets in the same currency. The amount stays the same — only the fee is deducted from the source.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={transferFormOnSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center">
+            <p className="text-xs text-muted-foreground">Transferring from:</p>
+            <p className="text-2xl font-semibold">{states.selectedWallet?.name}</p>
+            {states.selectedWallet?.currentAmount
+              && <span className="text-xs text-muted-foreground">Available: {states.selectedWallet.currentAmount.format()}</span>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Destination Wallet {states.selectedWallet && <span className="text-xs text-muted-foreground">in {currencyLabel[states.selectedWallet.currency]}</span>}</Label>
+            <Combobox
+              placeholder="Select wallet"
+              searchPlaceholder="Search wallet name"
+              emptyItemsPlaceholder="No wallets in this currency."
+              value={transferDestinationOption}
+              onChangeValue={option => states.setTransferDestinationWallet(option.data)}
+              options={transferDestinationOptions} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Amount {states.selectedWallet && <span className="text-xs text-muted-foreground">in {currencyLabel[states.selectedWallet.currency]}</span>}</Label>
+            <Input value={states.transferAmount} onChange={event => states.setTransferAmount(event.target.value)} placeholder="Amount being transferred" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Fee {states.selectedWallet && <span className="text-xs text-muted-foreground">in {currencyLabel[states.selectedWallet.currency]}</span>}</Label>
+            <Input value={states.transferFee} onChange={event => states.setTransferFee(event.target.value)} placeholder="Transfer fee" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Notes <span className="text-xs text-muted-foreground">Optional</span></Label>
+            <Input value={states.transferNotes} onChange={event => states.setTransferNotes(event.target.value)} placeholder="Transfer notes" />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={transferButtonOnClick} type="button">Transfer</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
