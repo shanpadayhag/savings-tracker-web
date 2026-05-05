@@ -1,18 +1,19 @@
 "use client";
 
 // Insight strip.
-// A single, rotating tip drawn from anomaly detection over the user's recent
-// activity in the active currency (mocked for now). Sits between the KPI
-// tiles and the charts so it catches the eye without competing with them
-// for vertical space. Switching currency resets to the first insight so the
-// index never overflows the new list.
+// A single, rotating tip derived from the user's activity in the active
+// currency (spend trend, top-goal progress, biggest spend this month). Sits
+// between the KPI tiles and the charts so it catches the eye without
+// competing for vertical space. Switching currency resets to the first
+// insight so the index never overflows the new list.
 
 import { Button } from '@/components/atoms/button';
 import { Card } from '@/components/atoms/card';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
+import Currency from '@/enums/currency';
+import computeDashboardInsights from '@/features/dashboard/api/compute-dashboard-insights';
 import { IconBulb, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 type DashboardInsightStripProps = {
   index: number;
@@ -21,9 +22,23 @@ type DashboardInsightStripProps = {
   onReset: () => void;
 };
 
+const useDashboardInsights = (currency: Currency): string[] => {
+  const [insights, setInsights] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeDashboardInsights(currency)
+      .then(nextInsights => { if (!isCancelled) setInsights(nextInsights); })
+      .catch(() => { if (!isCancelled) setInsights([]); });
+    return () => { isCancelled = true; };
+  }, [currency]);
+
+  return insights;
+};
+
 const DashboardInsightStrip = (props: DashboardInsightStripProps) => {
   const { activeCurrency } = useActiveCurrency();
-  const insights = dashboardData.insights(activeCurrency);
+  const insights = useDashboardInsights(activeCurrency);
 
   // Reset to the first insight when the user switches currency so a stale
   // index can't reach past the new list's bounds.

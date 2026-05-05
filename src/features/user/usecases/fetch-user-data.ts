@@ -1,22 +1,29 @@
-import JsonObj from '@/configs/types/json';
-import getGoalVersions from '@/features/goals/api/get-goal-versions';
-import getGoals from '@/features/goals/api/get-goals';
-import getTransactionEntries from '@/features/transactions/api/get-transaction-entries';
-import getTransactions from '@/features/transactions/api/get-transactions';
 import fetchCurrentUser from '@/features/user/api/fetch-current-user';
-import getWallets from '@/features/wallets/api/get-wallets';
+import UserDataExport, { USER_DATA_SCHEMA_VERSION } from '@/features/user/entities/user-data-export';
+import appDBUtil from '@/utils/app-db-util';
 
-const fetchUserData = async () => {
-  const userData: JsonObj = {};
+const fetchUserData = async (): Promise<UserDataExport> => {
+  const [user, wallets, goals, goalVersions, transactions, transactionEntries, categories] = await Promise.all([
+    fetchCurrentUser(),
+    appDBUtil.wallets.toArray(),
+    appDBUtil.goals.toArray(),
+    appDBUtil.goal_versions.toArray(),
+    appDBUtil.transactions.toArray(),
+    appDBUtil.transaction_entries.toArray(),
+    appDBUtil.categories.toArray(),
+  ]);
 
-  userData.user = await fetchCurrentUser();
-  userData.wallets = await getWallets();
-  userData.goals = await getGoals();
-  userData.goalVersions = await getGoalVersions();
-  userData.transactions = await getTransactions();
-  userData.transactionEntries = await getTransactionEntries();
-
-  return userData;
+  return {
+    schemaVersion: USER_DATA_SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    user,
+    wallets,
+    goals,
+    goalVersions,
+    transactions,
+    transactionEntries,
+    categories,
+  };
 };
 
 export default fetchUserData;

@@ -4,56 +4,82 @@
 // Shows the last few transactions in the active currency with a per-type icon
 // and color so the user can scan recent money movement at a glance. Filtering
 // by currency keeps the feed coherent — mixing $500 and €410 entries would
-// invite false comparisons.
+// invite false comparisons. Cross-currency conversions still show up in both
+// currency feeds, with the sign reflecting whether money flowed in or out.
 
 import { Button } from '@/components/atoms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
+import Currency from '@/enums/currency';
 import Routes from '@/enums/routes';
-import { DashboardTransaction, dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
+import computeRecentTransactions, { RecentActivityPrefix, RecentActivityRow } from '@/features/dashboard/api/compute-recent-transactions';
+import TransactionType from '@/features/transactions/enums/transaction-type';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import dateUtil from '@/utils/date-util';
-import { IconArrowDownLeft, IconArrowRight, IconArrowUpRight, IconCreditCardPay } from '@tabler/icons-react';
+import { IconArrowDownLeft, IconArrowRight, IconArrowsExchange, IconArrowsLeftRight, IconArrowUpRight, IconCreditCardPay } from '@tabler/icons-react';
 import Link from 'next/link';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
 type Visual = {
   icon: ReactNode;
   iconClass: string;
-  amountClass: string;
-  amountPrefix: string;
 };
 
-const visualFor = (type: DashboardTransaction['type']): Visual => {
+const visualFor = (type: TransactionType): Visual => {
   switch (type) {
-    case 'allocate':
+    case TransactionType.Allocate:
       return {
         icon: <IconArrowUpRight className="size-4" />,
         iconClass: 'bg-green-600/10 text-green-600 dark:bg-green-400/10 dark:text-green-400',
-        amountClass: 'text-green-600 dark:text-green-400',
-        amountPrefix: '+',
       };
-    case 'spend':
+    case TransactionType.Spend:
       return {
         icon: <IconCreditCardPay className="size-4" />,
         iconClass: 'bg-red-600/10 text-red-600 dark:bg-red-400/10 dark:text-red-400',
-        amountClass: 'text-red-600 dark:text-red-400',
-        amountPrefix: '-',
       };
-    case 'deallocate':
+    case TransactionType.Deallocate:
       return {
         icon: <IconArrowDownLeft className="size-4" />,
         iconClass: 'bg-amber-600/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400',
-        amountClass: 'text-amber-600 dark:text-amber-400',
-        amountPrefix: '-',
+      };
+    case TransactionType.Transfer:
+      return {
+        icon: <IconArrowsLeftRight className="size-4" />,
+        iconClass: 'bg-slate-500/10 text-slate-600 dark:bg-slate-400/10 dark:text-slate-400',
+      };
+    case TransactionType.Convert:
+      return {
+        icon: <IconArrowsExchange className="size-4" />,
+        iconClass: 'bg-blue-600/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400',
       };
   }
 };
 
+const amountClassFor = (type: TransactionType, prefix: RecentActivityPrefix): string => {
+  if (type === TransactionType.Deallocate) return 'text-amber-600 dark:text-amber-400';
+  if (prefix === '+') return 'text-green-600 dark:text-green-400';
+  if (prefix === '-') return 'text-red-600 dark:text-red-400';
+  return 'text-foreground';
+};
+
+const useRecentTransactions = (currency: Currency): RecentActivityRow[] => {
+  const [rows, setRows] = useState<RecentActivityRow[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeRecentTransactions(currency)
+      .then(nextRows => { if (!isCancelled) setRows(nextRows); })
+      .catch(() => { if (!isCancelled) setRows([]); });
+    return () => { isCancelled = true; };
+  }, [currency]);
+
+  return rows;
+};
+
 const DashboardRecentTransactions = () => {
   const { activeCurrency } = useActiveCurrency();
-  const transactions = dashboardData.recentTransactions(activeCurrency);
+  const transactions = useRecentTransactions(activeCurrency);
 
   return (
     <Card>
@@ -74,6 +100,7 @@ const DashboardRecentTransactions = () => {
         )}
         {transactions.map(transaction => {
           const visual = visualFor(transaction.type);
+          const amountClass = amountClassFor(transaction.type, transaction.prefix);
           return (
             <div key={transaction.id} className="flex items-center gap-3">
               <span className={cn('flex items-center justify-center size-9 rounded-full shrink-0', visual.iconClass)}>
@@ -84,8 +111,8 @@ const DashboardRecentTransactions = () => {
                 <p className="text-xs text-muted-foreground truncate">{transaction.counterparty}</p>
               </div>
               <div className="flex flex-col items-end shrink-0">
-                <span className={cn('text-sm font-medium tabular-nums', visual.amountClass)}>
-                  {visual.amountPrefix}{currencyUtil.format(transaction.amount, transaction.currency)}
+                <span className={cn('text-sm font-medium tabular-nums', amountClass)}>
+                  {transaction.prefix}{currencyUtil.format(transaction.amount, transaction.currency)}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {dateUtil.formatDisplayDate(transaction.createdAt)}

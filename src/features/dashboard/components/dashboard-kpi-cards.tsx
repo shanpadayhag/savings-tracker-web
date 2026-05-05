@@ -12,11 +12,32 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/card';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
 import Currency from '@/enums/currency';
-import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
+import computeDashboardSummary, { DashboardSummary } from '@/features/dashboard/api/compute-dashboard-summary';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { IconCoinFilled, IconCreditCardPay, IconTargetArrow, IconTrendingDown, IconTrendingUp, IconWallet } from '@tabler/icons-react';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+
+const emptySummary: DashboardSummary = {
+  netWorth: 0, netWorthChangePercent: 0,
+  walletsBalance: 0, walletsBalanceChangePercent: 0,
+  goalsBalance: 0, goalsBalanceChangePercent: 0,
+  monthlySpend: 0, monthlySpendChangePercent: 0,
+};
+
+const useDashboardSummary = (currency: Currency): DashboardSummary => {
+  const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeDashboardSummary(currency)
+      .then(nextSummary => { if (!isCancelled) setSummary(nextSummary); })
+      .catch(() => { if (!isCancelled) setSummary(emptySummary); });
+    return () => { isCancelled = true; };
+  }, [currency]);
+
+  return summary;
+};
 
 type KpiCardProps = {
   label: string;
@@ -60,7 +81,7 @@ const KpiCard = (props: KpiCardProps) => {
 
 const DashboardKpiCards = () => {
   const { activeCurrency } = useActiveCurrency();
-  const summary = useMemo(() => dashboardData.summary(activeCurrency), [activeCurrency]);
+  const summary = useDashboardSummary(activeCurrency);
 
   return (
     <div className="grid gap-4 px-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">

@@ -80,8 +80,7 @@ export default () => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button className="data-[state=open]:bg-muted text-muted-foreground flex"
-                        variant="ghost" size="icon"
-                        disabled={category.isSystem}>
+                        variant="ghost" size="icon">
                         <IconDotsVertical /> <span className="sr-only">Category Actions</span>
                       </Button>
                     </DropdownMenuTrigger>
@@ -92,7 +91,8 @@ export default () => {
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={() => events.handleStartDelete(category)}>
+                        <DropdownMenuItem onClick={() => events.handleStartDelete(category)}
+                          disabled={category.isSystem}>
                           <span className="text-red-700">Delete</span>
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
@@ -152,7 +152,9 @@ export default () => {
         <DialogHeader>
           <DialogTitle>Edit Category</DialogTitle>
           <DialogDescription>
-            Rename or recolor this category. Transactions already tagged with it will keep using it.
+            {states.editingCategory?.isSystem
+              ? "The system 'Others' category's name is locked, but you can pick a new color."
+              : "Rename or recolor this category. Transactions already tagged with it will keep using it."}
           </DialogDescription>
         </DialogHeader>
 
@@ -162,7 +164,8 @@ export default () => {
             <Input
               value={states.editCategoryName}
               onChange={event => states.setEditCategoryName(event.target.value)}
-              placeholder="Category name" />
+              placeholder="Category name"
+              disabled={states.editingCategory?.isSystem} />
           </div>
 
           <div className="grid gap-2">

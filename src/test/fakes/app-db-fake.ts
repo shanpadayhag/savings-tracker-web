@@ -9,10 +9,14 @@ import InMemoryTable from '@/test/fakes/in-memory-table';
 class CategoriesTable extends InMemoryTable<Category> {
   where(_field: 'name') {
     return {
-      equalsIgnoreCase: (value: string) => ({
-        first: async (): Promise<Category | undefined> =>
-          this.list().find(category => category.name?.toLowerCase() === value.toLowerCase()),
-      }),
+      equalsIgnoreCase: (value: string) => {
+        const matches = (): Category[] =>
+          this.list().filter(category => category.name?.toLowerCase() === value.toLowerCase());
+        return {
+          first: async (): Promise<Category | undefined> => matches()[0],
+          toArray: async (): Promise<Category[]> => matches(),
+        };
+      },
     };
   }
 }

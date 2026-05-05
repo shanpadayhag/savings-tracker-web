@@ -9,9 +9,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
+import Currency from '@/enums/currency';
+import computeAllocationBreakdown, { AllocationSlice } from '@/features/dashboard/api/compute-allocation-breakdown';
 import currencyUtil from '@/utils/currency-util';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Cell, Pie, PieChart } from 'recharts';
 
 const palette = [
@@ -23,16 +24,28 @@ const palette = [
   'var(--primary)',
 ];
 
+const useAllocationBreakdown = (currency: Currency): AllocationSlice[] => {
+  const [slices, setSlices] = useState<AllocationSlice[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeAllocationBreakdown(currency)
+      .then(nextSlices => { if (!isCancelled) setSlices(nextSlices); })
+      .catch(() => { if (!isCancelled) setSlices([]); });
+    return () => { isCancelled = true; };
+  }, [currency]);
+
+  return slices;
+};
+
 const DashboardAllocationChart = () => {
   const { activeCurrency } = useActiveCurrency();
+  const slices = useAllocationBreakdown(activeCurrency);
 
-  const data = useMemo(() => {
-    const slices = dashboardData.allocation(activeCurrency);
-    return slices.map((slice, index) => ({
-      ...slice,
-      fill: palette[index % palette.length],
-    }));
-  }, [activeCurrency]);
+  const data = useMemo(() => slices.map((slice, index) => ({
+    ...slice,
+    fill: palette[index % palette.length],
+  })), [slices]);
 
   const total = useMemo(
     () => data.reduce((sum, slice) => sum + slice.amount, 0),
