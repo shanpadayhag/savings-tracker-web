@@ -9,11 +9,12 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { reportsData } from '@/features/reports/data/mock-reports-data';
+import Currency from '@/enums/currency';
+import computeReportsDailySpending, { DailySpendingPoint } from '@/features/reports/api/compute-reports-daily-spending';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { format } from 'date-fns';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -29,14 +30,28 @@ type Cell =
   | { kind: 'pad' }
   | { kind: 'day'; date: Date; amount: number; intensity: number; };
 
+const useDailySpending = (currency: Currency): DailySpendingPoint[] => {
+  const [days, setDays] = useState<DailySpendingPoint[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeReportsDailySpending(currency)
+      .then(next => { if (!isCancelled) setDays(next); })
+      .catch(() => { if (!isCancelled) setDays([]); });
+    return () => { isCancelled = true; };
+  }, [currency]);
+
+  return days;
+};
+
 const ReportsSpendingHeatmap = () => {
   const { activeCurrency } = useActiveCurrency();
+  const days = useDailySpending(activeCurrency);
 
   // Pre-compute the grid: pad the start with empty cells so the first day
   // lands on its actual weekday row, then bucket each day's amount into one
   // of five intensity tiers based on the period max.
   const { cells, totals } = useMemo(() => {
-    const days = reportsData.heatmap(activeCurrency);
     const max = Math.max(...days.map(d => d.amount), 1);
 
     const intensityFor = (amount: number) => {
@@ -65,7 +80,7 @@ const ReportsSpendingHeatmap = () => {
     const dailyAvg = activeDays === 0 ? 0 : total / activeDays;
 
     return { cells: grid, totals: { total, dailyAvg, activeDays } };
-  }, [activeCurrency]);
+  }, [days]);
 
   return (
     <Card>

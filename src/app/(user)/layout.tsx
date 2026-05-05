@@ -4,40 +4,39 @@ import { SidebarInset, SidebarProvider } from '@/components/atoms/sidebar';
 import UserLayoutHeader from '@/components/organisms/user-layout-header';
 import UserLayoutSidebar from '@/components/organisms/user-layout-sidebar';
 import { ActiveCurrencyProvider } from '@/contexts/active-currency-context';
-import { mockAvailableCurrencies, mockPrimaryCurrency } from '@/features/user/data/mock-user-currencies';
+import { CurrentUserProvider, useCurrentUser } from '@/contexts/current-user-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export default ({ children }: { children: React.ReactNode; }) => {
+const UserLayoutShell = ({ children }: { children: React.ReactNode; }) => {
   const isMobile = useIsMobile();
+  const { displayName, email, initials } = useCurrentUser();
+  const user = { name: displayName, email, initials };
 
-  const user = {
-    name: "Jim Paul", email: "jpp@savingstracker.com",
-    initials: "J P P".split(/\s+/)
-      .filter(n => n.length > 0)
-      .map(n => n.charAt(0).toUpperCase())
-      .slice(0, 3)
-      .join('')
-  };
-
-  return <div className="max-w-screen max-h-screen">
-    <ActiveCurrencyProvider
-      initialCurrency={mockPrimaryCurrency}
-      availableCurrencies={mockAvailableCurrencies}>
-      <SidebarProvider style={{
-        "--sidebar-width": "calc(var(--spacing) * 72)",
-        "--header-height": "calc(var(--spacing) * 15)",
-      } as React.CSSProperties}>
-        <UserLayoutSidebar
+  return (
+    <SidebarProvider style={{
+      "--sidebar-width": "calc(var(--spacing) * 72)",
+      "--header-height": "calc(var(--spacing) * 15)",
+    } as React.CSSProperties}>
+      <UserLayoutSidebar
+        user={user}
+        dropdownMenuContentSide={isMobile ? "top" : "right"}
+        sidebar={{ variant: "inset" }} />
+      <SidebarInset className="overflow-auto">
+        <UserLayoutHeader
           user={user}
-          dropdownMenuContentSide={isMobile ? "top" : "right"}
-          sidebar={{ variant: "inset" }} />
-        <SidebarInset className="overflow-auto">
-          <UserLayoutHeader
-            user={user}
-            dropdownMenuContentSide="bottom" />
-          {children}
-        </SidebarInset>
-      </SidebarProvider>
-    </ActiveCurrencyProvider>
+          dropdownMenuContentSide="bottom" />
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+  );
+};
+
+export default ({ children }: { children: React.ReactNode; }) => {
+  return <div className="max-w-screen max-h-screen">
+    <CurrentUserProvider>
+      <ActiveCurrencyProvider>
+        <UserLayoutShell>{children}</UserLayoutShell>
+      </ActiveCurrencyProvider>
+    </CurrentUserProvider>
   </div>;
 };

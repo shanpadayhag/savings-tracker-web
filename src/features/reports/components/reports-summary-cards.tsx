@@ -8,11 +8,39 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/card';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { ReportRange, reportsData } from '@/features/reports/data/mock-reports-data';
+import Currency from '@/enums/currency';
+import computeReportsSummary, { ReportsSummary } from '@/features/reports/api/compute-reports-summary';
+import { ReportRange } from '@/features/reports/data/mock-reports-data';
+import { balanceSizeClass } from '@/utils/balance-size';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { IconCashBanknote, IconCreditCardPay, IconPercentage, IconPigMoney, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+
+const emptySummary: ReportsSummary = {
+  totalIncome: 0,
+  totalExpense: 0,
+  netSaved: 0,
+  savingsRate: 0,
+  incomeChangePercent: 0,
+  expenseChangePercent: 0,
+  netChangePercent: 0,
+  savingsRateChangePercent: 0,
+};
+
+const useReportsSummary = (currency: Currency, range: ReportRange): ReportsSummary => {
+  const [summary, setSummary] = useState<ReportsSummary>(emptySummary);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeReportsSummary(currency, range)
+      .then(next => { if (!isCancelled) setSummary(next); })
+      .catch(() => { if (!isCancelled) setSummary(emptySummary); });
+    return () => { isCancelled = true; };
+  }, [currency, range]);
+
+  return summary;
+};
 
 type MetricCardProps = {
   label: string;
@@ -39,7 +67,12 @@ const MetricCard = (props: MetricCardProps) => {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
-        <span className="text-2xl font-semibold tabular-nums">{props.value}</span>
+        <span className={cn(
+          'numeral-hero whitespace-nowrap font-semibold tabular-nums tracking-tight',
+          balanceSizeClass(props.value)
+        )}>
+          {props.value}
+        </span>
         <span className={cn('flex items-center gap-1 text-xs font-medium',
           isGood ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
           {isPositive
@@ -59,9 +92,7 @@ type ReportsSummaryCardsProps = {
 
 const ReportsSummaryCards = (props: ReportsSummaryCardsProps) => {
   const { activeCurrency } = useActiveCurrency();
-  const summary = useMemo(
-    () => reportsData.summary(activeCurrency, props.range),
-    [activeCurrency, props.range]);
+  const summary = useReportsSummary(activeCurrency, props.range);
 
   return (
     <div className="grid gap-4 px-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">

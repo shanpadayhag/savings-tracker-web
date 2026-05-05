@@ -1,25 +1,23 @@
 "use client";
 
-import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/atoms/dropdown-menu';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import { Progress } from '@/components/atoms/progress';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/atoms/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
 import Combobox from '@/components/molecules/combobox';
 import Currency, { currencyLabel } from '@/enums/currency';
 import CategoryCombobox from '@/features/categories/components/category-combobox';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
 import GoalStatus, { goalStatusLabel } from '@/features/goals/enums/goal-status';
 import useGoalsEvents from '@/features/goals/events/goals-events';
-import useGoalsStates from '@/features/goals/states/goals-states';
+import useGoalsStates, { GoalStatusFilter } from '@/features/goals/states/goals-states';
 import { cn } from '@/utils/cn';
 import dateUtil from '@/utils/date-util';
-import { IconDotsVertical } from '@tabler/icons-react';
-import { FormEvent, useCallback, useEffect } from 'react';
+import { balanceSizeClass } from '@/utils/balance-size';
+import { IconCheck, IconDotsVertical, IconPlus, IconSearch } from '@tabler/icons-react';
+import { FormEvent, useCallback, useEffect, useMemo } from 'react';
 
 export default () => {
   const states = useGoalsStates();
@@ -127,97 +125,241 @@ export default () => {
     }
     : undefined;
 
+  const counts = useMemo(() => {
+    const base: Record<GoalStatusFilter, number> = {
+      all: states.goals.length,
+      [GoalStatus.Active]: 0,
+      [GoalStatus.Completed]: 0,
+      [GoalStatus.Archived]: 0,
+    };
+    for (const goal of states.goals) base[goal.status] += 1;
+    return base;
+  }, [states.goals]);
+
+  const filteredGoals = useMemo(() => {
+    if (states.statusFilter === 'all') return states.goals;
+    return states.goals.filter(goal => goal.status === states.statusFilter);
+  }, [states.goals, states.statusFilter]);
+
+  const headlineProgress = useMemo(() => {
+    const active = states.goals.filter(goal => goal.status === GoalStatus.Active);
+    if (active.length === 0) return null;
+    const totalTarget = active.reduce((sum, goal) => sum + goal.targetAmount.value, 0);
+    const totalSaved = active.reduce((sum, goal) => sum + goal.savedAmount.value, 0);
+    if (totalTarget === 0) return null;
+    return {
+      activeCount: active.length,
+      percent: Math.min(100, Math.round((totalSaved / totalTarget) * 100)),
+    };
+  }, [states.goals]);
+
+  const filterOrder: GoalStatusFilter[] = [
+    'all',
+    GoalStatus.Active,
+    GoalStatus.Completed,
+    GoalStatus.Archived,
+  ];
+  const filterLabel: Record<GoalStatusFilter, string> = {
+    all: 'All',
+    [GoalStatus.Active]: goalStatusLabel[GoalStatus.Active],
+    [GoalStatus.Completed]: goalStatusLabel[GoalStatus.Completed],
+    [GoalStatus.Archived]: goalStatusLabel[GoalStatus.Archived],
+  };
+
   return <>
-    <div className="flex flex-col overflow-auto h-full pb-2 gap-6">
-      <div className="w-full px-4 pt-4">
-        <h1 className="text-xl font-semi font-serif lg:text-2xl">Goals</h1>
-        <p className="text-sm text-muted-foreground font-light">Set and track savings targets to achieve your financial objectives.</p>
+    <div className="flex flex-col overflow-auto h-full pb-8 gap-6">
+      <div className="w-full px-4 pt-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="eyebrow">Saving toward</p>
+            <h1 className="heading-display mt-2 text-3xl font-semibold lg:text-4xl">Goals</h1>
+            <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+              Set targets, name what you're saving for, and watch the progress fill.
+            </p>
+          </div>
+
+          {headlineProgress && (
+            <div className="rounded-xl border bg-card px-5 py-4 shadow-sm">
+              <p className="eyebrow">Across active goals</p>
+              <div className="mt-2 flex items-baseline gap-3">
+                <span className="numeral-hero text-3xl font-semibold tabular-nums">
+                  {headlineProgress.percent}%
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  toward {headlineProgress.activeCount}{' '}
+                  {headlineProgress.activeCount === 1 ? 'goal' : 'goals'}
+                </span>
+              </div>
+              <div className="mt-3 h-1.5 w-44 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary transition-[width] duration-500"
+                  style={{ width: `${headlineProgress.percent}%` }} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex justify-between items-center px-4">
-        <div><Input disabled className="w-70" placeholder="Search for goal" /></div>
-        <div><Button onClick={() => states.setCreateGoalDialogIsOpen(true)}>New Goal</Button></div>
+      <div className="flex flex-col gap-3 px-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-full max-w-xs">
+            <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input disabled className="pl-9" placeholder="Search goals (coming soon)" />
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {filterOrder.map(filter => {
+              const isActive = states.statusFilter === filter;
+              const count = counts[filter];
+              return (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => states.setStatusFilter(filter)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                    isActive
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}>
+                  <span>{filterLabel[filter]}</span>
+                  <span className={cn('tabular-nums',
+                    isActive ? 'text-background/70' : 'text-muted-foreground/60')}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <Button onClick={() => states.setCreateGoalDialogIsOpen(true)}>
+          <IconPlus className="size-4" /> New Goal
+        </Button>
       </div>
 
-      <div className="border-y">
-        <Table>
-          <TableHeader className="bg-muted sticky top-0 z-0">
-            <TableRow>
-              <TableHead><span className="sr-only">Drag</span></TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Target Amount</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead>Saved Amount</TableHead>
-              <TableHead>Remaining Amount</TableHead>
-              <TableHead><span className="sr-only">Actions</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {states.goals.length > 0
-              ? <>{states.goals.map(goal => <TableRow key={goal.id}>
-                <TableCell></TableCell>
-                <TableCell className="py-4">{goal.name}</TableCell>
-                <TableCell className="py-4">{goal.targetAmount.format()}</TableCell>
-                <TableCell className="py-4 text-center">
-                  <div className="flex flex-col items-center gap-1">
-                    <Badge className={cn('border-none focus-visible:outline-none',
-                      goal.status === GoalStatus.Active && 'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
-                      goal.status === GoalStatus.Completed && 'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5',
-                      goal.status === GoalStatus.Archived && 'bg-red-600/10 text-red-600 focus-visible:ring-red-600/20 dark:focus-visible:ring-red-600/40 [a&]:hover:bg-red-600/5',)}>
-                      <span className={cn('size-1.5 rounded-full',
-                        goal.status === GoalStatus.Active && 'bg-green-600 dark:bg-green-400',
-                        goal.status === GoalStatus.Completed && 'bg-amber-600 dark:bg-amber-400',
-                        goal.status === GoalStatus.Archived && 'bg-red-600 dark:bg-red-400')} aria-hidden='true' />
-                      {goalStatusLabel[goal.status]}
-                    </Badge>
-                    {goal.status !== GoalStatus.Active && (
-                      <span className="text-xs text-muted-foreground">
-                        on {dateUtil.formatDisplayDate(goal.updatedAt)}
+      <div className="px-4">
+        {filteredGoals.length === 0 ? (
+          <div className="rounded-xl border border-dashed bg-card/50 px-6 py-16 text-center">
+            <p className="text-sm font-medium">
+              {states.goals.length === 0
+                ? 'No goals yet.'
+                : `No ${filterLabel[states.statusFilter].toLowerCase()} goals.`}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {states.goals.length === 0
+                ? 'Name something specific you\'re saving for, then allocate money toward it.'
+                : 'Switch the filter to see goals in other states.'}
+            </p>
+            {states.goals.length === 0 && (
+              <Button className="mt-6" onClick={() => states.setCreateGoalDialogIsOpen(true)}>
+                <IconPlus className="size-4" /> Create a goal
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredGoals.map(goal => {
+              const pct = Math.min(100, Math.max(0, goal.savedPercent.value));
+              const isActive = goal.status === GoalStatus.Active;
+              const isComplete = goal.status === GoalStatus.Completed;
+              const isArchived = goal.status === GoalStatus.Archived;
+              return (
+                <article key={goal.id}
+                  className={cn('group relative flex flex-col gap-5 rounded-xl border bg-card p-6 shadow-sm transition-shadow',
+                    isActive && 'hover:shadow-md',
+                    isArchived && 'opacity-70')}>
+                  <header className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="heading-display truncate text-lg font-semibold tracking-tight">
+                        {goal.name}
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Target {goal.targetAmount.format()}
+                      </p>
+                    </div>
+                    {isActive ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon"
+                            className="-mr-2 -mt-1 size-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
+                            <IconDotsVertical />
+                            <span className="sr-only">Goal actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuLabel>Transaction</DropdownMenuLabel>
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem onClick={() => allocateMoneyOnClick(goal)}>Allocate Money</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => transferMoneyOnClick(goal)}>Transfer Money</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => spendGoalFundButtonOnClick(goal)}>Spend Money</DropdownMenuItem>
+                          </DropdownMenuGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel>Goal</DropdownMenuLabel>
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem disabled>Adjust Amount</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => completeGoalOnClick(goal)}>Complete Goal</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => archiveGoalOnClick(goal)}>
+                              <span className="text-rose-700 dark:text-rose-400">Archive Goal</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <span className={cn(
+                        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                        isComplete && 'bg-amber-600/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400',
+                        isArchived && 'bg-muted text-muted-foreground'
+                      )}>
+                        {isComplete && <IconCheck className="size-3" />}
+                        {goalStatusLabel[goal.status]}
                       </span>
                     )}
+                  </header>
+
+                  <div>
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <span className={cn(
+                        'numeral-hero whitespace-nowrap font-semibold tabular-nums tracking-tight',
+                        balanceSizeClass(goal.savedAmount.format())
+                      )}>
+                        {goal.savedAmount.format()}
+                      </span>
+                      <span className="whitespace-nowrap text-sm text-muted-foreground tabular-nums">
+                        / {goal.targetAmount.format()}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-3">
+                      <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                        <div className={cn(
+                          'h-full rounded-full transition-[width] duration-500',
+                          isComplete ? 'bg-amber-500' : 'bg-primary'
+                        )}
+                          style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="numeral-hero w-10 text-right text-xs font-semibold tabular-nums">
+                        {Math.round(pct)}%
+                      </span>
+                    </div>
                   </div>
-                </TableCell>
-                <TableCell className="py-4"><span className="flex items-center gap-2">
-                  <Progress value={goal.savedPercent.value} className="w-30" />
-                  {goal.savedPercent.format()}
-                </span></TableCell>
-                <TableCell className="py-4">{goal.savedAmount.format()}</TableCell>
-                <TableCell className="py-4" colSpan={goal.status !== GoalStatus.Active ? 2 : 1}>{goal.remainingAmount.format()}</TableCell>
-                {goal.status === GoalStatus.Active && <TableCell className="py-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className="data-[state=open]:bg-muted text-muted-foreground flex"
-                        variant="ghost" size="icon">
-                        <IconDotsVertical />
-                        <span className="sr-only">Goal Item Action</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-38">
-                      <DropdownMenuLabel>Transaction</DropdownMenuLabel>
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={() => allocateMoneyOnClick(goal)}>Allocate Money</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => transferMoneyOnClick(goal)}>Transfer Money</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => spendGoalFundButtonOnClick(goal)}>Spend Money</DropdownMenuItem>
-                      </DropdownMenuGroup>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel>Goal</DropdownMenuLabel>
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem disabled>Adjust Amount</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => completeGoalOnClick(goal)}>Complete Goal</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => archiveGoalOnClick(goal)}><span className="text-red-700">Archive Goal</span></DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>}
-              </TableRow>)}</>
-              : <TableRow>
-                <TableCell className="h-24 text-center" colSpan={7}>
-                  No goals.
-                </TableCell>
-              </TableRow>}
-          </TableBody>
-        </Table>
+
+                  <footer className="flex items-end justify-between gap-3 border-t pt-4 text-xs">
+                    <div>
+                      <p className="text-muted-foreground">Remaining</p>
+                      <p className="numeral-hero mt-0.5 text-sm font-semibold tabular-nums">
+                        {goal.remainingAmount.format()}
+                      </p>
+                    </div>
+                    <p className="text-right text-muted-foreground">
+                      {isActive
+                        ? <>Updated {dateUtil.formatDisplayDate(goal.updatedAt)}</>
+                        : <>{goalStatusLabel[goal.status]} {dateUtil.formatDisplayDate(goal.updatedAt)}</>}
+                    </p>
+                  </footer>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
 

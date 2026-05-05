@@ -1,5 +1,6 @@
 "use client";
 
+import { useCurrentUser } from '@/contexts/current-user-context';
 import DashboardAllocationChart from '@/features/dashboard/components/dashboard-allocation-chart';
 import DashboardCashflowChart from '@/features/dashboard/components/dashboard-cashflow-chart';
 import DashboardGreeting from '@/features/dashboard/components/dashboard-greeting';
@@ -14,10 +15,11 @@ import useDashboardStates from '@/features/dashboard/states/dashboard-states';
 export default () => {
   const states = useDashboardStates();
   const events = useDashboardEvents(states);
+  const { firstName } = useCurrentUser();
 
   return (
     <div className="flex flex-col overflow-auto h-full pb-6 gap-6">
-      <DashboardGreeting name="Jim" />
+      <DashboardGreeting name={firstName} />
 
       <DashboardKpiCards />
 

@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
+import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/atoms/sonner";
 
 import "@/assets/css/tailwind.css";
 import { ThemeProvider } from '@/components/atoms/theme-provider';
-// import AuthProvider from '@/features/auth/components/atoms/AuthProvider';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "Savings Tracker",
@@ -16,15 +24,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
+    <html lang="en" suppressHydrationWarning
+      className={`${GeistSans.variable} ${GeistMono.variable} ${inter.variable}`}>
+      <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange>
           {children}
-          {/* <AuthProvider></AuthProvider> */}
           <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>

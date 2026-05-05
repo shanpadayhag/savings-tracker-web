@@ -8,9 +8,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { ReportRange, reportsData } from '@/features/reports/data/mock-reports-data';
+import Currency from '@/enums/currency';
+import computeReportsSpendingByCategory, { SpendingByCategory } from '@/features/reports/api/compute-reports-spending-by-category';
+import { ReportRange } from '@/features/reports/data/mock-reports-data';
 import currencyUtil from '@/utils/currency-util';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Cell, Pie, PieChart } from 'recharts';
 
 const palette = [
@@ -24,20 +26,36 @@ const palette = [
   'oklch(0.62 0.14 215)',
 ];
 
+const useSpendingByCategory = (currency: Currency, range: ReportRange): SpendingByCategory[] => {
+  const [data, setData] = useState<SpendingByCategory[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeReportsSpendingByCategory(currency, range)
+      .then(next => { if (!isCancelled) setData(next); })
+      .catch(() => { if (!isCancelled) setData([]); });
+    return () => { isCancelled = true; };
+  }, [currency, range]);
+
+  return data;
+};
+
 type ReportsSpendingByCategoryProps = {
   range: ReportRange;
 };
 
 const ReportsSpendingByCategory = (props: ReportsSpendingByCategoryProps) => {
   const { activeCurrency } = useActiveCurrency();
+  const categories = useSpendingByCategory(activeCurrency, props.range);
 
-  const data = useMemo(() => {
-    const categories = reportsData.spendingByCategory(activeCurrency, props.range);
-    return categories.map((cat, index) => ({
-      ...cat,
-      fill: palette[index % palette.length],
-    }));
-  }, [activeCurrency, props.range]);
+  const data = useMemo(() =>
+    [...categories]
+      .sort((a, b) => b.amount - a.amount)
+      .map((cat, index) => ({
+        ...cat,
+        fill: palette[index % palette.length],
+      })),
+    [categories]);
 
   const total = useMemo(
     () => data.reduce((sum, cat) => sum + cat.amount, 0),

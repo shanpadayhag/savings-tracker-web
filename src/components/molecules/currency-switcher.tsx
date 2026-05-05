@@ -5,8 +5,9 @@
 // dashboard / reports headers but reads from a global context so switching
 // on one page is reflected everywhere else.
 //
-// If the user only holds a single currency the control becomes a static label
-// (no need to make them click a useless dropdown).
+// The option list is ordered by recency (most-recently-used first) so the
+// user's primary currency surfaces at the top after a few uses. The same
+// list can be stepped through with ⌘. / Ctrl+. without opening the dropdown.
 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/atoms/select';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
@@ -16,7 +17,9 @@ import { IconCoin } from '@tabler/icons-react';
 const CurrencySwitcher = () => {
   const { activeCurrency, setActiveCurrency, availableCurrencies } = useActiveCurrency();
 
-  if (availableCurrencies.length <= 1) {
+  if (availableCurrencies.length === 0) return null;
+
+  if (availableCurrencies.length === 1) {
     return (
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <IconCoin className="size-4" />
@@ -33,7 +36,12 @@ const CurrencySwitcher = () => {
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>Viewing</SelectLabel>
+          <SelectLabel className="flex items-center justify-between gap-4">
+            <span>Viewing</span>
+            <kbd className="pointer-events-none inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground">
+              <span className="text-[11px] leading-none">⌘</span>.
+            </kbd>
+          </SelectLabel>
           {availableCurrencies.map(currency => (
             <SelectItem key={currency} value={currency}>
               {currencyLabel[currency]}

@@ -2,8 +2,11 @@ import Currency from '@/enums/currency';
 import WalletListItem from '@/features/wallets/entities/wallet-list-item';
 import { useState } from 'react';
 
+export type WalletCurrencyFilter = 'all' | Currency;
+
 const useWalletsStates = () => {
   const [wallets, setWallets] = useState<WalletListItem[]>([]);
+  const [currencyFilter, setCurrencyFilter] = useState<WalletCurrencyFilter>('all');
 
   const [createWalletDialogIsOpen, setCreateWalletDialogIsOpen] = useState(false);
   const [newWalletName, setNewWalletName] = useState("");
@@ -28,6 +31,7 @@ const useWalletsStates = () => {
 
   return {
     wallets, setWallets,
+    currencyFilter, setCurrencyFilter,
     createWalletDialogIsOpen, setCreateWalletDialogIsOpen,
     newWalletName, setNewWalletName,
     newWalletCurrency, setNewWalletCurrency,
