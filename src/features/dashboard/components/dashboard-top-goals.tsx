@@ -9,14 +9,17 @@ import { Button } from '@/components/atoms/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { Progress } from '@/components/atoms/progress';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
+import Currency from '@/enums/currency';
 import Routes from '@/enums/routes';
-import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
+import computeTopGoals, { TopGoal } from '@/features/dashboard/api/compute-top-goals';
 import currencyUtil from '@/utils/currency-util';
 import { IconArrowRight } from '@tabler/icons-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
-const formatEta = (months: number) => {
+const formatEta = (months: number | null) => {
+  if (months === null) return 'Pace not yet known';
+  if (months === 0) return 'Funded';
   if (months <= 1) return 'About a month left';
   if (months < 12) return `~${months} months left`;
   const years = Math.floor(months / 12);
@@ -25,16 +28,23 @@ const formatEta = (months: number) => {
   return `~${years}y ${remaining}m left`;
 };
 
+const useTopGoals = (currency: Currency): TopGoal[] => {
+  const [goals, setGoals] = useState<TopGoal[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeTopGoals(currency)
+      .then(nextGoals => { if (!isCancelled) setGoals(nextGoals); })
+      .catch(() => { if (!isCancelled) setGoals([]); });
+    return () => { isCancelled = true; };
+  }, [currency]);
+
+  return goals;
+};
+
 const DashboardTopGoals = () => {
   const { activeCurrency } = useActiveCurrency();
-
-  // Sort by progress descending so the goals nearest the finish line surface
-  // first — that's the motivating view, not a flat list.
-  const sortedGoals = useMemo(() => {
-    const goals = dashboardData.topGoals(activeCurrency);
-    return [...goals].sort((a, b) =>
-      (b.saved / b.target) - (a.saved / a.target));
-  }, [activeCurrency]);
+  const sortedGoals = useTopGoals(activeCurrency);
 
   return (
     <Card>

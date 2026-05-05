@@ -9,10 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
 import { Tabs, TabsList, TabsTrigger } from '@/components/atoms/tabs';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
+import Currency from '@/enums/currency';
+import computeNetWorthTrend, { NetWorthPoint } from '@/features/dashboard/api/compute-net-worth-trend';
 import { NetWorthRange } from '@/features/dashboard/states/dashboard-states';
 import currencyUtil from '@/utils/currency-util';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 const rangeToMonths: Record<NetWorthRange, number> = {
@@ -23,6 +24,20 @@ const chartConfig = {
   netWorth: { label: 'Net Worth', color: 'var(--chart-1)' },
 } satisfies ChartConfig;
 
+const useNetWorthTrend = (currency: Currency): NetWorthPoint[] => {
+  const [series, setSeries] = useState<NetWorthPoint[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeNetWorthTrend(currency)
+      .then(nextSeries => { if (!isCancelled) setSeries(nextSeries); })
+      .catch(() => { if (!isCancelled) setSeries([]); });
+    return () => { isCancelled = true; };
+  }, [currency]);
+
+  return series;
+};
+
 type DashboardNetWorthChartProps = {
   range: NetWorthRange;
   onRangeChange: (range: NetWorthRange) => void;
@@ -30,12 +45,12 @@ type DashboardNetWorthChartProps = {
 
 const DashboardNetWorthChart = (props: DashboardNetWorthChartProps) => {
   const { activeCurrency } = useActiveCurrency();
+  const series = useNetWorthTrend(activeCurrency);
 
   const data = useMemo(() => {
-    const series = dashboardData.netWorthTrend(activeCurrency);
     const months = rangeToMonths[props.range];
     return months === Infinity ? series : series.slice(-months);
-  }, [props.range, activeCurrency]);
+  }, [props.range, series]);
 
   return (
     <Card>

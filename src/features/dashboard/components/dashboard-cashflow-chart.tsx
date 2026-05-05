@@ -8,11 +8,12 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { dashboardData } from '@/features/dashboard/data/mock-dashboard-data';
+import Currency from '@/enums/currency';
+import computeCashflow, { CashflowPoint } from '@/features/dashboard/api/compute-cashflow';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 const chartConfig = {
@@ -20,9 +21,23 @@ const chartConfig = {
   expense: { label: 'Expense', color: 'var(--chart-2)' },
 } satisfies ChartConfig;
 
+const useCashflow = (currency: Currency): CashflowPoint[] => {
+  const [points, setPoints] = useState<CashflowPoint[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeCashflow(currency)
+      .then(nextPoints => { if (!isCancelled) setPoints(nextPoints); })
+      .catch(() => { if (!isCancelled) setPoints([]); });
+    return () => { isCancelled = true; };
+  }, [currency]);
+
+  return points;
+};
+
 const DashboardCashflowChart = () => {
   const { activeCurrency } = useActiveCurrency();
-  const data = useMemo(() => dashboardData.cashflow(activeCurrency), [activeCurrency]);
+  const data = useCashflow(activeCurrency);
 
   const averageNet = useMemo(() => {
     if (data.length === 0) return 0;

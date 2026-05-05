@@ -13,9 +13,6 @@ const updateCategory = async (params: UpdateCategoryParams): Promise<void> => {
   if (!existing) throw new AppError(
     "Category Not Found 🔍",
     "We couldn't find this category. It may have been deleted — try refreshing.");
-  if (existing.isSystem) throw new AppError(
-    "System Category 🛡️",
-    "The 'Others' category is built in and can't be edited. Create a new category instead.");
 
   const name = params.name.trim();
   if (!name) throw new AppError(
@@ -24,6 +21,17 @@ const updateCategory = async (params: UpdateCategoryParams): Promise<void> => {
   if (!params.color) throw new AppError(
     "Pick a Color 🎨",
     "Choose a color so this category is easy to spot in your reports.");
+
+  // System rows have a locked name — the seeder still falls back to a
+  // name lookup for legacy installs, so renaming would break that path.
+  // Only the color is editable here.
+  if (existing.isSystem) {
+    if (name !== existing.name) throw new AppError(
+      "System Name Locked 🛡️",
+      "The 'Others' category name can't be changed, but you can recolor it.");
+    await appDBUtil.categories.update(params.id, { color: params.color });
+    return;
+  }
 
   // Reject duplicate names — but allow renaming to a value that's the same
   // ignoring case (e.g., "groceries" → "Groceries") since that resolves to

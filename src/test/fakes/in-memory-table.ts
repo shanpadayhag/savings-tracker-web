@@ -9,6 +9,7 @@ class InMemoryTable<T extends WithId> {
 
   async add(record: T): Promise<string> {
     if (!record.id) throw new Error("InMemoryTable.add requires record.id");
+    if (this.records.has(record.id)) throw new Error(`Key already exists: ${record.id}`);
     this.records.set(record.id, record);
     return record.id;
   }
@@ -28,6 +29,10 @@ class InMemoryTable<T extends WithId> {
 
   async clear(): Promise<void> {
     this.records.clear();
+  }
+
+  async toArray(): Promise<T[]> {
+    return Array.from(this.records.values());
   }
 
   list(): T[] {

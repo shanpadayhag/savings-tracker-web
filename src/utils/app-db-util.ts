@@ -3,12 +3,12 @@ import Goal from '@/features/goals/entities/goal';
 import GoalVersion from '@/features/goals/entities/goal-version';
 import Transaction from '@/features/transactions/entities/transaction';
 import TransactionEntry from '@/features/transactions/entities/transaction-entry';
-import User from '@/features/user/entities/user-old';
+import User from '@/features/user/entities/user';
 import Wallet from '@/features/wallets/entities/wallet';
 import Dexie from 'dexie';
 
 class DB extends Dexie {
-  users!: Dexie.Table<User, "singleton">;
+  users!: Dexie.Table<User, User['id']>;
   wallets!: Dexie.Table<Wallet, Wallet['id']>;
   goals!: Dexie.Table<Goal, Goal['id']>;
   goal_versions!: Dexie.Table<GoalVersion, GoalVersion['id']>;
