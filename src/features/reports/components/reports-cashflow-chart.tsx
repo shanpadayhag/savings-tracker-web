@@ -9,9 +9,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { ReportRange, reportsData } from '@/features/reports/data/mock-reports-data';
+import Currency from '@/enums/currency';
+import computeReportsCashflow, { ReportsCashflowPoint } from '@/features/reports/api/compute-reports-cashflow';
+import { ReportRange } from '@/features/reports/data/mock-reports-data';
 import currencyUtil from '@/utils/currency-util';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts';
 
 const chartConfig = {
@@ -20,15 +22,27 @@ const chartConfig = {
   savingsRate: { label: 'Savings Rate', color: 'var(--primary)' },
 } satisfies ChartConfig;
 
+const useReportsCashflow = (currency: Currency, range: ReportRange): ReportsCashflowPoint[] => {
+  const [data, setData] = useState<ReportsCashflowPoint[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeReportsCashflow(currency, range)
+      .then(next => { if (!isCancelled) setData(next); })
+      .catch(() => { if (!isCancelled) setData([]); });
+    return () => { isCancelled = true; };
+  }, [currency, range]);
+
+  return data;
+};
+
 type ReportsCashflowChartProps = {
   range: ReportRange;
 };
 
 const ReportsCashflowChart = (props: ReportsCashflowChartProps) => {
   const { activeCurrency } = useActiveCurrency();
-  const data = useMemo(
-    () => reportsData.cashflow(activeCurrency, props.range),
-    [activeCurrency, props.range]);
+  const data = useReportsCashflow(activeCurrency, props.range);
 
   return (
     <Card>

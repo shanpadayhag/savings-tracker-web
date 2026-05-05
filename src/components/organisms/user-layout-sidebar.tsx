@@ -50,10 +50,8 @@ const UserLayoutSidebar = (props: UserLayoutSidebarProps) => {
             <AvatarFallback className="rounded-lg">{props.user.initials}</AvatarFallback>
           </Avatar>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-medium">Jim Paul</span>
-            <span className="text-muted-foreground truncate text-xs">
-              jpp@savingstracker.com
-            </span>
+            <span className="truncate font-medium">{props.user.name}</span>
+            <span className="text-muted-foreground truncate text-xs">{props.user.email}</span>
           </div>
           <IconDotsVertical className="ml-auto size-4" />
         </SidebarMenuButton>

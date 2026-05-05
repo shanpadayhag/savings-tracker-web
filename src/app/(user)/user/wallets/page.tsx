@@ -6,14 +6,16 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/atoms/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
 import Combobox from '@/components/molecules/combobox';
 import Currency, { currencyLabel } from '@/enums/currency';
 import useWalletsEvents from '@/features/wallets/events/wallets-events';
-import useWalletsStates from '@/features/wallets/states/wallets-states';
+import useWalletsStates, { WalletCurrencyFilter } from '@/features/wallets/states/wallets-states';
+import { cn } from '@/utils/cn';
+import currencyUtil from '@/utils/currency-util';
 import dateUtil from '@/utils/date-util';
-import { IconDotsVertical } from '@tabler/icons-react';
-import { FormEvent, useCallback, useEffect } from 'react';
+import { balanceSizeClass } from '@/utils/balance-size';
+import { IconDotsVertical, IconPlus, IconSearch, IconWallet } from '@tabler/icons-react';
+import { FormEvent, useCallback, useEffect, useMemo } from 'react';
 
 export default () => {
   const states = useWalletsStates();
@@ -82,47 +84,157 @@ export default () => {
     events.handleFetchWallets();
   }, []);
 
+  const totalsByCurrency = useMemo(() => {
+    const totals = new Map<Currency, number>();
+    for (const wallet of states.wallets) {
+      const previous = totals.get(wallet.currency) ?? 0;
+      totals.set(wallet.currency, currencyUtil.parse(previous, wallet.currency)
+        .add(wallet.currentAmount.value).value);
+    }
+    return totals;
+  }, [states.wallets]);
+
+  const counts = useMemo(() => {
+    const base: Record<WalletCurrencyFilter, number> = {
+      all: states.wallets.length,
+      [Currency.Euro]: 0,
+      [Currency.CAD]: 0,
+      [Currency.USD]: 0,
+      [Currency.Peso]: 0,
+    };
+    for (const wallet of states.wallets) base[wallet.currency] += 1;
+    return base;
+  }, [states.wallets]);
+
+  const currencyFilterOptions = useMemo<WalletCurrencyFilter[]>(() => {
+    const present = Array.from(new Set(states.wallets.map(wallet => wallet.currency)));
+    return ['all', ...present];
+  }, [states.wallets]);
+
+  const filteredWallets = useMemo(() => {
+    if (states.currencyFilter === 'all') return states.wallets;
+    return states.wallets.filter(wallet => wallet.currency === states.currencyFilter);
+  }, [states.wallets, states.currencyFilter]);
+
+  const filterLabel = (filter: WalletCurrencyFilter) =>
+    filter === 'all' ? 'All' : currencyLabel[filter];
+
   return <>
-    <div className="flex flex-col overflow-auto h-full pb-2 gap-6">
-      <div className="w-full px-4 pt-4">
-        <h1 className="text-xl font-semi font-serif lg:text-2xl">Wallets</h1>
-        <p className="text-sm text-muted-foreground font-light">Create and manage wallets to track real account balances before allocating funds to goals.</p>
+    <div className="flex flex-col overflow-auto h-full pb-8 gap-6">
+      <div className="w-full px-4 pt-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="eyebrow">Cash on hand</p>
+            <h1 className="heading-display mt-2 text-3xl font-semibold lg:text-4xl">Wallets</h1>
+            <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+              Track real account balances. Allocate from here to fund your goals.
+            </p>
+          </div>
+
+          {totalsByCurrency.size > 0 && (
+            <div className="rounded-xl border bg-card px-5 py-4 shadow-sm">
+              <p className="eyebrow">Total balance</p>
+              <div className="mt-2 flex flex-col gap-1">
+                {Array.from(totalsByCurrency.entries()).map(([currency, total]) => (
+                  <div key={currency} className="flex items-baseline justify-between gap-6">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                      {currencyLabel[currency]}
+                    </span>
+                    <span className="numeral-hero text-base font-semibold tabular-nums">
+                      {currencyUtil.format(total, currency)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex justify-between items-center px-4">
-        <div><Input disabled className="w-70" placeholder="Search for wallet" /></div>
-        <div><Button onClick={() => states.setCreateWalletDialogIsOpen(true)}>New Wallet</Button></div>
+      <div className="flex flex-col gap-3 px-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-full max-w-xs">
+            <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input disabled className="pl-9" placeholder="Search wallets (coming soon)" />
+          </div>
+          {currencyFilterOptions.length > 1 && (
+            <div className="flex flex-wrap gap-1.5">
+              {currencyFilterOptions.map(filter => {
+                const isActive = states.currencyFilter === filter;
+                const count = counts[filter];
+                return (
+                  <button
+                    key={filter}
+                    type="button"
+                    onClick={() => states.setCurrencyFilter(filter)}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                      isActive
+                        ? 'border-foreground bg-foreground text-background'
+                        : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}>
+                    <span>{filterLabel(filter)}</span>
+                    <span className={cn('tabular-nums',
+                      isActive ? 'text-background/70' : 'text-muted-foreground/60')}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <Button onClick={() => states.setCreateWalletDialogIsOpen(true)}>
+          <IconPlus className="size-4" /> New Wallet
+        </Button>
       </div>
 
-      <div className="border-y">
-        <Table>
-          <TableHeader className="bg-muted sticky top-0 z-0">
-            <TableRow>
-              <TableHead colSpan={1}><span className="sr-only">Drag</span></TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Currency</TableHead>
-              <TableHead>Current Amount</TableHead>
-              <TableHead>Timestamp</TableHead>
-              <TableHead><span className="sr-only">Actions</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {states.wallets.length > 0
-              ? <>{states.wallets.map(wallet => <TableRow key={wallet.id}>
-                <TableCell></TableCell>
-                <TableCell className="py-4">{wallet.name}</TableCell>
-                <TableCell>{currencyLabel[wallet.currency]}</TableCell>
-                <TableCell>{wallet.currentAmount.format()}</TableCell>
-                <TableCell>{dateUtil.formatDisplayDate(wallet.createdAt)}</TableCell>
-                <TableCell>
+      <div className="px-4">
+        {filteredWallets.length === 0 ? (
+          <div className="rounded-xl border border-dashed bg-card/50 px-6 py-16 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
+              <IconWallet className="size-5 text-muted-foreground" />
+            </div>
+            <p className="mt-4 text-sm font-medium">
+              {states.wallets.length === 0
+                ? 'No wallets yet.'
+                : `No ${filterLabel(states.currencyFilter).toLowerCase()} wallets.`}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {states.wallets.length === 0
+                ? 'Add a wallet for each real account you want to track. Money flows from wallets into goals.'
+                : 'Switch the filter to see wallets in another currency.'}
+            </p>
+            {states.wallets.length === 0 && (
+              <Button className="mt-6" onClick={() => states.setCreateWalletDialogIsOpen(true)}>
+                <IconPlus className="size-4" /> Create a wallet
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredWallets.map(wallet => (
+              <article key={wallet.id}
+                className="group relative flex flex-col gap-5 rounded-xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
+                <header className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="heading-display truncate text-lg font-semibold tracking-tight">
+                      {wallet.name}
+                    </h3>
+                    <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                      {currencyLabel[wallet.currency]}
+                    </p>
+                  </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button className="data-[state=open]:bg-muted text-muted-foreground flex"
-                        variant="ghost" size="icon">
-                        <IconDotsVertical /> <span className="sr-only">Wallet Item Action</span>
+                      <Button variant="ghost" size="icon"
+                        className="-mr-2 -mt-1 size-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
+                        <IconDotsVertical />
+                        <span className="sr-only">Wallet actions</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-38">
+                    <DropdownMenuContent align="end" className="w-44">
                       <DropdownMenuLabel>Transaction</DropdownMenuLabel>
                       <DropdownMenuGroup>
                         <DropdownMenuItem onClick={() => {
@@ -150,19 +262,31 @@ export default () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel>Wallet</DropdownMenuLabel>
                       <DropdownMenuGroup>
-                        <DropdownMenuItem disabled><span className="text-red-700">Archive Wallet</span></DropdownMenuItem>
+                        <DropdownMenuItem disabled>
+                          <span className="text-rose-700 dark:text-rose-400">Archive Wallet</span>
+                        </DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </TableCell>
-              </TableRow>)}</>
-              : <TableRow>
-                <TableCell className="h-24 text-center" colSpan={6}>
-                  No wallets.
-                </TableCell>
-              </TableRow>}
-          </TableBody>
-        </Table>
+                </header>
+
+                <div>
+                  <p className="eyebrow">Current balance</p>
+                  <p className={cn(
+                    'numeral-hero mt-1 whitespace-nowrap font-semibold tabular-nums tracking-tight',
+                    balanceSizeClass(wallet.currentAmount.format())
+                  )}>
+                    {wallet.currentAmount.format()}
+                  </p>
+                </div>
+
+                <footer className="flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
+                  <span>Created {dateUtil.formatDisplayDate(wallet.createdAt)}</span>
+                </footer>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </div>
 

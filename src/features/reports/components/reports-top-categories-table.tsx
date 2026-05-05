@@ -9,11 +9,27 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
-import { ReportRange, reportsData } from '@/features/reports/data/mock-reports-data';
+import Currency from '@/enums/currency';
+import computeReportsSpendingByCategory, { SpendingByCategory } from '@/features/reports/api/compute-reports-spending-by-category';
+import { ReportRange } from '@/features/reports/data/mock-reports-data';
 import { cn } from '@/utils/cn';
 import currencyUtil from '@/utils/currency-util';
 import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+const useSpendingByCategory = (currency: Currency, range: ReportRange): SpendingByCategory[] => {
+  const [data, setData] = useState<SpendingByCategory[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    computeReportsSpendingByCategory(currency, range)
+      .then(next => { if (!isCancelled) setData(next); })
+      .catch(() => { if (!isCancelled) setData([]); });
+    return () => { isCancelled = true; };
+  }, [currency, range]);
+
+  return data;
+};
 
 type ReportsTopCategoriesTableProps = {
   range: ReportRange;
@@ -21,10 +37,10 @@ type ReportsTopCategoriesTableProps = {
 
 const ReportsTopCategoriesTable = (props: ReportsTopCategoriesTableProps) => {
   const { activeCurrency } = useActiveCurrency();
-  const data = useMemo(() => {
-    const categories = reportsData.spendingByCategory(activeCurrency, props.range);
-    return [...categories].sort((a, b) => b.amount - a.amount);
-  }, [activeCurrency, props.range]);
+  const categories = useSpendingByCategory(activeCurrency, props.range);
+  const data = useMemo(
+    () => [...categories].sort((a, b) => b.amount - a.amount),
+    [categories]);
 
   return (
     <Card>

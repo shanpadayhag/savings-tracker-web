@@ -1,18 +1,16 @@
 "use client";
 
-import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/atoms/dropdown-menu';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
 import CategoryColorPicker from '@/features/categories/components/category-color-picker';
 import { categoryColorPalette } from '@/features/categories/data/category-color-palette';
 import useCategoriesEvents from '@/features/categories/events/categories-events';
 import useCategoriesStates from '@/features/categories/states/categories-states';
-import { IconDotsVertical } from '@tabler/icons-react';
-import { FormEvent, useCallback, useEffect } from 'react';
+import { IconDotsVertical, IconLock, IconPlus, IconSearch, IconTags } from '@tabler/icons-react';
+import { FormEvent, useCallback, useEffect, useMemo } from 'react';
 
 export default () => {
   const states = useCategoriesStates();
@@ -38,75 +36,123 @@ export default () => {
     states.setCreateDialogIsOpen(true);
   }, []);
 
+  const counts = useMemo(() => {
+    const customCount = states.categories.filter(c => !c.isSystem).length;
+    const systemCount = states.categories.filter(c => c.isSystem).length;
+    return { total: states.categories.length, customCount, systemCount };
+  }, [states.categories]);
+
+  const sortedCategories = useMemo(() =>
+    [...states.categories].sort((a, b) => {
+      if (a.isSystem !== b.isSystem) return a.isSystem ? 1 : -1;
+      return a.name.localeCompare(b.name);
+    }), [states.categories]);
+
   return <>
-    <div className="flex flex-col overflow-auto h-full pb-2 gap-6">
-      <div className="w-full px-4 pt-4">
-        <h1 className="text-xl font-semi font-serif lg:text-2xl">Categories</h1>
-        <p className="text-sm text-muted-foreground font-light">
-          Group your transactions to see where your money goes. Anything left untagged falls under "Others".
-        </p>
+    <div className="flex flex-col overflow-auto h-full pb-8 gap-6">
+      <div className="w-full px-4 pt-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="eyebrow">Tagging</p>
+            <h1 className="heading-display mt-2 text-3xl font-semibold lg:text-4xl">Categories</h1>
+            <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+              Group your transactions so spending reads in plain language. Anything left untagged falls back to "Others".
+            </p>
+          </div>
+
+          {counts.total > 0 && (
+            <div className="rounded-xl border bg-card px-5 py-4 shadow-sm">
+              <p className="eyebrow">Tags in use</p>
+              <div className="mt-2 flex items-baseline gap-3">
+                <span className="numeral-hero text-3xl font-semibold tabular-nums">{counts.total}</span>
+                <span className="text-xs text-muted-foreground">
+                  {counts.customCount} custom &middot; {counts.systemCount} system
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex justify-between items-center px-4">
-        <div><Input disabled className="w-70" placeholder="Search for category" /></div>
-        <div><Button onClick={openCreateDialog}>New Category</Button></div>
+      <div className="flex flex-col gap-3 px-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full max-w-xs">
+          <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input disabled className="pl-9" placeholder="Search categories (coming soon)" />
+        </div>
+
+        <Button onClick={openCreateDialog}>
+          <IconPlus className="size-4" /> New Category
+        </Button>
       </div>
 
-      <div className="border-y">
-        <Table>
-          <TableHeader className="bg-muted sticky top-0 z-0">
-            <TableRow>
-              <TableHead className="w-12"><span className="sr-only">Color</span></TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead><span className="sr-only">Actions</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {states.categories.length > 0
-              ? <>{states.categories.map(category => <TableRow key={category.id}>
-                <TableCell>
-                  <span className="size-4 rounded-full inline-block align-middle ml-4"
-                    style={{ backgroundColor: category.color }}
-                    aria-hidden="true" />
-                </TableCell>
-                <TableCell className="py-4 font-medium">{category.name}</TableCell>
-                <TableCell>
-                  {category.isSystem
-                    ? <Badge variant="secondary">System</Badge>
-                    : <Badge variant="outline">Custom</Badge>}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className="data-[state=open]:bg-muted text-muted-foreground flex"
-                        variant="ghost" size="icon">
-                        <IconDotsVertical /> <span className="sr-only">Category Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-38">
-                      <DropdownMenuLabel>Category</DropdownMenuLabel>
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={() => events.handleStartEdit(category)}>Edit</DropdownMenuItem>
-                      </DropdownMenuGroup>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={() => events.handleStartDelete(category)}
-                          disabled={category.isSystem}>
-                          <span className="text-red-700">Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>)}</>
-              : <TableRow>
-                <TableCell className="h-24 text-center" colSpan={4}>
-                  No categories.
-                </TableCell>
-              </TableRow>}
-          </TableBody>
-        </Table>
+      <div className="px-4">
+        {sortedCategories.length === 0 ? (
+          <div className="rounded-xl border border-dashed bg-card/50 px-6 py-16 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
+              <IconTags className="size-5 text-muted-foreground" />
+            </div>
+            <p className="mt-4 text-sm font-medium">No categories yet.</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Create a category, then tag transactions with it to see exactly where your money is going.
+            </p>
+            <Button className="mt-6" onClick={openCreateDialog}>
+              <IconPlus className="size-4" /> Create a category
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {sortedCategories.map(category => (
+              <article key={category.id}
+                className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md">
+                <div className="h-2 w-full" style={{ backgroundColor: category.color }} aria-hidden="true" />
+
+                <div className="flex flex-1 flex-col gap-3 px-5 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="size-3.5 shrink-0 rounded-full ring-2 ring-background"
+                        style={{ backgroundColor: category.color }}
+                        aria-hidden="true" />
+                      <h3 className="heading-display truncate text-base font-semibold tracking-tight">
+                        {category.name}
+                      </h3>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon"
+                          className="-mr-2 -mt-1 size-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
+                          <IconDotsVertical className="size-4" />
+                          <span className="sr-only">Category actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuLabel>Category</DropdownMenuLabel>
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem onClick={() => events.handleStartEdit(category)}>
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem onClick={() => events.handleStartDelete(category)}
+                            disabled={category.isSystem}>
+                            <span className="text-rose-700 dark:text-rose-400">Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {category.isSystem && (
+                    <div className="inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      <IconLock className="size-3" />
+                      System
+                    </div>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </div>
 

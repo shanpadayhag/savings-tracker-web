@@ -1,11 +1,9 @@
 import GoalListItem from '@/features/goals/entities/goal-list-item';
-import GoalStatus from '@/features/goals/enums/goal-status';
 import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
 
 const getCachedGoals = async (): Promise<GoalListItem[]> => {
   const goalList = await documentDBUtil.goal_list
-    .where('status').anyOf([GoalStatus.Active, GoalStatus.Completed])
     .reverse().sortBy("updatedAt");
   const now = new Date();
 

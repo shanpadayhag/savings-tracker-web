@@ -24,13 +24,14 @@ const DashboardGreeting = ({ name }: DashboardGreetingProps) => {
   const now = new Date();
 
   return (
-    <div className="w-full px-4 pt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="w-full px-4 pt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-xl font-semi font-serif lg:text-2xl">
-          {greetingFor(now)}, {name}
+        <p className="eyebrow">{format(now, 'EEEE · MMMM d')}</p>
+        <h1 className="heading-display mt-2 text-3xl font-semibold lg:text-4xl">
+          {greetingFor(now)}, {name}.
         </h1>
-        <p className="text-sm text-muted-foreground font-light">
-          Here's how your money is doing on {format(now, 'EEEE, MMMM d')}.
+        <p className="mt-2 text-sm text-muted-foreground">
+          Here's where your money stands today.
         </p>
       </div>
       <CurrencySwitcher />

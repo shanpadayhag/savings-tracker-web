@@ -1,10 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { Separator } from "@/components/atoms/separator";
 import { SidebarTrigger } from "@/components/atoms/sidebar";
-import Combobox from '@/components/molecules/combobox';
+import AppSearchCommand from '@/components/molecules/app-search-command';
+import ThemeToggle from '@/components/molecules/theme-toggle';
 import UserLayoutProfileMenu from '@/components/molecules/user-layout-profile-menu';
 import Routes from '@/enums/routes';
-import { IconBell, IconMoon, IconSettings } from '@tabler/icons-react';
+import { IconBell, IconSettings } from '@tabler/icons-react';
 import Link from 'next/link';
 
 type UserLayoutHeaderProps = {
@@ -19,20 +20,20 @@ const UserLayoutHeader = (props: UserLayoutHeaderProps) => {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
         <div className="flex justify-between w-full">
-          <div className="w-60">
-            <Combobox disabled
-              placeholder="Search... (Coming Soon)" />
-          </div>
+          <AppSearchCommand />
           <div className="flex items-center gap-1 lg:gap-2">
-            <div className="flex items-center gap-4 lg:gap-6">
+            <div className="flex items-center gap-1 lg:gap-2">
               <IconBell className="size-4 text-muted-foreground" />
-              <IconMoon className="size-4 text-muted-foreground" />
-              <Link href={Routes.UserSettings}><IconSettings className="size-4" /></Link>
+              <ThemeToggle />
+              <Link href={Routes.UserAccountSettings}
+                className="text-muted-foreground hover:text-foreground p-1.5">
+                <IconSettings className="size-4" />
+              </Link>
             </div>
             <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
             <UserLayoutProfileMenu user={props.user} dropdownMenuContentSide={props.dropdownMenuContentSide}>
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage alt={"JP"} />
+                <AvatarImage alt={props.user.name} />
                 <AvatarFallback className="rounded-lg">{props.user.initials}</AvatarFallback>
               </Avatar>
             </UserLayoutProfileMenu>

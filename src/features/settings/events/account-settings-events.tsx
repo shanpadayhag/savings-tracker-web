@@ -1,13 +1,17 @@
+import { useCurrentUser } from '@/contexts/current-user-context';
 import useAccountSettingsStates from '@/features/settings/states/account-settings-states';
+import fetchCurrentUser from '@/features/user/api/fetch-current-user';
 import fetchUserData from '@/features/user/usecases/fetch-user-data';
 import importUserData from '@/features/user/usecases/import-user-data';
 import parseUserDataImport from '@/features/user/usecases/parse-user-data-import';
 import reconcileLedger from '@/features/user/usecases/reconcile-ledger';
+import saveUserProfile from '@/features/user/usecases/save-user-profile';
 import useAppCallback from '@/hooks/use-app-callback';
 import dateUtil from '@/utils/date-util';
 import { toast } from 'sonner';
 
 const useAccountSettingsEvents = (states: ReturnType<typeof useAccountSettingsStates>) => {
+  const { refresh: refreshCurrentUser } = useCurrentUser();
   const handleReconcileLedger = useAppCallback(async () => {
     await reconcileLedger();
     toast.success("Ledger Reconciled ✅", {
@@ -78,11 +82,43 @@ const useAccountSettingsEvents = (states: ReturnType<typeof useAccountSettingsSt
     states.setIsImporting,
   ]);
 
+  const handleLoadProfile = useAppCallback(async () => {
+    const user = await fetchCurrentUser();
+    states.setProfileFirstName(user.firstName ?? '');
+    states.setProfileLastName(user.lastName ?? '');
+    states.setProfileEmail(user.email ?? '');
+  }, [states.setProfileFirstName, states.setProfileLastName, states.setProfileEmail]);
+
+  const handleSaveProfile = useAppCallback(async () => {
+    states.setIsSavingProfile(true);
+    try {
+      await saveUserProfile({
+        firstName: states.profileFirstName,
+        lastName: states.profileLastName,
+        email: states.profileEmail,
+      });
+      await refreshCurrentUser();
+      toast.success("Profile Saved 👤", {
+        description: "Your account details were updated.",
+      });
+    } finally {
+      states.setIsSavingProfile(false);
+    }
+  }, [
+    states.profileFirstName,
+    states.profileLastName,
+    states.profileEmail,
+    states.setIsSavingProfile,
+    refreshCurrentUser,
+  ]);
+
   return {
     handleReconcileLedger,
     handleExport,
     handlePrepareImport,
     handleConfirmImport,
+    handleLoadProfile,
+    handleSaveProfile,
   };
 };
 

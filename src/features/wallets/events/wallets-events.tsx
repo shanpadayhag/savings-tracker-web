@@ -1,3 +1,4 @@
+import { useActiveCurrency } from '@/contexts/active-currency-context';
 import { AppError } from '@/errors/app-error';
 import allocateFundsToWallet from '@/features/transactions/api/allocate-funds-to-wallet';
 import convertFundsBetweenWallets from '@/features/transactions/api/convert-funds-between-wallets';
@@ -10,6 +11,7 @@ import { useCallback } from 'react';
 import { toast } from 'sonner';
 
 const useWalletsEvents = (states: ReturnType<typeof useWalletsStates>) => {
+  const { refreshAvailable } = useActiveCurrency();
   const handleFetchWallets = useCallback(async () => {
     try {
       states.setWallets(await walletRepository.getWallets());
@@ -26,6 +28,7 @@ const useWalletsEvents = (states: ReturnType<typeof useWalletsStates>) => {
       });
 
       handleFetchWallets();
+      refreshAvailable();
       states.setCreateWalletDialogIsOpen(false);
       states.setNewWalletName("");
       states.setNewWalletCurrency(undefined);

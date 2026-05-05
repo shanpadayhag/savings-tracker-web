@@ -19,10 +19,11 @@ type ReportsHeaderProps = {
 
 const ReportsHeader = (props: ReportsHeaderProps) => {
   return (
-    <div className="w-full px-4 pt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="w-full px-4 pt-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <h1 className="text-xl font-semi font-serif lg:text-2xl">Reports</h1>
-        <p className="text-sm text-muted-foreground font-light">
+        <p className="eyebrow">Insights</p>
+        <h1 className="heading-display mt-2 text-3xl font-semibold lg:text-4xl">Reports</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Visualize your savings and spending patterns to spot trends over time.
         </p>
       </div>

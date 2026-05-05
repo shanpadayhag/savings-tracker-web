@@ -1,12 +1,16 @@
 import Currency from '@/enums/currency';
 import { CategoryOption } from '@/features/categories/components/category-combobox';
 import GoalListItem from '@/features/goals/entities/goal-list-item';
+import GoalStatus from '@/features/goals/enums/goal-status';
 import WalletOption from '@/features/wallets/entities/wallet-option';
 import { useState } from 'react';
+
+export type GoalStatusFilter = 'all' | GoalStatus;
 
 const useGoalsStates = () => {
   const [goals, setGoals] = useState<GoalListItem[]>([]);
   const [walletOptions, setWalletOptions] = useState<WalletOption[]>([]);
+  const [statusFilter, setStatusFilter] = useState<GoalStatusFilter>(GoalStatus.Active);
 
   const [createGoalDialogIsOpen, setCreateGoalDialogIsOpen] = useState(false);
   const [newGoalName, setNewGoalName] = useState("");
@@ -28,6 +32,7 @@ const useGoalsStates = () => {
   return {
     goals, setGoals,
     walletOptions, setWalletOptions,
+    statusFilter, setStatusFilter,
     createGoalDialogIsOpen, setCreateGoalDialogIsOpen,
     newGoalName, setNewGoalName,
     newGoalTargetAmount, setNewGoalTargetAmount,
