@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/table';
 import TransactionType, { transactionTypeLabel } from '@/features/transactions/enums/transaction-type';
@@ -10,7 +11,9 @@ import dateUtil from '@/utils/date-util';
 import {
   IconArrowBackUp,
   IconArrowDownLeft,
+  IconArrowLeft,
   IconArrowNarrowRight,
+  IconArrowRight,
   IconArrowsLeftRight,
   IconArrowUpRight,
   IconRefresh,
@@ -87,6 +90,32 @@ export default () => {
   useEffect(() => {
     events.handleFetchTransactions();
   }, []);
+
+  useEffect(() => {
+    const isTypingTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      if (target.isContentEditable) return true;
+      const tag = target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    };
+
+    const handlePaginationShortcut = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        events.handleFetchPreviousPage();
+        return;
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        events.handleFetchNextPage();
+      }
+    };
+
+    window.addEventListener('keydown', handlePaginationShortcut);
+    return () => window.removeEventListener('keydown', handlePaginationShortcut);
+  }, [events.handleFetchPreviousPage, events.handleFetchNextPage]);
 
   const counts = useMemo(() => {
     const base: Record<TransactionTypeFilter, number> = {
@@ -205,6 +234,8 @@ export default () => {
                   ? 'text-rose-700 dark:text-rose-400'
                   : 'text-foreground';
 
+              const transactionCode = transaction.id ? transaction.id.slice(0, 8).toUpperCase() : null;
+
               return (
                 <TableRow key={transaction.id} className="group">
                   <TableCell className="py-4 pl-5">
@@ -214,11 +245,18 @@ export default () => {
                         style.iconWrapClass)}>
                         {style.icon}
                       </span>
-                      <span className={cn(
-                        'rounded-full px-2 py-0.5 text-xs font-medium',
-                        style.chipClass)}>
-                        {transactionTypeLabel[transaction.type]}
-                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span className={cn(
+                          'rounded-full px-2 py-0.5 text-xs font-medium self-start',
+                          style.chipClass)}>
+                          {transactionTypeLabel[transaction.type]}
+                        </span>
+                        {transactionCode && (
+                          <span className="mt-1 px-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                            #{transactionCode}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="py-4">
@@ -272,6 +310,34 @@ export default () => {
             })}
           </TableBody>
         </Table>
+
+        <div className="flex items-center justify-between border-t px-5 py-3">
+          <span className="text-xs text-muted-foreground">
+            {states.isPageLoading ? 'Loading…' : 'Use ← / → to navigate'}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!states.prevCursor || states.isPageLoading}
+              onClick={events.handleFetchPreviousPage}>
+              <IconArrowLeft className="size-4" />
+              Previous
+              <kbd className="ml-1 hidden rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">←</kbd>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!states.nextCursor || states.isPageLoading}
+              onClick={events.handleFetchNextPage}>
+              Next
+              <kbd className="ml-1 hidden rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">→</kbd>
+              <IconArrowRight className="size-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   </div>;
