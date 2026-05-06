@@ -176,8 +176,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overscroll-behavior: none;
+  }
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior: none;
     letter-spacing: var(--tracking-normal);
     font-feature-settings: "ss01", "cv11";
   }

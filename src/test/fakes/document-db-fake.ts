@@ -25,6 +25,7 @@ type GoalListItemRecord = {
   remainingAmount: number;
   status: Goal['status'];
   currency: Currency;
+  categoryID?: Category['id'];
   createdAt?: Date;
   updatedAt?: Date;
 };

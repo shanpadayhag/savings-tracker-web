@@ -3,6 +3,8 @@ import { AppError } from '@/errors/app-error';
 import allocateFundsToWallet from '@/features/transactions/api/allocate-funds-to-wallet';
 import convertFundsBetweenWallets from '@/features/transactions/api/convert-funds-between-wallets';
 import transferFundsBetweenWallets from '@/features/transactions/api/transfer-funds-between-wallets';
+import deallocateFundsFromWallet from '@/features/transactions/usecases/deallocate-funds-from-wallet';
+import spendFundsFromWallet from '@/features/transactions/usecases/spend-funds-from-wallet';
 import createWallet from '@/features/wallets/api/create-wallet';
 import walletRepository from '@/features/wallets/repositories/wallet-repository';
 import useWalletsStates from '@/features/wallets/states/wallets-states';
@@ -122,12 +124,61 @@ const useWalletsEvents = (states: ReturnType<typeof useWalletsStates>) => {
     states.transferNotes,
   ]);
 
+  const handleSpendFundsFromWallet = useAppCallback(async () => {
+    await spendFundsFromWallet({
+      walletID: states.selectedWallet?.id,
+      amount: states.spendAmount,
+      categoryID: states.spendCategory?.value,
+      notes: states.spendNotes,
+    });
+
+    handleFetchWallets();
+    states.setSpendDialogIsOpen(false);
+    states.setSelectedWallet(undefined);
+    states.setSpendAmount("");
+    states.setSpendCategory(undefined);
+    states.setSpendNotes("");
+
+    toast.success("Spend Recorded ✅", {
+      description: "We deducted the amount from your wallet."
+    });
+  }, [
+    states.selectedWallet,
+    states.spendAmount,
+    states.spendCategory,
+    states.spendNotes,
+  ]);
+
+  const handleDeallocateFundsFromWallet = useAppCallback(async () => {
+    await deallocateFundsFromWallet({
+      walletID: states.selectedWallet?.id,
+      amount: states.defundAmount,
+      notes: states.defundNotes,
+    });
+
+    handleFetchWallets();
+    states.setDefundDialogIsOpen(false);
+    states.setSelectedWallet(undefined);
+    states.setDefundAmount("");
+    states.setDefundNotes("");
+
+    toast.success("Refund Recorded ↩️", {
+      description: "We deducted the refunded amount from your wallet."
+    });
+  }, [
+    states.selectedWallet,
+    states.defundAmount,
+    states.defundNotes,
+  ]);
+
   return {
     handleFetchWallets,
     handleCreateWallet,
     handleAllocateFundsToWallet,
     handleConvertFundsBetweenWallets,
     handleTransferFundsBetweenWallets,
+    handleSpendFundsFromWallet,
+    handleDeallocateFundsFromWallet,
   };
 };
 

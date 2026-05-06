@@ -2,6 +2,8 @@ import { AppError } from '@/errors/app-error';
 import Category from '@/features/categories/entities/category';
 import appDBUtil from '@/utils/app-db-util';
 
+const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
+
 type CreateCategoryParams = {
   name: string;
   color: string;
@@ -16,6 +18,9 @@ const createCategory = async (params: CreateCategoryParams): Promise<Category['i
   if (!params.color) throw new AppError(
     "Pick a Color 🎨",
     "Choose a color so this category is easy to spot in your reports.");
+  if (!HEX_COLOR_PATTERN.test(params.color)) throw new AppError(
+    "Color Format Off 🎨",
+    "Use a hex color like #22c55e — a hash followed by six hex digits.");
 
   // Names are unique (case-insensitive) so the picker doesn't end up with
   // two "Groceries" entries that the user can't tell apart.
@@ -31,7 +36,7 @@ const createCategory = async (params: CreateCategoryParams): Promise<Category['i
   await appDBUtil.categories.add({
     id,
     name,
-    color: params.color,
+    color: params.color.toLowerCase(),
     isSystem: false,
     createdAt: now,
     updatedAt: now,

@@ -20,6 +20,7 @@ const seedGoal = async (overrides: {
   targetAmount?: number;
   savedAmount?: number;
   name?: string;
+  categoryID?: string;
 }) => {
   const targetAmount = overrides.targetAmount ?? 1000;
   const savedAmount = overrides.savedAmount ?? 0;
@@ -33,6 +34,7 @@ const seedGoal = async (overrides: {
     remainingAmount: targetAmount - savedAmount,
     status: overrides.status ?? GoalStatus.Active,
     currency: overrides.currency ?? Currency.USD,
+    categoryID: overrides.categoryID,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
   });
@@ -41,6 +43,18 @@ const seedGoal = async (overrides: {
     status: overrides.status ?? GoalStatus.Active,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
+  });
+};
+
+const seedCategory = async (overrides: Partial<{ id: string; name: string; color: string; deletedAt: Date | 'null'; }> = {}) => {
+  await appDBFake.categories.add({
+    id: overrides.id ?? 'category-vacation',
+    name: overrides.name ?? 'Vacation',
+    color: overrides.color ?? '#22c55e',
+    isSystem: false,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+    deletedAt: overrides.deletedAt ?? 'null',
   });
 };
 
@@ -83,7 +97,7 @@ describe('completeGoal', () => {
     });
   });
 
-  it('tags the spend transaction with the seeded "Others" category', async () => {
+  it('falls back to the seeded "Others" category when the goal has none', async () => {
     await seedGoal({ id: 'emergency', targetAmount: 500, savedAmount: 500 });
 
     await completeGoal({ goalID: 'emergency' });
@@ -98,6 +112,32 @@ describe('completeGoal', () => {
     const transactionListRow = documentDBFake.transaction_list.list()[0];
     expect(transactionListRow.categoryID).toBe(seededCategory?.id);
     expect(transactionListRow.categoryName).toBe('Others');
+  });
+
+  it("uses the goal's stored category on the spend transaction", async () => {
+    await seedCategory({ id: 'category-vacation', name: 'Vacation', color: '#22c55e' });
+    await seedGoal({ id: 'emergency', targetAmount: 500, savedAmount: 500, categoryID: 'category-vacation' });
+
+    await completeGoal({ goalID: 'emergency' });
+
+    const transactions = appDBFake.transactions.list();
+    expect(transactions[0].categoryID).toBe('category-vacation');
+
+    const transactionListRow = documentDBFake.transaction_list.list()[0];
+    expect(transactionListRow.categoryID).toBe('category-vacation');
+    expect(transactionListRow.categoryName).toBe('Vacation');
+    expect(transactionListRow.categoryColor).toBe('#22c55e');
+  });
+
+  it('falls back to "Others" when the goal\'s stored category is soft-deleted', async () => {
+    await seedCategory({ id: 'category-old', name: 'Old', deletedAt: new Date('2026-02-01') });
+    await seedGoal({ id: 'emergency', targetAmount: 500, savedAmount: 500, categoryID: 'category-old' });
+
+    await completeGoal({ goalID: 'emergency' });
+
+    const seededCategory = appDBFake.categories.list().find(category => category.name === 'Others');
+    const transactions = appDBFake.transactions.list();
+    expect(transactions[0].categoryID).toBe(seededCategory?.id);
   });
 
   it('writes one transaction list row with both entries linked to the same id', async () => {

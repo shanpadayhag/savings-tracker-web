@@ -1,4 +1,5 @@
 import Currency from '@/enums/currency';
+import Category from '@/features/categories/entities/category';
 
 type GoalVersion = {
   id: string;
@@ -6,6 +7,7 @@ type GoalVersion = {
   name: string;
   targetAmount: number;
   currency: Currency;
+  categoryID?: Category['id'];
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | "null";

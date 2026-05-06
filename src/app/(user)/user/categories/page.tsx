@@ -119,7 +119,7 @@ export default () => {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon"
-                          className="-mr-2 -mt-1 size-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
+                          className="-mr-2 -mt-1 size-7 text-muted-foreground transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
                           <IconDotsVertical className="size-4" />
                           <span className="sr-only">Category actions</span>
                         </Button>

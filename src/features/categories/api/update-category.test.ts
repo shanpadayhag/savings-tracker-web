@@ -100,6 +100,27 @@ describe('updateCategory', () => {
     })).rejects.toBeInstanceOf(AppError);
   });
 
+  it('rejects malformed hex colors', async () => {
+    await seedUserCategory('groceries', 'Groceries');
+
+    for (const bad of ['red', '#fff', '#22c55', 'ff00ff', '#22c55ez']) {
+      await expect(updateCategory({
+        id: 'groceries',
+        name: 'Groceries',
+        color: bad,
+      })).rejects.toBeInstanceOf(AppError);
+    }
+  });
+
+  it('normalizes the stored hex to lowercase', async () => {
+    await seedUserCategory('groceries', 'Groceries');
+
+    await updateCategory({ id: 'groceries', name: 'Groceries', color: '#FF00FF' });
+
+    const updated = await appDBFake.categories.get('groceries');
+    expect(updated?.color).toBe('#ff00ff');
+  });
+
   it('rejects renaming to a name already used by another active category', async () => {
     await seedUserCategory('groceries', 'Groceries');
     await seedUserCategory('food', 'Food');

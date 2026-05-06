@@ -11,9 +11,11 @@ import Combobox, { ComboboxOption } from '@/components/molecules/combobox';
 import ensureDefaultCategory from '@/features/categories/api/ensure-default-category';
 import getCategories from '@/features/categories/api/get-categories';
 import Category from '@/features/categories/entities/category';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export type CategoryOption = ComboboxOption<{ color: Category['color']; isSystem: Category['isSystem']; }>;
+
+const NONE_VALUE = "__none__";
 
 const toOption = (category: Category): CategoryOption => ({
   value: category.id,
@@ -23,7 +25,7 @@ const toOption = (category: Category): CategoryOption => ({
 
 type CategoryComboboxProps = {
   value?: CategoryOption;
-  onChange: (option: CategoryOption) => void;
+  onChange: (option: CategoryOption | undefined) => void;
   placeholder?: string;
 };
 
@@ -38,14 +40,19 @@ const CategoryCombobox = (props: CategoryComboboxProps) => {
     })();
   }, []);
 
+  const optionsWithNone = useMemo<CategoryOption[]>(() => [
+    { value: NONE_VALUE, label: "None" },
+    ...options,
+  ], [options]);
+
   return (
     <Combobox
       placeholder={props.placeholder ?? "Select category"}
       searchPlaceholder="Search categories"
       emptyItemsPlaceholder="No categories found."
       value={props.value}
-      onChangeValue={props.onChange}
-      options={options} />
+      onChangeValue={option => props.onChange(option.value === NONE_VALUE ? undefined : option)}
+      options={optionsWithNone} />
   );
 };
 
