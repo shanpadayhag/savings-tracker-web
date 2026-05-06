@@ -16,6 +16,7 @@ const useGoalsStates = () => {
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTargetAmount, setNewGoalTargetAmount] = useState("");
   const [newGoalCurrency, setNewGoalCurrency] = useState<Currency>();
+  const [newGoalCategory, setNewGoalCategory] = useState<CategoryOption>();
 
   const [allocationDialogIsOpen, setAllocationDialogIsOpen] = useState(false);
   const [spendDialogIsOpen, setSpendDialogIsOpen] = useState(false);
@@ -37,6 +38,7 @@ const useGoalsStates = () => {
     newGoalName, setNewGoalName,
     newGoalTargetAmount, setNewGoalTargetAmount,
     newGoalCurrency, setNewGoalCurrency,
+    newGoalCategory, setNewGoalCategory,
     allocationDialogIsOpen, setAllocationDialogIsOpen,
     spendDialogIsOpen, setSpendDialogIsOpen,
     completeDialogIsOpen, setCompleteDialogIsOpen,

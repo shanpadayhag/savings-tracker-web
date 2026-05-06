@@ -158,7 +158,7 @@ export default () => {
           </div>
         </div>
 
-        <Table>
+        <Table className="min-w-[640px]">
           <TableHeader className="bg-muted/40 sticky top-0 z-0">
             <TableRow>
               <TableHead className="w-[140px] pl-5">Type</TableHead>

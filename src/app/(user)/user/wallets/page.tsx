@@ -8,6 +8,7 @@ import { Label } from '@/components/atoms/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/atoms/select';
 import Combobox from '@/components/molecules/combobox';
 import Currency, { currencyLabel } from '@/enums/currency';
+import CategoryCombobox from '@/features/categories/components/category-combobox';
 import useWalletsEvents from '@/features/wallets/events/wallets-events';
 import useWalletsStates, { WalletCurrencyFilter } from '@/features/wallets/states/wallets-states';
 import { cn } from '@/utils/cn';
@@ -56,6 +57,24 @@ export default () => {
     event.preventDefault();
     events.handleTransferFundsBetweenWallets();
   }, [events.handleTransferFundsBetweenWallets]);
+
+  const spendButtonOnClick = useCallback(() => {
+    events.handleSpendFundsFromWallet();
+  }, [events.handleSpendFundsFromWallet]);
+
+  const spendFormOnSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    events.handleSpendFundsFromWallet();
+  }, [events.handleSpendFundsFromWallet]);
+
+  const defundButtonOnClick = useCallback(() => {
+    events.handleDeallocateFundsFromWallet();
+  }, [events.handleDeallocateFundsFromWallet]);
+
+  const defundFormOnSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    events.handleDeallocateFundsFromWallet();
+  }, [events.handleDeallocateFundsFromWallet]);
 
   const convertDestinationOption = states.convertDestinationWallet
     ? {
@@ -229,7 +248,7 @@ export default () => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon"
-                        className="-mr-2 -mt-1 size-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
+                        className="-mr-2 -mt-1 size-8 text-muted-foreground transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
                         <IconDotsVertical />
                         <span className="sr-only">Wallet actions</span>
                       </Button>
@@ -258,6 +277,19 @@ export default () => {
                           states.setTransferNotes("");
                           states.setTransferDialogIsOpen(true);
                         }}>Bank Transfer</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          states.setSelectedWallet(wallet);
+                          states.setSpendAmount("");
+                          states.setSpendCategory(undefined);
+                          states.setSpendNotes("");
+                          states.setSpendDialogIsOpen(true);
+                        }}>Spend Money</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          states.setSelectedWallet(wallet);
+                          states.setDefundAmount("");
+                          states.setDefundNotes("");
+                          states.setDefundDialogIsOpen(true);
+                        }}>Refund / Defund</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel>Wallet</DropdownMenuLabel>
@@ -436,6 +468,83 @@ export default () => {
         <DialogFooter>
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={transferButtonOnClick} type="button">Transfer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.spendDialogIsOpen} onOpenChange={states.setSpendDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Spend from Wallet</DialogTitle>
+          <DialogDescription>Deduct money directly from this wallet to record a purchase.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={spendFormOnSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center">
+            <p className="text-xs text-muted-foreground">Spending from:</p>
+            <p className="text-2xl font-semibold">{states.selectedWallet?.name}</p>
+            {states.selectedWallet?.currentAmount
+              && <span className="text-xs text-muted-foreground">Available: {states.selectedWallet.currentAmount.format()}</span>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Amount {states.selectedWallet && <span className="text-xs text-muted-foreground">in {currencyLabel[states.selectedWallet.currency]}</span>}</Label>
+            <Input value={states.spendAmount} onChange={event => states.setSpendAmount(event.target.value)} placeholder="Spend amount" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Category <span className="text-xs text-muted-foreground">Defaults to "Others"</span></Label>
+            <CategoryCombobox
+              value={states.spendCategory}
+              onChange={states.setSpendCategory} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Notes <span className="text-xs text-muted-foreground">Optional</span></Label>
+            <Input value={states.spendNotes} onChange={event => states.setSpendNotes(event.target.value)} placeholder="Spend notes" />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={spendButtonOnClick} type="button">Spend</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={states.defundDialogIsOpen} onOpenChange={states.setDefundDialogIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Refund / Defund Wallet</DialogTitle>
+          <DialogDescription>Deduct money from this wallet without recording a categorized expense — for refunds, returns, or money given back.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={defundFormOnSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center">
+            <p className="text-xs text-muted-foreground">Defunding from:</p>
+            <p className="text-2xl font-semibold">{states.selectedWallet?.name}</p>
+            {states.selectedWallet?.currentAmount
+              && <span className="text-xs text-muted-foreground">Available: {states.selectedWallet.currentAmount.format()}</span>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Amount {states.selectedWallet && <span className="text-xs text-muted-foreground">in {currencyLabel[states.selectedWallet.currency]}</span>}</Label>
+            <Input value={states.defundAmount} onChange={event => states.setDefundAmount(event.target.value)} placeholder="Refund amount" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Notes <span className="text-xs text-muted-foreground">Optional</span></Label>
+            <Input value={states.defundNotes} onChange={event => states.setDefundNotes(event.target.value)} placeholder="Refund notes" />
+          </div>
+
+          <button className="hidden" type="submit">Submit</button>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={defundButtonOnClick} type="button">Defund</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

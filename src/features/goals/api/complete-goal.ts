@@ -1,5 +1,6 @@
 import { AppError } from '@/errors/app-error';
 import ensureDefaultCategory from '@/features/categories/api/ensure-default-category';
+import Category from '@/features/categories/entities/category';
 import GoalStatus from '@/features/goals/enums/goal-status';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
@@ -30,7 +31,10 @@ const completeGoal = async (params: CompleteGoalParameters): Promise<void> => {
   const savedAmount = currencyUtil.parse(goal.savedAmount, goal.currency);
 
   if (savedAmount.value > 0) {
-    const category = await ensureDefaultCategory();
+    let category: Category | undefined = goal.categoryID
+      ? await appDBUtil.categories.get(goal.categoryID)
+      : undefined;
+    if (!category || category.deletedAt !== 'null') category = await ensureDefaultCategory();
     const transactionID = crypto.randomUUID();
     const fromEntry = {
       id: crypto.randomUUID(),

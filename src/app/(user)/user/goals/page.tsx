@@ -280,7 +280,7 @@ export default () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon"
-                            className="-mr-2 -mt-1 size-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
+                            className="-mr-2 -mt-1 size-8 text-muted-foreground transition-opacity sm:opacity-0 sm:group-hover:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-muted">
                             <IconDotsVertical />
                             <span className="sr-only">Goal actions</span>
                           </Button>
@@ -397,6 +397,13 @@ export default () => {
                 </SelectGroup>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Category <span className="text-xs text-muted-foreground">Used when this goal is completed. Defaults to "Others"</span></Label>
+            <CategoryCombobox
+              value={states.newGoalCategory}
+              onChange={states.setNewGoalCategory} />
           </div>
 
           <button className="hidden" type="submit">Submit</button>

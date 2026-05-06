@@ -1,3 +1,4 @@
+import Category from '@/features/categories/entities/category';
 import Goal from '@/features/goals/entities/goal';
 import GoalVersion from '@/features/goals/entities/goal-version';
 import currency from 'currency.js';
@@ -12,6 +13,7 @@ type GoalListItem = {
   remainingAmount: currency;
   status: Goal['status'];
   currency: GoalVersion['currency'];
+  categoryID?: Category['id'];
   createdAt: Goal['createdAt'];
   updatedAt: GoalVersion['createdAt'];
 };

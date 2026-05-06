@@ -1,4 +1,5 @@
 import Currency from '@/enums/currency';
+import { CategoryOption } from '@/features/categories/components/category-combobox';
 import WalletListItem from '@/features/wallets/entities/wallet-list-item';
 import { useState } from 'react';
 
@@ -29,6 +30,15 @@ const useWalletsStates = () => {
   const [transferFee, setTransferFee] = useState("");
   const [transferNotes, setTransferNotes] = useState("");
 
+  const [spendDialogIsOpen, setSpendDialogIsOpen] = useState(false);
+  const [spendAmount, setSpendAmount] = useState("");
+  const [spendCategory, setSpendCategory] = useState<CategoryOption>();
+  const [spendNotes, setSpendNotes] = useState("");
+
+  const [defundDialogIsOpen, setDefundDialogIsOpen] = useState(false);
+  const [defundAmount, setDefundAmount] = useState("");
+  const [defundNotes, setDefundNotes] = useState("");
+
   return {
     wallets, setWallets,
     currencyFilter, setCurrencyFilter,
@@ -49,6 +59,13 @@ const useWalletsStates = () => {
     transferAmount, setTransferAmount,
     transferFee, setTransferFee,
     transferNotes, setTransferNotes,
+    spendDialogIsOpen, setSpendDialogIsOpen,
+    spendAmount, setSpendAmount,
+    spendCategory, setSpendCategory,
+    spendNotes, setSpendNotes,
+    defundDialogIsOpen, setDefundDialogIsOpen,
+    defundAmount, setDefundAmount,
+    defundNotes, setDefundNotes,
   };
 };
 

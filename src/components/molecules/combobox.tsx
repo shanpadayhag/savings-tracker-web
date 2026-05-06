@@ -57,12 +57,13 @@ const Combobox = <T extends unknown>(props: ComboboxProps<T>) => {
       <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
         <Command>
           <CommandInput placeholder={props.searchPlaceholder || "Search..."} />
-          <CommandList>
+          <CommandList className="max-h-none flex-1 min-h-0">
             <CommandEmpty>{props.emptyItemsPlaceholder || "No items found."}</CommandEmpty>
             <CommandGroup>
               {props.options?.map((option) => (
                 <CommandItem key={option.value}
                   value={option.value}
+                  keywords={[option.label]}
                   onSelect={() => { props.onChangeValue?.(option); setOpen(false); }}>
                   <IconCheck className={cn("mr-2 h-4 w-4", option.value === props.value?.value ? "opacity-100" : "opacity-0")} />
                   {option.label}

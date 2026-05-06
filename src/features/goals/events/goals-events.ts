@@ -26,11 +26,16 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
       await createGoal({
         name: states.newGoalName,
         targetAmount: states.newGoalTargetAmount,
-        currency: states.newGoalCurrency
+        currency: states.newGoalCurrency,
+        categoryID: states.newGoalCategory?.value,
       });
 
       handleFetchGoals();
       states.setCreateGoalDialogIsOpen(false);
+      states.setNewGoalName("");
+      states.setNewGoalTargetAmount("");
+      states.setNewGoalCurrency(undefined);
+      states.setNewGoalCategory(undefined);
 
       toast.success("Goal Funded! 🎯", {
         description: "Successfully moved funds from your wallet to your goal."
@@ -43,6 +48,7 @@ const useGoalsEvents = (states: ReturnType<typeof useGoalsStates>) => {
     states.newGoalName,
     states.newGoalTargetAmount,
     states.newGoalCurrency,
+    states.newGoalCategory,
   ]);
 
   const handleFetchWalletOptions = useCallback(async () => {
