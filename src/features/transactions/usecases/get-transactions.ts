@@ -9,7 +9,7 @@ import documentDBUtil from '@/utils/document-db-util';
 import currency from 'currency.js';
 import Dexie from 'dexie';
 
-type Cursor = {
+export type TransactionPageCursor = {
   reversedCreatedAt: number;
   id: TransactionListItem['id'];
   direction: 'next' | 'prev';
@@ -18,13 +18,13 @@ type Cursor = {
 type GetTransactionsParams = {
   date?: Date | [Date, Date];
   limit?: number;
-  cursor?: Cursor | null;
+  cursor?: TransactionPageCursor | null;
 };
 
 type GetTransactionsResult = {
   items: TransactionListItem[];
-  prevCursor?: Cursor | null;
-  nextCursor?: Cursor | null;
+  prevCursor?: TransactionPageCursor | null;
+  nextCursor?: TransactionPageCursor | null;
 };
 
 // For future reference when doing cleanup:
@@ -78,8 +78,8 @@ const getTransactions = async (params: GetTransactionsParams): Promise<GetTransa
   const limit = params.limit || 25;
   const rawTransactionList = await query.limit(limit + 1).toArray();
   const hasMore = rawTransactionList.length > limit;
-  let nextCursor: Cursor | null = null;
-  let prevCursor: Cursor | null = null;
+  let nextCursor: TransactionPageCursor | null = null;
+  let prevCursor: TransactionPageCursor | null = null;
 
   if (hasMore) rawTransactionList.pop();
   if (direction === 'prev') rawTransactionList.reverse();
