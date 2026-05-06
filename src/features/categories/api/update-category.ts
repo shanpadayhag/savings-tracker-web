@@ -2,6 +2,8 @@ import { AppError } from '@/errors/app-error';
 import Category from '@/features/categories/entities/category';
 import appDBUtil from '@/utils/app-db-util';
 
+const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
+
 type UpdateCategoryParams = {
   id: Category['id'];
   name: string;
@@ -21,6 +23,10 @@ const updateCategory = async (params: UpdateCategoryParams): Promise<void> => {
   if (!params.color) throw new AppError(
     "Pick a Color 🎨",
     "Choose a color so this category is easy to spot in your reports.");
+  if (!HEX_COLOR_PATTERN.test(params.color)) throw new AppError(
+    "Color Format Off 🎨",
+    "Use a hex color like #22c55e — a hash followed by six hex digits.");
+  const color = params.color.toLowerCase();
 
   // System rows have a locked name — the seeder still falls back to a
   // name lookup for legacy installs, so renaming would break that path.
@@ -29,7 +35,7 @@ const updateCategory = async (params: UpdateCategoryParams): Promise<void> => {
     if (name !== existing.name) throw new AppError(
       "System Name Locked 🛡️",
       "The 'Others' category name can't be changed, but you can recolor it.");
-    await appDBUtil.categories.update(params.id, { color: params.color });
+    await appDBUtil.categories.update(params.id, { color });
     return;
   }
 
@@ -45,7 +51,7 @@ const updateCategory = async (params: UpdateCategoryParams): Promise<void> => {
 
   await appDBUtil.categories.update(params.id, {
     name,
-    color: params.color,
+    color,
   });
 };
 
