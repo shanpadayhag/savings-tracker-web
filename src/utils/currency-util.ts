@@ -1,11 +1,15 @@
 import Currency from '@/enums/currency';
 import currency from 'currency.js';
 
+// Negative pattern places the minus before the symbol (`-$ 408.10`). Using
+// the same pattern for both positive and negative — as before — silently
+// dropped the sign, making negative balances and a negative Net Saved KPI
+// render as if positive.
 const currencyOptions = {
-  EURO: { symbol: '€', precision: 2, decimal: ',', separator: '.', pattern: `! #`, negativePattern: "! #" },
-  CAD: { symbol: 'CA$', precision: 2, pattern: `! #`, negativePattern: "! #" },
-  USD: { symbol: '$', precision: 2, pattern: `! #`, negativePattern: "! #" },
-  PESO: { symbol: '₱', precision: 2, pattern: `! #`, negativePattern: "! #" }
+  EURO: { symbol: '€', precision: 2, decimal: ',', separator: '.', pattern: `! #`, negativePattern: "-! #" },
+  CAD: { symbol: 'CA$', precision: 2, pattern: `! #`, negativePattern: "-! #" },
+  USD: { symbol: '$', precision: 2, pattern: `! #`, negativePattern: "-! #" },
+  PESO: { symbol: '₱', precision: 2, pattern: `! #`, negativePattern: "-! #" }
 };
 
 const currencyUtil = {

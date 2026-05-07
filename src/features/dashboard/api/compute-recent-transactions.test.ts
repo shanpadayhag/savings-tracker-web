@@ -148,6 +148,25 @@ describe('computeRecentTransactions', () => {
     expect(row.counterparty).toBe('Spent');
   });
 
+  it('renders a wallet-sourced Spend as a wallet outflow', async () => {
+    // Regression: wallet-direct spends were silently dropped from the recent
+    // activity strip because buildSpendRow only matched Goal/From entries.
+    await seedTransaction('wallet-spend', TransactionType.Spend, new Date(2026, 4, 12), [
+      { type: TransactionSourceType.Wallet, sourceID: 'w', name: 'Checking', currency: Currency.USD, direction: TransactionDirection.From, amount: 42 },
+      { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.To, amount: 42 },
+    ], 'Coffee');
+
+    const rows = await computeRecentTransactions(Currency.USD);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      label: 'Checking',
+      counterparty: 'Coffee',
+      amount: 42,
+      prefix: '-',
+    });
+  });
+
   it('renders a Deallocate as a goal-to-wallet outflow with the wallet as counterparty', async () => {
     await seedTransaction('dealloc', TransactionType.Deallocate, new Date(2026, 4, 13), [
       { type: TransactionSourceType.Goal, sourceID: 'g', name: 'Old Goal', currency: Currency.USD, direction: TransactionDirection.From, amount: 200 },

@@ -131,12 +131,28 @@ const computeReportsGoalGrowth = async (
     deltasByGoal.set(goal.id!, aggregateMonthlyDeltas(transactions, goal.id!, currency));
   }
 
-  // Walk monthly anchors backward from "now". The current month's anchor is
-  // `now` itself (live value); older anchors are the last day of each month —
-  // matches compute-net-worth-trend so the historical line reconciles with
-  // the live snapshot.
+  // The eagerly-maintained `goal.savedAmount` already reflects every
+  // transaction in the ledger — including any post-dated ones whose month
+  // sits in the future. Future-month deltas are also captured by
+  // `aggregateMonthlyDeltas` but the cursor never visits those keys (it walks
+  // backward from the current month), so they'd never be reversed and would
+  // leak into every historical anchor. Pre-roll the future deltas off the
+  // running balance once at the top so the loop's "now" anchor reflects the
+  // present moment, not a hypothetical future state.
+  const currentMonthKey = monthKeyOf(new Date(now.getFullYear(), now.getMonth(), 1));
   const running = new Map<string, number>();
-  for (const goal of goals) running.set(goal.id!, goal.savedAmount);
+  for (const goal of goals) {
+    let balance = goal.savedAmount;
+    const goalDeltas = deltasByGoal.get(goal.id!);
+    if (goalDeltas) {
+      for (const [key, delta] of goalDeltas) {
+        if (key > currentMonthKey) {
+          balance = currencyUtil.parse(balance, currency).subtract(delta).value;
+        }
+      }
+    }
+    running.set(goal.id!, balance);
+  }
 
   const points: GoalGrowthPoint[] = [];
   const cursor = new Date(now.getFullYear(), now.getMonth(), 1);

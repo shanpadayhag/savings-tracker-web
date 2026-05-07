@@ -1,9 +1,10 @@
 import Category from '@/features/categories/entities/category';
 import appDBUtil from '@/utils/app-db-util';
+import isActiveRow from '@/utils/is-active-row';
 
 const getCategories = async (): Promise<Category[]> => {
   const all = await appDBUtil.categories
-    .filter(category => category.deletedAt === 'null')
+    .filter(isActiveRow)
     .toArray();
 
   // Sort: system "Others" pinned to the bottom, everything else alphabetical.

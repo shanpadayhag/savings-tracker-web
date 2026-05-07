@@ -8,8 +8,8 @@ type GoalVersion = {
   targetAmount: number;
   currency: Currency;
   categoryID?: Category['id'];
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date | "null";
 };
 

@@ -64,6 +64,7 @@ const seedGoal = async (overrides: {
     targetAmount,
     currency,
     createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
   });
   await documentDBFake.goal_list.add({
     id: overrides.id,
@@ -210,5 +211,24 @@ describe('allocateFundsToGoal', () => {
       amount: '-10',
       notes: '',
     })).rejects.toBeInstanceOf(AppError);
+  });
+
+  it('emits 0% savedPercent for a zero-target goal instead of NaN/Infinity', async () => {
+    // Regression: previously dividing savedAmount by a 0 targetAmount would
+    // produce Infinity (or NaN) on the destination goal's savedPercent.
+    // The reconciler guards against this; allocators now match.
+    await seedWallet('wallet', Currency.USD, 500);
+    await seedGoal({ id: 'goal', targetAmount: 0, savedAmount: 0 });
+
+    await allocateFundsToGoal({
+      sourceID: 'wallet',
+      destinationID: 'goal',
+      amount: '100',
+      notes: '',
+    });
+
+    const goal = await documentDBFake.goal_list.get('goal');
+    expect(goal?.savedPercent).toBe(0);
+    expect(Number.isFinite(goal?.savedPercent ?? NaN)).toBe(true);
   });
 });

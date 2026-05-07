@@ -30,6 +30,11 @@ const archiveGoal = async (params: ArchiveGoalParameters): Promise<void> => {
     "Currencies Don't Match 💱",
     "The wallet and the goal use different currencies. Please choose a wallet with the same currency as the goal.");
 
+  // Default the timestamp once at the top so every entry, transaction, and
+  // index field shares the same instant. Without this, the UI path (which
+  // omits createdAt) would write `undefined` everywhere — breaking
+  // reversedCreatedAt and the replay sort.
+  const transactionTimestamp = params.createdAt ?? new Date();
   const goalSavedAmount = currencyUtil.parse(goal.savedAmount, goal.currency);
 
   if (goalSavedAmount.value > 0) {
@@ -42,8 +47,8 @@ const archiveGoal = async (params: ArchiveGoalParameters): Promise<void> => {
       direction: TransactionDirection.From,
       amount: goalSavedAmount.value,
       currency: goal.currency,
-      createdAt: params.createdAt,
-      updatedAt: params.createdAt,
+      createdAt: transactionTimestamp,
+      updatedAt: transactionTimestamp,
     };
     const transactionEntry2 = {
       id: crypto.randomUUID(),
@@ -53,16 +58,16 @@ const archiveGoal = async (params: ArchiveGoalParameters): Promise<void> => {
       direction: TransactionDirection.To,
       amount: goalSavedAmount.value,
       currency: goal.currency,
-      createdAt: params.createdAt,
-      updatedAt: params.createdAt,
+      createdAt: transactionTimestamp,
+      updatedAt: transactionTimestamp,
     };
 
     await appDBUtil.transactions.add({
       id: transactionID,
       type: TransactionType.Deallocate,
       notes: null,
-      createdAt: params.createdAt,
-      updatedAt: params.createdAt,
+      createdAt: transactionTimestamp,
+      updatedAt: transactionTimestamp,
     });
     await appDBUtil.transaction_entries.add(transactionEntry1);
     await appDBUtil.transaction_entries.add(transactionEntry2);
@@ -85,11 +90,9 @@ const archiveGoal = async (params: ArchiveGoalParameters): Promise<void> => {
         direction: transactionEntry2.direction,
         amount: transactionEntry2.amount,
       }],
-      createdAt: params.createdAt,
-      updatedAt: params.createdAt,
-      reversedCreatedAt: params?.createdAt
-        ? params.createdAt.getTime() * -1
-        : undefined
+      createdAt: transactionTimestamp,
+      updatedAt: transactionTimestamp,
+      reversedCreatedAt: transactionTimestamp.getTime() * -1,
     });
 
     const walletNewCurrentAmount = currencyUtil.parse(wallet.currentAmount, wallet.currency)
@@ -106,9 +109,8 @@ const archiveGoal = async (params: ArchiveGoalParameters): Promise<void> => {
     });
   }
 
-  const statusChangedAt = params.createdAt ?? new Date();
-  await appDBUtil.goals.update(goal.id, { status: GoalStatus.Archived, statusChangedAt });
-  await documentDBUtil.goal_list.update(goal.id, { status: GoalStatus.Archived, statusChangedAt });
+  await appDBUtil.goals.update(goal.id, { status: GoalStatus.Archived, statusChangedAt: transactionTimestamp });
+  await documentDBUtil.goal_list.update(goal.id, { status: GoalStatus.Archived, statusChangedAt: transactionTimestamp });
 };
 
 export default archiveGoal;

@@ -22,7 +22,7 @@ const createWallet = async (params: CreateWalletParams): Promise<Wallet['id']> =
   const walletID = crypto.randomUUID();
   const now = new Date();
 
-  appDBUtil.wallets.add({
+  await appDBUtil.wallets.add({
     id: walletID,
     name: walletName,
     currency: params.currency,
@@ -30,7 +30,7 @@ const createWallet = async (params: CreateWalletParams): Promise<Wallet['id']> =
     updatedAt: now,
     deletedAt: "null",
   });
-  documentDBUtil.wallet_list.add({
+  await documentDBUtil.wallet_list.add({
     id: walletID,
     name: walletName,
     currency: params.currency,

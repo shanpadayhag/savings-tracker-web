@@ -194,4 +194,24 @@ describe('computeNetWorthTrend', () => {
     expect(trend).toHaveLength(1);
     expect(trend[0]).toMatchObject({ date: 'May 2026', netWorth: 1000 });
   });
+
+  it('reverses future-dated allocations off the live anchor (regression)', async () => {
+    // Regression: wallet.currentAmount is updated eagerly when a future-dated
+    // transaction is logged, but the cursor only walks backward from the
+    // current month — future-month deltas were never reversed and would leak
+    // into every historical anchor. Pre-roll fixes this.
+    await seedWallet('w', Currency.USD, 1200);
+    // 200 income dated to NEXT month, already baked into the 1200 above.
+    await seedTransaction('future-income', TransactionType.Allocate, new Date(2026, 5, 10), [
+      { type: TransactionSourceType.External, sourceID: null, currency: Currency.USD, direction: TransactionDirection.From, amount: 200 },
+      { type: TransactionSourceType.Wallet, sourceID: 'w', currency: Currency.USD, direction: TransactionDirection.To, amount: 200 },
+    ]);
+
+    const trend = await computeNetWorthTrend(Currency.USD, { now: FIXED_NOW, maxMonths: 3 });
+
+    // The live ("now") anchor should reflect the present, not a future state.
+    expect(trend[trend.length - 1].netWorth).toBe(1000);
+    // No past activity, so prior months equal "now" too.
+    expect(trend.every(point => point.netWorth === 1000)).toBe(true);
+  });
 });

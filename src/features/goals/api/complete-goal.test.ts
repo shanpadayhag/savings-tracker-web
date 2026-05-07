@@ -167,6 +167,28 @@ describe('completeGoal', () => {
     expect(documentDBFake.transaction_list.list()).toHaveLength(0);
   });
 
+  it('writes a defined createdAt and reversedCreatedAt when params.createdAt is omitted', async () => {
+    // Regression: previously params.createdAt was passed straight through, so
+    // omitting it (the typical UI path) wrote `undefined` to createdAt and
+    // reversedCreatedAt, breaking the reverse-chronological transaction list
+    // index and the reconciler's chronological replay.
+    await seedGoal({ id: 'empty-but-fresh', targetAmount: 1000, savedAmount: 200 });
+
+    const before = Date.now();
+    await completeGoal({ goalID: 'empty-but-fresh' });
+    const after = Date.now();
+
+    const [listRow] = documentDBFake.transaction_list.list();
+    expect(listRow.createdAt).toBeInstanceOf(Date);
+    const ts = listRow.createdAt!.getTime();
+    expect(ts).toBeGreaterThanOrEqual(before);
+    expect(ts).toBeLessThanOrEqual(after);
+    expect(listRow.reversedCreatedAt).toBe(ts * -1);
+
+    const [appRow] = appDBFake.transactions.list();
+    expect(appRow.createdAt).toBeInstanceOf(Date);
+  });
+
   it('rejects when the goal does not exist', async () => {
     await expect(completeGoal({ goalID: 'missing' })).rejects.toBeInstanceOf(AppError);
   });

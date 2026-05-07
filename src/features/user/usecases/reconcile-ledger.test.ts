@@ -39,6 +39,7 @@ const seedGoal = async (
       name: version.name, targetAmount: version.targetAmount,
       currency,
       createdAt: version.createdAt,
+      updatedAt: version.createdAt,
       deletedAt: 'null',
     });
   }
@@ -198,6 +199,32 @@ describe('reconcileLedger', () => {
     expect(goal?.name).toBe('Rainy Day Fund');
     expect(goal?.targetAmount).toBe(2000);
     expect(goal?.versionID).toBe('v2');
+  });
+
+  it('writes categoryID from the latest goal version onto goal_list', async () => {
+    // Regression: writeGoals previously omitted categoryID, so every reconcile
+    // stripped category badges from goals — UI showed "no category" until the
+    // user added a new goal version.
+    await appDBFake.goals.add({
+      id: 'travel', status: GoalStatus.Active,
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+      deletedAt: 'null',
+    });
+    await appDBFake.goal_versions.add({
+      id: 'v1', goalID: 'travel',
+      name: 'Travel Fund', targetAmount: 5000,
+      currency: Currency.USD,
+      categoryID: 'leisure',
+      createdAt: new Date(2026, 0, 1),
+      updatedAt: new Date(2026, 0, 1),
+      deletedAt: 'null',
+    });
+
+    await reconcileLedger();
+
+    const goal = await documentDBFake.goal_list.get('travel');
+    expect(goal?.categoryID).toBe('leisure');
   });
 
   it('preserves category metadata on transaction_list rows', async () => {

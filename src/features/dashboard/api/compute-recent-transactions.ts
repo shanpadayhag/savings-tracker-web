@@ -72,18 +72,24 @@ const buildAllocateRow = (row: Row, currency: Currency): RecentActivityRow | nul
 };
 
 const buildSpendRow = (row: Row, currency: Currency): RecentActivityRow | null => {
-  const goalEntry = findEntry(row.entries, entry =>
-    entry.type === TransactionSourceType.Goal
+  // A Spend can be sourced from a Goal (drawing earmarked savings) or directly
+  // from a Wallet — both are real outflows and need to surface in recent
+  // activity. Restricting to Goal-only would silently drop every wallet-direct
+  // spend from the strip even though the cashflow chart counts it.
+  const fromEntry = findEntry(row.entries, entry =>
+    isWalletOrGoal(entry)
     && entry.direction === TransactionDirection.From
     && entry.currency === currency);
-  if (!goalEntry) return null;
+  if (!fromEntry) return null;
+
+  const fallbackLabel = fromEntry.type === TransactionSourceType.Wallet ? 'Wallet' : 'Goal';
 
   return {
     id: row.id!,
     type: row.type,
-    label: goalEntry.name ?? 'Goal',
+    label: fromEntry.name ?? fallbackLabel,
     counterparty: row.notes?.trim() || 'Spent',
-    amount: goalEntry.amount,
+    amount: fromEntry.amount,
     prefix: '-',
     currency,
     createdAt: row.createdAt!,

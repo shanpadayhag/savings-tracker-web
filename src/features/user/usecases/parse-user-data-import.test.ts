@@ -102,4 +102,71 @@ describe('parseUserDataImport', () => {
 
     expect(parsed.schemaVersion).toBe(USER_DATA_SCHEMA_VERSION);
   });
+
+  it('drops transaction entries with NaN or non-numeric amounts', () => {
+    // Regression: previously any row was accepted, so a NaN amount would
+    // propagate into the ledger and corrupt every downstream balance.
+    const data = {
+      ...validBase(),
+      transactionEntries: [
+        { id: 'good', transactionID: 't', amount: 100 },
+        { id: 'nan', transactionID: 't', amount: NaN },
+        { id: 'string', transactionID: 't', amount: '50' },
+        { id: 'missing', transactionID: 't' },
+        { id: 'infinity', transactionID: 't', amount: Infinity },
+      ],
+    };
+
+    const parsed = parseUserDataImport(data);
+
+    expect(parsed.transactionEntries).toHaveLength(1);
+    expect(parsed.transactionEntries[0].id).toBe('good');
+  });
+
+  it('drops transaction entries missing an id or transactionID', () => {
+    const data = {
+      ...validBase(),
+      transactionEntries: [
+        { id: '', transactionID: 't', amount: 1 },
+        { id: 'no-tx', amount: 1 },
+        { id: 'good', transactionID: 't', amount: 1 },
+      ],
+    };
+
+    const parsed = parseUserDataImport(data);
+
+    expect(parsed.transactionEntries.map(entry => entry.id)).toEqual(['good']);
+  });
+
+  it('drops goal versions with NaN targetAmount', () => {
+    const data = {
+      ...validBase(),
+      goalVersions: [
+        { id: 'v1', goalID: 'g', targetAmount: 1000 },
+        { id: 'v2', goalID: 'g', targetAmount: NaN },
+        { id: 'v3', goalID: 'g', targetAmount: 'oops' },
+      ],
+    };
+
+    const parsed = parseUserDataImport(data);
+
+    expect(parsed.goalVersions.map(version => version.id)).toEqual(['v1']);
+  });
+
+  it('drops rows missing required ids across every table', () => {
+    const data = {
+      ...validBase(),
+      wallets: [{ id: 'w1' }, { id: '' }, {}],
+      goals: [{ id: 'g1' }, { name: 'no-id' }],
+      transactions: [{ id: 't1' }, { id: '' }],
+      categories: [{ id: 'c1' }, {}],
+    };
+
+    const parsed = parseUserDataImport(data);
+
+    expect(parsed.wallets).toHaveLength(1);
+    expect(parsed.goals).toHaveLength(1);
+    expect(parsed.transactions).toHaveLength(1);
+    expect(parsed.categories).toHaveLength(1);
+  });
 });

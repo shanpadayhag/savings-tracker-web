@@ -1,6 +1,7 @@
 import { AppError } from '@/errors/app-error';
 import Category from '@/features/categories/entities/category';
 import appDBUtil from '@/utils/app-db-util';
+import isActiveRow from '@/utils/is-active-row';
 
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 
@@ -27,7 +28,7 @@ const createCategory = async (params: CreateCategoryParams): Promise<Category['i
   const conflict = await appDBUtil.categories
     .where('name').equalsIgnoreCase(name)
     .first();
-  if (conflict && conflict.deletedAt === 'null') throw new AppError(
+  if (conflict && isActiveRow(conflict)) throw new AppError(
     "Name Already Taken 🪞",
     `You already have a category called "${conflict.name}". Try a different name.`);
 

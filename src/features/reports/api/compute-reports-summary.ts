@@ -3,11 +3,18 @@
 //
 // Income / expense semantics mirror the dashboard cashflow chart:
 //   - Income: External → Wallet entries on Allocate transactions in the
-//     active currency.
-//   - Expense: Goal-side From entries on Spend transactions in the active
-//     currency, plus Internal/To fees attributed back to a source wallet
-//     in the same currency.
-// Aggregations never sum across currencies.
+//     active currency, plus the destination side of cross-currency Convert
+//     transactions where the destination wallet is in the active currency
+//     (fresh inflow into this ledger from another currency's books).
+//   - Expense: From entries on Spend transactions in the active currency
+//     where the source is a Goal or a Wallet, plus Internal/To fees
+//     attributed back to a source wallet in the same currency, plus the
+//     source side of cross-currency Convert transactions where the source
+//     wallet is in the active currency (outflow leaving this ledger for
+//     another currency's books).
+// Each currency's ledger is tracked independently — aggregations never sum
+// across currencies, and a Convert is treated as a transfer between two
+// separate ledgers (outflow on source side, inflow on destination).
 
 import Currency from '@/enums/currency';
 import { ReportRange } from '@/features/reports/data/mock-reports-data';
@@ -58,13 +65,58 @@ const incomeFor = (transaction: TransactionRow, currency: Currency): number => {
   return toEntry?.amount ?? 0;
 };
 
-const spendExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
-  if (transaction.type !== TransactionType.Spend) return 0;
-  const goalEntry = transaction.entries.find(entry =>
-    entry.type === TransactionSourceType.Goal
+// Currency conversions bring fresh money into the destination currency's
+// ledger from a different ledger. From the destination's perspective, the
+// converted-in amount is real inflow, even though no value was created (the
+// source currency lost it). Each currency's books are tracked independently.
+const convertIncomeFor = (transaction: TransactionRow, currency: Currency): number => {
+  if (transaction.type !== TransactionType.Convert) return 0;
+  const toEntry = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Wallet
+    && entry.direction === TransactionDirection.To
+    && entry.currency === currency);
+  if (!toEntry) return 0;
+  // Defensive: only count cross-currency conversions. A same-currency
+  // Convert (shouldn't occur — Transfer covers that) wouldn't represent
+  // money entering this ledger from outside.
+  const sourceWallet = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Wallet
+    && entry.direction === TransactionDirection.From);
+  if (sourceWallet?.currency === currency) return 0;
+  return toEntry.amount;
+};
+
+// Symmetric source-side rule: the converted-out amount is value leaving the
+// source currency's ledger entirely. From that ledger's perspective it's an
+// outflow — same shape as the destination-side income. The fee is counted
+// separately by feeExpenseFor (so this returns the wallet/from amount only,
+// no double-counting).
+const convertExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
+  if (transaction.type !== TransactionType.Convert) return 0;
+  const fromEntry = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Wallet
     && entry.direction === TransactionDirection.From
     && entry.currency === currency);
-  return goalEntry?.amount ?? 0;
+  if (!fromEntry) return 0;
+  const destWallet = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Wallet
+    && entry.direction === TransactionDirection.To);
+  if (destWallet?.currency === currency) return 0;
+  return fromEntry.amount;
+};
+
+// A Spend's outflow is whichever side of the row is the user's own account —
+// Goal (drawing from earmarked savings) or Wallet (drawing directly). We
+// accept either, since both represent money leaving the user's hands. Anchor
+// rows like Internal/External never count as the source of a Spend.
+const spendExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
+  if (transaction.type !== TransactionType.Spend) return 0;
+  const fromEntry = transaction.entries.find(entry =>
+    (entry.type === TransactionSourceType.Goal
+      || entry.type === TransactionSourceType.Wallet)
+    && entry.direction === TransactionDirection.From
+    && entry.currency === currency);
+  return fromEntry?.amount ?? 0;
 };
 
 const feeExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
@@ -92,9 +144,11 @@ const sumWindow = (
     if (!transaction.createdAt) continue;
     if (transaction.createdAt < startInclusive) continue;
     if (transaction.createdAt >= endExclusive) continue;
-    const inc = incomeFor(transaction, currency);
+    const inc = incomeFor(transaction, currency)
+      + convertIncomeFor(transaction, currency);
     const exp = spendExpenseFor(transaction, currency)
-      + feeExpenseFor(transaction, currency);
+      + feeExpenseFor(transaction, currency)
+      + convertExpenseFor(transaction, currency);
     if (inc > 0) income = currencyUtil.parse(income, currency).add(inc).value;
     if (exp > 0) expense = currencyUtil.parse(expense, currency).add(exp).value;
   }

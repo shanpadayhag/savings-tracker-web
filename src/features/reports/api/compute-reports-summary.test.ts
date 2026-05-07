@@ -53,6 +53,12 @@ const seedSpend = (id: string, createdAt: Date, currency: Currency, amount: numb
     { type: TransactionSourceType.External, currency, direction: TransactionDirection.To, amount },
   ]);
 
+const seedSpendFromWallet = (id: string, createdAt: Date, currency: Currency, amount: number) =>
+  seedTransaction(id, TransactionType.Spend, createdAt, [
+    { type: TransactionSourceType.Wallet, sourceID: 'w', currency, direction: TransactionDirection.From, amount },
+    { type: TransactionSourceType.External, currency, direction: TransactionDirection.To, amount },
+  ]);
+
 describe('computeReportsSummary', () => {
   beforeEach(() => {
     appDBFake.reset();
@@ -127,6 +133,54 @@ describe('computeReportsSummary', () => {
     expect(summary.totalIncome).toBe(0);
   });
 
+  it('counts a cross-currency convert as income on the destination currency', async () => {
+    // Symmetric with the convert fee on the source side: each currency's
+    // ledger is tracked independently, so a Convert that lands fresh PESO
+    // in the user's PESO wallet is real income from PESO's perspective —
+    // even though no value was created at overall net-worth level.
+    await seedTransaction('convert', TransactionType.Convert, new Date(2026, 4, 8), [
+      { type: TransactionSourceType.Wallet, sourceID: 'usd', currency: Currency.USD, direction: TransactionDirection.From, amount: 100 },
+      { type: TransactionSourceType.Wallet, sourceID: 'peso', currency: Currency.Peso, direction: TransactionDirection.To, amount: 5500 },
+      { type: TransactionSourceType.Internal, currency: Currency.USD, direction: TransactionDirection.To, amount: 2 },
+    ]);
+
+    const pesoSummary = await computeReportsSummary(Currency.Peso, '1m', { now: FIXED_NOW });
+
+    expect(pesoSummary.totalIncome).toBe(5500);
+    expect(pesoSummary.totalExpense).toBe(0);
+  });
+
+  it('counts the converted-out amount plus the fee as expense on the source currency', async () => {
+    // Symmetric with the destination-as-income rule: USD loses 100 to
+    // PESO's books — that's outflow from USD's ledger — and the $2 fee is
+    // also expense. Total USD expense = $102. USD income stays at 0.
+    await seedTransaction('convert', TransactionType.Convert, new Date(2026, 4, 8), [
+      { type: TransactionSourceType.Wallet, sourceID: 'usd', currency: Currency.USD, direction: TransactionDirection.From, amount: 100 },
+      { type: TransactionSourceType.Wallet, sourceID: 'peso', currency: Currency.Peso, direction: TransactionDirection.To, amount: 5500 },
+      { type: TransactionSourceType.Internal, currency: Currency.USD, direction: TransactionDirection.To, amount: 2 },
+    ]);
+
+    const usdSummary = await computeReportsSummary(Currency.USD, '1m', { now: FIXED_NOW });
+
+    expect(usdSummary.totalIncome).toBe(0);
+    expect(usdSummary.totalExpense).toBe(102);
+  });
+
+  it('treats same-currency Transfer as neither income nor expense (beyond fees)', async () => {
+    // A Transfer is an internal move in the same currency; the convert-income
+    // rule is gated to cross-currency only, so a same-currency Transfer
+    // shouldn't sneak in as income.
+    await seedTransaction('transfer', TransactionType.Transfer, new Date(2026, 4, 9), [
+      { type: TransactionSourceType.Wallet, sourceID: 'a', currency: Currency.USD, direction: TransactionDirection.From, amount: 300 },
+      { type: TransactionSourceType.Wallet, sourceID: 'b', currency: Currency.USD, direction: TransactionDirection.To, amount: 300 },
+    ]);
+
+    const summary = await computeReportsSummary(Currency.USD, '1m', { now: FIXED_NOW });
+
+    expect(summary.totalIncome).toBe(0);
+    expect(summary.totalExpense).toBe(0);
+  });
+
   it('counts convert/transfer fees as expense when the source wallet is in the active currency', async () => {
     await seedTransaction('transfer-fee', TransactionType.Transfer, new Date(2026, 4, 7), [
       { type: TransactionSourceType.Wallet, sourceID: 'a', currency: Currency.USD, direction: TransactionDirection.From, amount: 200 },
@@ -137,6 +191,36 @@ describe('computeReportsSummary', () => {
     const summary = await computeReportsSummary(Currency.USD, '1m', { now: FIXED_NOW });
 
     expect(summary.totalExpense).toBe(5);
+  });
+
+  it('counts wallet-sourced Spend transactions as expense', async () => {
+    // Wallet-sourced spends were silently dropped before the fix because the
+    // matcher required Goal/From entries. They represent real outflows from
+    // the user's accounts and must count as expense.
+    await seedSpendFromWallet('w-spend-1', new Date(2026, 4, 5), Currency.USD, 120);
+    await seedSpendFromWallet('w-spend-2', new Date(2026, 4, 6), Currency.USD, 80);
+
+    const summary = await computeReportsSummary(Currency.USD, '1m', { now: FIXED_NOW });
+
+    expect(summary.totalExpense).toBe(200);
+  });
+
+  it('counts a mix of wallet-sourced and goal-sourced spends', async () => {
+    await seedSpendFromWallet('w-spend', new Date(2026, 4, 5), Currency.USD, 100);
+    await seedSpend('g-spend', new Date(2026, 4, 6), Currency.USD, 250);
+
+    const summary = await computeReportsSummary(Currency.USD, '1m', { now: FIXED_NOW });
+
+    expect(summary.totalExpense).toBe(350);
+  });
+
+  it('respects active currency for wallet-sourced spends', async () => {
+    await seedSpendFromWallet('w-usd', new Date(2026, 4, 5), Currency.USD, 100);
+    await seedSpendFromWallet('w-peso', new Date(2026, 4, 5), Currency.Peso, 5000);
+
+    const summary = await computeReportsSummary(Currency.USD, '1m', { now: FIXED_NOW });
+
+    expect(summary.totalExpense).toBe(100);
   });
 
   it('reports savings rate change in percentage points (current minus prior)', async () => {

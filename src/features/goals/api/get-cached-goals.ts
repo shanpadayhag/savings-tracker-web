@@ -16,10 +16,11 @@ const getCachedGoals = async (): Promise<GoalListItem[]> => {
     savedPercent: currencyUtil.parsePercent(goalListItem.savedPercent, goalListItem.currency),
     remainingAmount: currencyUtil.parse(goalListItem.remainingAmount, goalListItem.currency),
     status: goalListItem.status,
+    statusChangedAt: goalListItem.statusChangedAt,
     currency: goalListItem.currency,
     categoryID: goalListItem.categoryID,
     createdAt: goalListItem.createdAt || now,
-    updatedAt: goalListItem.createdAt || now,
+    updatedAt: goalListItem.updatedAt || goalListItem.createdAt || now,
   }));
 };
 

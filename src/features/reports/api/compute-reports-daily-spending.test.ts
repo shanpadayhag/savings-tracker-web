@@ -47,6 +47,12 @@ const seedSpend = (id: string, createdAt: Date, currency: Currency, amount: numb
     { type: TransactionSourceType.External, currency, direction: TransactionDirection.To, amount },
   ]);
 
+const seedSpendFromWallet = (id: string, createdAt: Date, currency: Currency, amount: number) =>
+  seedTransaction(id, TransactionType.Spend, createdAt, [
+    { type: TransactionSourceType.Wallet, sourceID: 'w', currency, direction: TransactionDirection.From, amount },
+    { type: TransactionSourceType.External, currency, direction: TransactionDirection.To, amount },
+  ]);
+
 describe('computeReportsDailySpending', () => {
   beforeEach(() => {
     appDBFake.reset();
@@ -105,6 +111,30 @@ describe('computeReportsDailySpending', () => {
     const points = await computeReportsDailySpending(Currency.USD, { now: FIXED_NOW });
 
     expect(points.every(point => point.amount === 0)).toBe(true);
+  });
+
+  it('counts wallet-sourced spends on the heatmap', async () => {
+    // Regression: the heatmap previously only saw Goal-sourced spends, so
+    // wallet-direct spend days appeared empty. Both source types must show.
+    await seedSpendFromWallet('w-spend', new Date(2026, 4, 14, 10, 0, 0), Currency.USD, 60);
+
+    const points = await computeReportsDailySpending(Currency.USD, { now: FIXED_NOW });
+    const may14 = points.find(point =>
+      point.date.getFullYear() === 2026
+      && point.date.getMonth() === 4
+      && point.date.getDate() === 14);
+
+    expect(may14?.amount).toBe(60);
+  });
+
+  it('aggregates wallet-sourced and goal-sourced spends on the same day', async () => {
+    await seedSpend('g-spend', new Date(2026, 4, 14, 9, 0, 0), Currency.USD, 25);
+    await seedSpendFromWallet('w-spend', new Date(2026, 4, 14, 18, 0, 0), Currency.USD, 35);
+
+    const points = await computeReportsDailySpending(Currency.USD, { now: FIXED_NOW });
+    const may14 = points.find(point => point.date.getDate() === 14 && point.date.getMonth() === 4);
+
+    expect(may14?.amount).toBe(60);
   });
 
   it('ignores non-Spend transactions', async () => {

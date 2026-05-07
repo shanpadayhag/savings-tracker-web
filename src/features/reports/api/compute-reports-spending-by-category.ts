@@ -1,9 +1,10 @@
 // Per-category spending breakdown for the reports page.
-// Walks Spend transactions in the active currency, groups goal-side outflows
-// by the snapshotted `categoryName` on each row, and counts the number of
-// spends in each bucket. Per-category change is computed against the same
-// bucket in the prior equivalent window (so a brand-new category shows 0%
-// when it had no spend before).
+// Walks Spend transactions in the active currency, groups outflows from the
+// user's accounts (Goal- or Wallet-sourced From entries) by the snapshotted
+// `categoryName` on each row, and counts the number of spends in each
+// bucket. Per-category change is computed against the same bucket in the
+// prior equivalent window (so a brand-new category shows 0% when it had no
+// spend before).
 
 import Currency from '@/enums/currency';
 import { ReportRange } from '@/features/reports/data/mock-reports-data';
@@ -43,13 +44,18 @@ type TransactionRow = {
   categoryName?: string;
 };
 
+// Match the summary card's spend rule: an outflow can come from a Goal
+// (drawing earmarked savings) or directly from a Wallet — both represent the
+// user's money leaving. Restricting to Goal-only would silently drop every
+// wallet-sourced spend from the category breakdown.
 const spendAmountInCurrency = (transaction: TransactionRow, currency: Currency): number => {
   if (transaction.type !== TransactionType.Spend) return 0;
-  const goalEntry = transaction.entries.find(entry =>
-    entry.type === TransactionSourceType.Goal
+  const fromEntry = transaction.entries.find(entry =>
+    (entry.type === TransactionSourceType.Goal
+      || entry.type === TransactionSourceType.Wallet)
     && entry.direction === TransactionDirection.From
     && entry.currency === currency);
-  return goalEntry?.amount ?? 0;
+  return fromEntry?.amount ?? 0;
 };
 
 type Bucket = { amount: number; transactionCount: number; };

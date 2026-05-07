@@ -8,8 +8,8 @@ type Transaction = {
   /** Optional category tag. Missing = treated as the system "Others" row at
    * read time, so historical (pre-feature) transactions stay valid. */
   categoryID?: Category['id'];
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date | "null";
 };
 
