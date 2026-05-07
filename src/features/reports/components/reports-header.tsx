@@ -15,6 +15,7 @@ type ReportsHeaderProps = {
   range: ReportRange;
   onRangeChange: (range: ReportRange) => void;
   onExport: () => void;
+  isExporting?: boolean;
 };
 
 const ReportsHeader = (props: ReportsHeaderProps) => {
@@ -39,8 +40,8 @@ const ReportsHeader = (props: ReportsHeaderProps) => {
           <ToggleGroupItem value="12m">12M</ToggleGroupItem>
         </ToggleGroup>
 
-        <Button size="sm" variant="outline" onClick={props.onExport}>
-          <IconDownload className="size-4" /> Export
+        <Button size="sm" variant="outline" onClick={props.onExport} disabled={props.isExporting}>
+          <IconDownload className="size-4" /> {props.isExporting ? 'Exporting…' : 'Export'}
         </Button>
       </div>
     </div>

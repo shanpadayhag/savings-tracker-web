@@ -106,8 +106,9 @@ const completeGoal = async (params: CompleteGoalParameters): Promise<void> => {
     });
   }
 
-  await appDBUtil.goals.update(goal.id, { status: GoalStatus.Completed });
-  await documentDBUtil.goal_list.update(goal.id, { status: GoalStatus.Completed });
+  const statusChangedAt = params.createdAt ?? new Date();
+  await appDBUtil.goals.update(goal.id, { status: GoalStatus.Completed, statusChangedAt });
+  await documentDBUtil.goal_list.update(goal.id, { status: GoalStatus.Completed, statusChangedAt });
 };
 
 export default completeGoal;

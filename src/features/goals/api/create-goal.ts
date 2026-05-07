@@ -35,6 +35,7 @@ const createGoal = async (params: CreateGoalParameters): Promise<void> => {
   await appDBUtil.goals.add({
     id: goalID,
     status: params.status || GoalStatus.Active,
+    statusChangedAt: params.createdAt,
     createdAt: params.createdAt,
     updatedAt: params.createdAt,
   });
@@ -57,6 +58,7 @@ const createGoal = async (params: CreateGoalParameters): Promise<void> => {
     savedPercent: 0,
     remainingAmount: 0,
     status: params.status || GoalStatus.Active,
+    statusChangedAt: params.createdAt,
     currency: params.currency,
     categoryID: params.categoryID,
     createdAt: params.createdAt,
