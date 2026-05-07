@@ -19,7 +19,8 @@ export default () => {
       <ReportsHeader
         range={states.range}
         onRangeChange={states.setRange}
-        onExport={events.handleExport} />
+        onExport={events.handleExport}
+        isExporting={events.isExporting} />
 
       <ReportsSummaryCards range={states.range} />
 

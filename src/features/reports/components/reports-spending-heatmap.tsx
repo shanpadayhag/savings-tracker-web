@@ -18,12 +18,16 @@ import { useEffect, useMemo, useState } from 'react';
 
 const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// Zero cells use the foreground at very low alpha so they stay visible against
+// `--card` in dark mode (where `--muted` resolves to the same color as the
+// card and disappears). Each cell also wears a thin border so the grid reads
+// even when the fill is faint.
 const intensityClass: Record<number, string> = {
-  0: 'bg-muted',
-  1: 'bg-primary/20',
-  2: 'bg-primary/40',
-  3: 'bg-primary/60',
-  4: 'bg-primary',
+  0: 'bg-foreground/5 border border-border',
+  1: 'bg-primary/30 border border-primary/30',
+  2: 'bg-primary/50 border border-primary/40',
+  3: 'bg-primary/75 border border-primary/60',
+  4: 'bg-primary border border-primary',
 };
 
 type Cell =

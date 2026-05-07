@@ -12,6 +12,7 @@ type GoalListItem = {
   savedPercent: currency;
   remainingAmount: currency;
   status: Goal['status'];
+  statusChangedAt?: Goal['statusChangedAt'];
   currency: GoalVersion['currency'];
   categoryID?: Category['id'];
   createdAt: Goal['createdAt'];

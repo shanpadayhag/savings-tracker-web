@@ -106,8 +106,9 @@ const archiveGoal = async (params: ArchiveGoalParameters): Promise<void> => {
     });
   }
 
-  await appDBUtil.goals.update(goal.id, { status: GoalStatus.Archived });
-  await documentDBUtil.goal_list.update(goal.id, { status: GoalStatus.Archived });
+  const statusChangedAt = params.createdAt ?? new Date();
+  await appDBUtil.goals.update(goal.id, { status: GoalStatus.Archived, statusChangedAt });
+  await documentDBUtil.goal_list.update(goal.id, { status: GoalStatus.Archived, statusChangedAt });
 };
 
 export default archiveGoal;

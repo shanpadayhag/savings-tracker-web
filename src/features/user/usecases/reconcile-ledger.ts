@@ -198,6 +198,16 @@ const writeWallets = async (
   }
 };
 
+// For pre-migration goals that lack a real statusChangedAt, fall back to the
+// closest timestamp we have. Non-Active rows almost certainly transitioned at
+// their last mutation, so updatedAt is the best proxy; Active rows never
+// transitioned, so createdAt is the truthful answer.
+const resolveStatusChangedAt = (goal: Goal): Date | undefined => {
+  if (goal.statusChangedAt) return goal.statusChangedAt;
+  if (goal.status !== GoalStatus.Active) return goal.updatedAt ?? goal.createdAt;
+  return goal.createdAt;
+};
+
 const writeGoals = async (
   goals: Goal[],
   latestVersion: Map<string, GoalVersion>,
@@ -224,6 +234,7 @@ const writeGoals = async (
       savedPercent: percentValue,
       remainingAmount: remaining.value,
       status: goal.status,
+      statusChangedAt: resolveStatusChangedAt(goal),
       currency: version.currency,
       createdAt: goal.createdAt,
       updatedAt: goal.updatedAt,
