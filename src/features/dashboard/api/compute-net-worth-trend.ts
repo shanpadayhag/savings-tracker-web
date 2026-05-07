@@ -119,10 +119,22 @@ const computeNetWorthTrend = async (
   const currentNetWorth = sumCurrentNetWorth(wallets, goals, currency);
   const deltasByMonth = aggregateMonthlyDeltas(transactions, currency);
 
+  // The eagerly-maintained wallet/goal balances already reflect every
+  // transaction in the ledger — including any post-dated ones whose month
+  // sits in the future. The cursor only walks backward from the current
+  // month, so future-month deltas would never be reversed and would leak
+  // into every historical anchor. Pre-roll them off the live anchor here.
+  const currentMonthKey = monthKeyOf(new Date(now.getFullYear(), now.getMonth(), 1));
+  let runningNetWorth = currentNetWorth;
+  for (const [key, delta] of deltasByMonth) {
+    if (key > currentMonthKey) {
+      runningNetWorth = currencyUtil.parse(runningNetWorth, currency).subtract(delta).value;
+    }
+  }
+
   // Walk monthly anchors backward from "now". The current month's anchor is
   // `now` itself (live value); older anchors are the last day of each month.
   const points: NetWorthPoint[] = [];
-  let runningNetWorth = currentNetWorth;
   const cursor = new Date(now.getFullYear(), now.getMonth(), 1);
 
   for (let i = 0; i < cap; i += 1) {

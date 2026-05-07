@@ -9,6 +9,7 @@ import TransactionType from '@/features/transactions/enums/transaction-type';
 import appDBUtil from '@/utils/app-db-util';
 import currencyUtil from '@/utils/currency-util';
 import documentDBUtil from '@/utils/document-db-util';
+import isActiveRow from '@/utils/is-active-row';
 
 type SpendFundsFromGoalParams = {
   goalID?: Goal['id'];
@@ -38,17 +39,19 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
   const pickedCategory = params.categoryID
     ? await appDBUtil.categories.get(params.categoryID)
     : null;
-  const category = pickedCategory && pickedCategory.deletedAt === 'null'
+  const category = pickedCategory && isActiveRow(pickedCategory)
     ? pickedCategory
     : fallbackCategory;
 
+  // Default once at the top so every related row shares the same instant.
+  const transactionTimestamp = params.createdAt ?? new Date();
   const transaction = {
     id: crypto.randomUUID(),
     type: TransactionType.Spend,
     notes: params.notes?.trim() || null,
     categoryID: category.id,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
   const transactionEntry1 = {
     id: crypto.randomUUID(),
@@ -58,8 +61,8 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
     direction: TransactionDirection.From,
     amount: paramsAmount.value,
     currency: existingGoal.currency,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -69,8 +72,8 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
     direction: TransactionDirection.To,
     amount: paramsAmount.value,
     currency: existingGoal.currency,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
 
   await appDBUtil.transactions.add(transaction);
@@ -99,17 +102,21 @@ const spendFundsFromGoal = async (params: SpendFundsFromGoalParams) => {
     categoryID: category.id,
     categoryName: category.name,
     categoryColor: category.color,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
-    reversedCreatedAt: params?.createdAt
-      ? params.createdAt.getTime() * -1
-      : undefined
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
+    reversedCreatedAt: transactionTimestamp.getTime() * -1,
   });
 
+  // Guard divide-by-zero: imported / legacy goals can have a 0 target. Mirror
+  // the reconciler's behavior (0% rather than NaN/Infinity).
+  const targetValue = existingGoal.targetAmount;
+  const savedPercent = targetValue === 0
+    ? 0
+    : newSavedAmount.multiply(100).divide(targetValue).value;
   await documentDBUtil.goal_list.update(existingGoal.id!, {
     savedAmount: newSavedAmount.value,
-    savedPercent: newSavedAmount.multiply(100).divide(existingGoal.targetAmount).value,
-    remainingAmount: newSavedAmount.subtract(existingGoal.targetAmount).multiply(-1).value,
+    savedPercent,
+    remainingAmount: newSavedAmount.subtract(targetValue).multiply(-1).value,
   });
 };
 

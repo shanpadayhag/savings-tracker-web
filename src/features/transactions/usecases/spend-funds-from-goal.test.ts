@@ -157,6 +157,20 @@ describe('spendFundsFromGoal', () => {
     expect(transactions[0].categoryID).toBe(seededCategory?.id);
   });
 
+  it('emits 0% savedPercent for a zero-target goal instead of NaN/Infinity', async () => {
+    // Regression: spending from a zero-target goal previously divided
+    // savedAmount by 0, writing Infinity (or NaN) into savedPercent. The
+    // reconciler's guard returned 0 in the same situation; this writer now
+    // matches.
+    await seedGoal({ id: 'goal', targetAmount: 0, savedAmount: 100 });
+
+    await spendFundsFromGoal({ goalID: 'goal', amount: '40', notes: '' });
+
+    const goal = await documentDBFake.goal_list.get('goal');
+    expect(goal?.savedPercent).toBe(0);
+    expect(Number.isFinite(goal?.savedPercent ?? NaN)).toBe(true);
+  });
+
   it('rejects when the goal does not exist', async () => {
     await expect(spendFundsFromGoal({
       goalID: 'missing',

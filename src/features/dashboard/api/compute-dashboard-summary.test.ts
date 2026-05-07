@@ -162,6 +162,80 @@ describe('computeDashboardSummary', () => {
     expect(summary.monthlySpendChangePercent).toBe(-20);
   });
 
+  it('counts wallet-sourced spends in monthlySpend (not just goal-sourced)', async () => {
+    // Regression: previously the dashboard only summed Spend rows where the
+    // From entry matched any source — but the spending-by-category and
+    // reports rules need wallet-sourced spends counted too. After unifying,
+    // the dashboard's "Monthly Spend" now agrees with reports' Total Expense.
+    await seedWallet('checking', Currency.USD, 1000);
+
+    await seedTransaction('wallet-spend', TransactionType.Spend, new Date(2026, 4, 6), [
+      { type: TransactionSourceType.Wallet, sourceID: 'checking', currency: Currency.USD, direction: TransactionDirection.From, amount: 65 },
+      { type: TransactionSourceType.External, sourceID: null, currency: Currency.USD, direction: TransactionDirection.To, amount: 65 },
+    ]);
+
+    const summary = await computeDashboardSummary(Currency.USD, { now: FIXED_NOW });
+
+    expect(summary.monthlySpend).toBe(65);
+  });
+
+  it('counts cross-currency convert source amount + fee as monthlySpend on the source currency', async () => {
+    // Symmetric with the income-on-destination rule: USD loses 100 to PESO's
+    // books — outflow from USD's ledger — and the $2 fee is also expense.
+    // Total USD monthlySpend = $102. (Dashboard mirrors reports' Total
+    // Expense exactly.)
+    await seedWallet('usd', Currency.USD, 500);
+    await seedWallet('peso', Currency.Peso, 0);
+
+    await seedTransaction('convert', TransactionType.Convert, new Date(2026, 4, 8), [
+      { type: TransactionSourceType.Wallet, sourceID: 'usd', currency: Currency.USD, direction: TransactionDirection.From, amount: 100 },
+      { type: TransactionSourceType.Wallet, sourceID: 'peso', currency: Currency.Peso, direction: TransactionDirection.To, amount: 5500 },
+      { type: TransactionSourceType.Internal, sourceID: null, currency: Currency.USD, direction: TransactionDirection.To, amount: 2 },
+    ]);
+
+    const usdSummary = await computeDashboardSummary(Currency.USD, { now: FIXED_NOW });
+    const pesoSummary = await computeDashboardSummary(Currency.Peso, { now: FIXED_NOW });
+
+    expect(usdSummary.monthlySpend).toBe(102);
+    expect(pesoSummary.monthlySpend).toBe(0);
+  });
+
+  it('includes convert/transfer fees in monthlySpend (parity with reports)', async () => {
+    // Regression: dashboard previously skipped non-Spend transactions entirely
+    // when summing Monthly Spend, so a $5 transfer fee never showed up as
+    // expense even though the reports' Total Expense bar counted it.
+    await seedWallet('a', Currency.USD, 500);
+    await seedWallet('b', Currency.USD, 500);
+
+    await seedTransaction('transfer-with-fee', TransactionType.Transfer, new Date(2026, 4, 7), [
+      { type: TransactionSourceType.Wallet, sourceID: 'a', currency: Currency.USD, direction: TransactionDirection.From, amount: 200 },
+      { type: TransactionSourceType.Wallet, sourceID: 'b', currency: Currency.USD, direction: TransactionDirection.To, amount: 200 },
+      { type: TransactionSourceType.Internal, sourceID: null, currency: Currency.USD, direction: TransactionDirection.To, amount: 5 },
+    ]);
+
+    const summary = await computeDashboardSummary(Currency.USD, { now: FIXED_NOW });
+
+    expect(summary.monthlySpend).toBe(5);
+  });
+
+  it('includes back-dated same-day spends after `now` in monthlySpend', async () => {
+    // Regression: when the upper bound was `now` (e.g. noon today), a spend
+    // dated to 6pm today was excluded from monthlySpend even though it's
+    // clearly part of this month. The fix uses startOfNextMonth as the
+    // upper bound.
+    await seedGoal('emergency', Currency.USD, 1000);
+
+    await seedTransaction('spend-this-evening', TransactionType.Spend,
+      new Date(2026, 4, 15, 18, 0, 0), [
+      { type: TransactionSourceType.Goal, sourceID: 'emergency', currency: Currency.USD, direction: TransactionDirection.From, amount: 30 },
+      { type: TransactionSourceType.External, sourceID: null, currency: Currency.USD, direction: TransactionDirection.To, amount: 30 },
+    ]);
+
+    const summary = await computeDashboardSummary(Currency.USD, { now: FIXED_NOW });
+
+    expect(summary.monthlySpend).toBe(30);
+  });
+
   it('reconstructs start-of-month wallet balance by reversing this month deltas', async () => {
     // Wallet currently 1500. This month: +500 allocation, -100 spend.
     // So start-of-month balance should be 1500 - 400 = 1100.

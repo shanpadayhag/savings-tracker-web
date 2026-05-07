@@ -4,6 +4,7 @@
 // underlying ledger — and after a JSON import to seed the document DB from
 // freshly imported source rows.
 
+import isActiveRow from '@/utils/is-active-row';
 import ensureDefaultCategory from '@/features/categories/api/ensure-default-category';
 import Category from '@/features/categories/entities/category';
 import Goal from '@/features/goals/entities/goal';
@@ -21,9 +22,6 @@ import documentDBUtil from '@/utils/document-db-util';
 import currency from 'currency.js';
 
 const COMPLETE_GOAL_NOTE = 'Goal completed';
-
-const isActive = (row: { deletedAt?: unknown; }): boolean =>
-  row.deletedAt === 'null' || row.deletedAt === null || row.deletedAt === undefined;
 
 const latestVersionByGoalID = (versions: GoalVersion[]): Map<string, GoalVersion> => {
   const latest = new Map<string, GoalVersion>();
@@ -172,9 +170,7 @@ const replayTransactions = (
       categoryColor: category?.color,
       createdAt: transaction.createdAt,
       updatedAt: transaction.updatedAt,
-      reversedCreatedAt: transaction.createdAt
-        ? transaction.createdAt.getTime() * -1
-        : undefined,
+      reversedCreatedAt: transaction.createdAt.getTime() * -1,
     });
   }
 
@@ -236,6 +232,7 @@ const writeGoals = async (
       status: goal.status,
       statusChangedAt: resolveStatusChangedAt(goal),
       currency: version.currency,
+      categoryID: version.categoryID,
       createdAt: goal.createdAt,
       updatedAt: goal.updatedAt,
     });
@@ -343,12 +340,12 @@ const reconcileLedger = async (): Promise<void> => {
     appDBUtil.categories.toArray(),
   ]);
 
-  const wallets = rawWallets.filter(isActive);
-  const goals = rawGoals.filter(isActive);
-  const goalVersions = rawGoalVersions.filter(isActive);
-  const transactions = rawTransactions.filter(isActive);
-  const transactionEntries = rawTransactionEntries.filter(isActive);
-  const categories = rawCategories.filter(isActive);
+  const wallets = rawWallets.filter(isActiveRow);
+  const goals = rawGoals.filter(isActiveRow);
+  const goalVersions = rawGoalVersions.filter(isActiveRow);
+  const transactions = rawTransactions.filter(isActiveRow);
+  const transactionEntries = rawTransactionEntries.filter(isActiveRow);
+  const categories = rawCategories.filter(isActiveRow);
 
   const lookups: Lookups = {
     walletByID: new Map(wallets.map(wallet => [wallet.id, wallet])),
@@ -369,7 +366,7 @@ const reconcileLedger = async (): Promise<void> => {
 
   let final = firstPass;
   if (healed > 0) {
-    const refreshedTransactions = (await appDBUtil.transactions.toArray()).filter(isActive);
+    const refreshedTransactions = (await appDBUtil.transactions.toArray()).filter(isActiveRow);
     final = replayTransactions(refreshedTransactions, entriesByTransactionID, lookups);
   }
 

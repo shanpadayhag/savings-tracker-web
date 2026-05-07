@@ -53,6 +53,8 @@ const transferFundsBetweenWallets = async (params: TransferFundsBetweenWalletsPa
     "Short on Funds... 😬",
     "Your source wallet doesn't have enough to cover the transfer amount and fee.");
 
+  // Default once at the top so every related row shares the same instant.
+  const transactionTimestamp = params.createdAt ?? new Date();
   const transactionID = crypto.randomUUID();
   const transactionEntry1 = {
     id: crypto.randomUUID(),
@@ -62,8 +64,8 @@ const transferFundsBetweenWallets = async (params: TransferFundsBetweenWalletsPa
     direction: TransactionDirection.From,
     amount: amount.value,
     currency: sourceWallet.currency,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -73,8 +75,8 @@ const transferFundsBetweenWallets = async (params: TransferFundsBetweenWalletsPa
     direction: TransactionDirection.To,
     amount: amount.value,
     currency: destinationWallet.currency,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
   const feeEntry = fee.value > 0
     ? {
@@ -85,8 +87,8 @@ const transferFundsBetweenWallets = async (params: TransferFundsBetweenWalletsPa
       direction: TransactionDirection.To,
       amount: fee.value,
       currency: sourceWallet.currency,
-      createdAt: params.createdAt,
-      updatedAt: params.createdAt,
+      createdAt: transactionTimestamp,
+      updatedAt: transactionTimestamp,
     }
     : null;
 
@@ -94,8 +96,8 @@ const transferFundsBetweenWallets = async (params: TransferFundsBetweenWalletsPa
     id: transactionID,
     type: TransactionType.Transfer,
     notes: params.notes?.trim() || null,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   });
   await appDBUtil.transaction_entries.add(transactionEntry1);
   await appDBUtil.transaction_entries.add(transactionEntry2);
@@ -126,11 +128,9 @@ const transferFundsBetweenWallets = async (params: TransferFundsBetweenWalletsPa
       direction: feeEntry.direction,
       amount: feeEntry.amount,
     }] : [])],
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
-    reversedCreatedAt: params?.createdAt
-      ? params.createdAt.getTime() * -1
-      : undefined
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
+    reversedCreatedAt: transactionTimestamp.getTime() * -1,
   });
 
   await documentDBUtil.wallet_list.update(sourceWallet.id, {

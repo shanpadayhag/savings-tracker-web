@@ -27,11 +27,17 @@ type SeedSpendOptions = {
   currency: Currency;
   amount: number;
   categoryName?: string;
+  /** Source side of the Spend. Defaults to Goal — set 'wallet' for the
+   * wallet-direct spend path (regression coverage). */
+  source?: 'goal' | 'wallet';
 };
 
 const seedSpend = async (options: SeedSpendOptions) => {
+  const sourceType = options.source === 'wallet'
+    ? TransactionSourceType.Wallet
+    : TransactionSourceType.Goal;
   const entries: EntryInput[] = [
-    { type: TransactionSourceType.Goal, sourceID: 'g', currency: options.currency, direction: TransactionDirection.From, amount: options.amount },
+    { type: sourceType, sourceID: 's', currency: options.currency, direction: TransactionDirection.From, amount: options.amount },
     { type: TransactionSourceType.External, currency: options.currency, direction: TransactionDirection.To, amount: options.amount },
   ];
   await documentDBFake.transaction_list.add({
@@ -116,6 +122,28 @@ describe('computeReportsSpendingByCategory', () => {
 
     expect(result).toEqual([
       expect.objectContaining({ name: 'Groceries', amount: 100, transactionCount: 1 }),
+    ]);
+  });
+
+  it('groups wallet-sourced spends by category alongside goal-sourced spends', async () => {
+    // Regression: wallet-direct Spend rows were filtered out, leaving every
+    // category bucket missing the wallet-sourced share of its spending.
+    await seedSpend({ id: 'goal-spend', createdAt: new Date(2026, 4, 5), currency: Currency.USD, amount: 100, categoryName: 'Groceries' });
+    await seedSpend({ id: 'wallet-spend', createdAt: new Date(2026, 4, 6), currency: Currency.USD, amount: 75, categoryName: 'Groceries', source: 'wallet' });
+
+    const result = await computeReportsSpendingByCategory(Currency.USD, '1m', { now: FIXED_NOW });
+    const groceries = result.find(category => category.name === 'Groceries');
+
+    expect(groceries).toMatchObject({ amount: 175, transactionCount: 2 });
+  });
+
+  it('counts wallet-only category buckets', async () => {
+    await seedSpend({ id: 'wallet-only', createdAt: new Date(2026, 4, 5), currency: Currency.USD, amount: 40, categoryName: 'Coffee', source: 'wallet' });
+
+    const result = await computeReportsSpendingByCategory(Currency.USD, '1m', { now: FIXED_NOW });
+
+    expect(result).toEqual([
+      expect.objectContaining({ name: 'Coffee', amount: 40, transactionCount: 1 }),
     ]);
   });
 

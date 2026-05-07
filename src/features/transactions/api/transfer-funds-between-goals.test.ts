@@ -165,4 +165,26 @@ describe('transferFundsBetweenGoals', () => {
       notes: '',
     })).rejects.toBeInstanceOf(AppError);
   });
+
+  it('emits 0% savedPercent on either side when its target is zero', async () => {
+    // Regression: dividing by a zero targetAmount on either the source or
+    // destination goal previously produced NaN/Infinity. Reconciler had a
+    // guard; this writer now matches it.
+    await seedGoal({ id: 'source', targetAmount: 0, savedAmount: 200 });
+    await seedGoal({ id: 'destination', targetAmount: 0, savedAmount: 0 });
+
+    await transferFundsBetweenGoals({
+      sourceID: 'source',
+      destinationID: 'destination',
+      amount: '100',
+      notes: '',
+    });
+
+    const source = await documentDBFake.goal_list.get('source');
+    const destination = await documentDBFake.goal_list.get('destination');
+    expect(source?.savedPercent).toBe(0);
+    expect(destination?.savedPercent).toBe(0);
+    expect(Number.isFinite(source?.savedPercent ?? NaN)).toBe(true);
+    expect(Number.isFinite(destination?.savedPercent ?? NaN)).toBe(true);
+  });
 });

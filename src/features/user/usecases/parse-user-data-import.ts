@@ -10,21 +10,51 @@ const DATE_FIELDS = ['createdAt', 'updatedAt', 'deletedAt'] as const;
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const hydrateDates = <T extends Record<string, unknown>>(rows: unknown): T[] => {
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const hydrateRow = (row: Record<string, unknown>): Record<string, unknown> => {
+  const next: Record<string, unknown> = { ...row };
+  for (const field of DATE_FIELDS) {
+    const value = next[field];
+    if (typeof value === 'string' && value !== 'null') {
+      next[field] = new Date(value);
+    }
+  }
+  return next;
+};
+
+const hydrateRows = <T extends Record<string, unknown>>(
+  rows: unknown,
+  rowIsValid: (row: Record<string, unknown>) => boolean,
+): T[] => {
   if (!Array.isArray(rows)) return [];
   return rows
     .filter(isPlainObject)
-    .map(row => {
-      const next: Record<string, unknown> = { ...row };
-      for (const field of DATE_FIELDS) {
-        const value = next[field];
-        if (typeof value === 'string' && value !== 'null') {
-          next[field] = new Date(value);
-        }
-      }
-      return next as T;
-    });
+    .filter(rowIsValid)
+    .map(hydrateRow) as T[];
 };
+
+// Per-table row validators. Anything that fails — missing ID, NaN amount,
+// non-string fields where strings are required — is dropped from the import
+// rather than allowed to corrupt the appDB and propagate into computed
+// balances. Enum values aren't checked here; downstream computes filter on
+// matchers and a stray value just becomes invisible.
+const isValidRowWithID = (row: Record<string, unknown>): boolean =>
+  isNonEmptyString(row.id);
+
+const isValidGoalVersionRow = (row: Record<string, unknown>): boolean =>
+  isNonEmptyString(row.id)
+  && isNonEmptyString(row.goalID)
+  && isFiniteNumber(row.targetAmount);
+
+const isValidTransactionEntryRow = (row: Record<string, unknown>): boolean =>
+  isNonEmptyString(row.id)
+  && isNonEmptyString(row.transactionID)
+  && isFiniteNumber(row.amount);
 
 const parseUserDataImport = (raw: unknown): UserDataExport => {
   if (!isPlainObject(raw)) throw new AppError(
@@ -46,15 +76,15 @@ const parseUserDataImport = (raw: unknown): UserDataExport => {
     schemaVersion,
     exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : '',
     user: raw.user as UserDataExport['user'],
-    wallets: hydrateDates(raw.wallets),
-    goals: hydrateDates(raw.goals),
-    goalVersions: hydrateDates(raw.goalVersions),
-    transactions: hydrateDates(raw.transactions),
-    transactionEntries: hydrateDates(raw.transactionEntries),
+    wallets: hydrateRows(raw.wallets, isValidRowWithID),
+    goals: hydrateRows(raw.goals, isValidRowWithID),
+    goalVersions: hydrateRows(raw.goalVersions, isValidGoalVersionRow),
+    transactions: hydrateRows(raw.transactions, isValidRowWithID),
+    transactionEntries: hydrateRows(raw.transactionEntries, isValidTransactionEntryRow),
     // Older exports predating the categories feature won't have this key —
     // treat as empty so the import succeeds and the seeder rebuilds "Others"
     // on next read.
-    categories: hydrateDates(raw.categories),
+    categories: hydrateRows(raw.categories, isValidRowWithID),
   };
 };
 

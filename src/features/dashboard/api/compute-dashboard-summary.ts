@@ -22,6 +22,9 @@ const startOfMonthAt = (date: Date): Date =>
 const startOfPreviousMonthAt = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth() - 1, 1);
 
+const startOfNextMonthAt = (date: Date): Date =>
+  new Date(date.getFullYear(), date.getMonth() + 1, 1);
+
 const computePercentChange = (current: number, previous: number): number => {
   if (previous === 0) return 0;
   return ((current - previous) / Math.abs(previous)) * 100;
@@ -93,6 +96,53 @@ const accumulateTransactionDeltas = (
   }
 };
 
+// Per-transaction outflow in the active currency. Mirrors the reports rule
+// (compute-reports-summary.ts) so the dashboard's Monthly Spend KPI agrees
+// with the reports' Total Expense for the same window:
+//   - Spend's From entry where source is Goal or Wallet, in the active
+//     currency.
+//   - Internal/To fees on any transaction (typically Convert/Transfer)
+//     attributed to a source Wallet/From in the active currency.
+//   - The source side of cross-currency Convert transactions where the
+//     source wallet is in the active currency (outflow leaving this ledger
+//     for another currency's books).
+const expenseFor = (transaction: TransactionListRow, currency: Currency): number => {
+  let total = 0;
+
+  if (transaction.type === TransactionType.Spend) {
+    const fromEntry = transaction.entries.find(entry =>
+      (entry.type === TransactionSourceType.Goal
+        || entry.type === TransactionSourceType.Wallet)
+      && entry.direction === TransactionDirection.From
+      && entry.currency === currency);
+    if (fromEntry) total += fromEntry.amount;
+  }
+
+  const feeEntry = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Internal
+    && entry.direction === TransactionDirection.To
+    && entry.currency === currency);
+  if (feeEntry) {
+    const sourceWallet = transaction.entries.find(entry =>
+      entry.type === TransactionSourceType.Wallet
+      && entry.direction === TransactionDirection.From);
+    if (sourceWallet?.currency === currency) total += feeEntry.amount;
+  }
+
+  if (transaction.type === TransactionType.Convert) {
+    const fromEntry = transaction.entries.find(entry =>
+      entry.type === TransactionSourceType.Wallet
+      && entry.direction === TransactionDirection.From
+      && entry.currency === currency);
+    const destWallet = transaction.entries.find(entry =>
+      entry.type === TransactionSourceType.Wallet
+      && entry.direction === TransactionDirection.To);
+    if (fromEntry && destWallet?.currency !== currency) total += fromEntry.amount;
+  }
+
+  return total;
+};
+
 const sumSpendInRange = (
   transactions: TransactionListRow[],
   currency: Currency,
@@ -101,14 +151,11 @@ const sumSpendInRange = (
 ): number => {
   let total = 0;
   for (const transaction of transactions) {
-    if (transaction.type !== TransactionType.Spend) continue;
     if (!transaction.createdAt) continue;
     if (transaction.createdAt < startInclusive) continue;
     if (transaction.createdAt >= endExclusive) continue;
-    const fromEntry = transaction.entries.find(entry =>
-      entry.direction === TransactionDirection.From
-      && entry.currency === currency);
-    if (fromEntry) total = currencyUtil.parse(total, currency).add(fromEntry.amount).value;
+    const amount = expenseFor(transaction, currency);
+    if (amount > 0) total = currencyUtil.parse(total, currency).add(amount).value;
   }
   return total;
 };
@@ -164,7 +211,12 @@ const computeDashboardSummary = async (
   const netWorthStartOfMonth = currencyUtil.parse(walletsBalanceStartOfMonth, currency)
     .add(goalsBalanceStartOfMonth).value;
 
-  const monthlySpend = sumSpendInRange(transactions, currency, startOfThisMonth, now);
+  // Both windows are full calendar months so the change% compares like-for-like.
+  // Using `now` as the upper bound previously biased the metric (partial
+  // current month vs full prior month) and excluded same-day-but-later
+  // back-dated rows.
+  const startOfNextMonth = startOfNextMonthAt(now);
+  const monthlySpend = sumSpendInRange(transactions, currency, startOfThisMonth, startOfNextMonth);
   const previousMonthSpend = sumSpendInRange(transactions, currency, startOfLastMonth, startOfThisMonth);
 
   return {

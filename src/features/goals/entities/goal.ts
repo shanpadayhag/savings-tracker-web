@@ -7,8 +7,8 @@ type Goal = {
    * Completed → Archived, etc.). Set to createdAt on initial creation.
    * Pre-migration rows may be undefined. */
   statusChangedAt?: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date | "null";
 };
 

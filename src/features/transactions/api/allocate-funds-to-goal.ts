@@ -53,6 +53,9 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     "Need a Positive Amount! 🪙",
     "You can't allocate zero or negative funds to a goal. Please enter a value greater than zero.");
 
+  // Default once at the top so every entry, transaction, and reversedCreatedAt
+  // share the same instant — and the type system can rely on Date.
+  const transactionTimestamp = params.createdAt ?? new Date();
   const transactionID = crypto.randomUUID();
   const transactionEntry1 = {
     id: crypto.randomUUID(),
@@ -62,8 +65,8 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     direction: TransactionDirection.From,
     amount: transactionAmount.value,
     currency: sourceWallet.currency,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -73,16 +76,16 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     direction: TransactionDirection.To,
     amount: transactionAmount.value,
     currency: sourceWallet.currency,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
 
   await appDBUtil.transactions.add({
     id: transactionID,
     type: TransactionType.Allocate,
     notes: params.notes,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   });
   await appDBUtil.transaction_entries.add(transactionEntry1);
   await appDBUtil.transaction_entries.add(transactionEntry2);
@@ -105,11 +108,9 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
       direction: transactionEntry2.direction,
       amount: transactionEntry2.amount
     }],
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
-    reversedCreatedAt: params?.createdAt
-      ? params.createdAt.getTime() * -1
-      : undefined
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
+    reversedCreatedAt: transactionTimestamp.getTime() * -1,
   });
 
   const sourceWalletCurrentAmount = currencyUtil.parse(
@@ -124,11 +125,14 @@ const allocateFundToGoal = async (params: AllocateFundToGoalParams) => {
     goalListItem.savedAmount, goalListItem.currency)
     .add(transactionEntry2.amount);
   const destinationGoalRemainingAmount = destinationGoalTargetAmount.subtract(destinationGoalSavedAmount);
-  const destinationGoalSavedPercent = destinationGoalSavedAmount.multiply(100)
-    .divide(destinationGoalTargetAmount);
+  // Imported / legacy goals can have a 0 target. Mirror the reconciler and
+  // emit 0% rather than NaN/Infinity.
+  const destinationGoalSavedPercent = destinationGoalTargetAmount.value === 0
+    ? 0
+    : destinationGoalSavedAmount.multiply(100).divide(destinationGoalTargetAmount).value;
   goalListItem.savedAmount = destinationGoalSavedAmount.value;
   goalListItem.remainingAmount = destinationGoalRemainingAmount.value;
-  goalListItem.savedPercent = destinationGoalSavedPercent.value;
+  goalListItem.savedPercent = destinationGoalSavedPercent;
   await documentDBUtil.goal_list.put(goalListItem);
 };
 

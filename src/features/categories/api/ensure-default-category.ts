@@ -13,6 +13,7 @@
 import Category from '@/features/categories/entities/category';
 import { systemCategoryColor } from '@/features/categories/data/category-color-palette';
 import appDBUtil from '@/utils/app-db-util';
+import isActiveRow from '@/utils/is-active-row';
 
 export const SYSTEM_CATEGORY_ID = 'system-others';
 export const SYSTEM_CATEGORY_NAME = 'Others';
@@ -31,7 +32,7 @@ const buildSeed = (): Category => {
 };
 
 const reviveIfDeleted = async (category: Category): Promise<Category> => {
-  if (category.deletedAt === 'null') return category;
+  if (isActiveRow(category)) return category;
   await appDBUtil.categories.update(category.id, { deletedAt: 'null' });
   return { ...category, deletedAt: 'null' };
 };
@@ -41,7 +42,7 @@ const findLegacySystemRows = async (): Promise<Category[]> => {
     .where('name').equalsIgnoreCase(SYSTEM_CATEGORY_NAME)
     .toArray();
   return matches.filter(category =>
-    category.isSystem && category.deletedAt === 'null');
+    category.isSystem && isActiveRow(category));
 };
 
 const sortByCreatedAtAscending = (rows: Category[]): Category[] =>

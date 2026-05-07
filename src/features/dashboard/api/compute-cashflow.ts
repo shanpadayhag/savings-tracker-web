@@ -45,13 +45,53 @@ const incomeFor = (transaction: TransactionRow, currency: Currency): number => {
   return toEntry?.amount ?? 0;
 };
 
-const spendExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
-  if (transaction.type !== TransactionType.Spend) return 0;
-  const goalEntry = transaction.entries.find(entry =>
-    entry.type === TransactionSourceType.Goal
+// Currency conversions bring fresh money into the destination currency's
+// ledger from a different ledger. Each currency is tracked as its own books
+// — a Convert is income for the receiving currency, even though no value
+// was created at the user's overall net-worth level.
+const convertIncomeFor = (transaction: TransactionRow, currency: Currency): number => {
+  if (transaction.type !== TransactionType.Convert) return 0;
+  const toEntry = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Wallet
+    && entry.direction === TransactionDirection.To
+    && entry.currency === currency);
+  if (!toEntry) return 0;
+  const sourceWallet = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Wallet
+    && entry.direction === TransactionDirection.From);
+  if (sourceWallet?.currency === currency) return 0;
+  return toEntry.amount;
+};
+
+// Symmetric source-side rule: the converted-out amount is real outflow from
+// the source currency's ledger. The fee is handled separately by
+// feeExpenseFor (this returns only the wallet/from amount).
+const convertExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
+  if (transaction.type !== TransactionType.Convert) return 0;
+  const fromEntry = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Wallet
     && entry.direction === TransactionDirection.From
     && entry.currency === currency);
-  return goalEntry?.amount ?? 0;
+  if (!fromEntry) return 0;
+  const destWallet = transaction.entries.find(entry =>
+    entry.type === TransactionSourceType.Wallet
+    && entry.direction === TransactionDirection.To);
+  if (destWallet?.currency === currency) return 0;
+  return fromEntry.amount;
+};
+
+// A Spend's outflow can come from either a Goal (drawing earmarked savings)
+// or a Wallet (spending directly). Both represent the user's own money
+// leaving — restricting to Goal-only would erase every wallet-sourced spend
+// from the cashflow chart's expense bar.
+const spendExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
+  if (transaction.type !== TransactionType.Spend) return 0;
+  const fromEntry = transaction.entries.find(entry =>
+    (entry.type === TransactionSourceType.Goal
+      || entry.type === TransactionSourceType.Wallet)
+    && entry.direction === TransactionDirection.From
+    && entry.currency === currency);
+  return fromEntry?.amount ?? 0;
 };
 
 const feeExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
@@ -128,9 +168,11 @@ const computeCashflow = async (
     if (key < earliestKey) continue;
     if (!buckets.has(key)) continue;
 
-    const income = incomeFor(transaction, currency);
+    const income = incomeFor(transaction, currency)
+      + convertIncomeFor(transaction, currency);
     const expense = spendExpenseFor(transaction, currency)
-      + feeExpenseFor(transaction, currency);
+      + feeExpenseFor(transaction, currency)
+      + convertExpenseFor(transaction, currency);
     accumulateInto(buckets, key, income, expense, currency);
   }
 

@@ -13,7 +13,7 @@ import currency from 'currency.js';
 // In this object instead of amount, it should be
 // amountValue and amountFormat
 type TransactionListItem = {
-  id?: Transaction['id'];
+  id: Transaction['id'];
   type: TransactionType;
   from: string | null;
   to: string | null;

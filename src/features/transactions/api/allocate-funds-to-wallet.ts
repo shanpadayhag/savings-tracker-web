@@ -23,6 +23,8 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     "Whoops, Check That Amount! 🤔",
     "To allocate funds, the amount needs to be a positive number. Please enter a value greater than zero.");
 
+  // Default once at the top so every related row shares the same instant.
+  const transactionTimestamp = params.createdAt ?? new Date();
   const transactionID = crypto.randomUUID();
   const transactionEntry1 = {
     id: crypto.randomUUID(),
@@ -32,8 +34,8 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     direction: TransactionDirection.From,
     amount: allocatedAmount.value,
     currency: wallet.currency,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
   const transactionEntry2 = {
     id: crypto.randomUUID(),
@@ -43,16 +45,16 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
     direction: TransactionDirection.To,
     amount: allocatedAmount.value,
     currency: wallet.currency,
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   };
 
   await appDBUtil.transactions.add({
     id: transactionID,
     type: TransactionType.Allocate,
     notes: null,
-    createdAt: params?.createdAt,
-    updatedAt: params.createdAt,
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
   });
   await appDBUtil.transaction_entries.add(transactionEntry1);
   await appDBUtil.transaction_entries.add(transactionEntry2);
@@ -75,14 +77,12 @@ const allocateFundsToWallet = async (params: AllocateFundsToWalletParams) => {
       direction: transactionEntry2.direction,
       amount: transactionEntry2.amount,
     }],
-    createdAt: params.createdAt,
-    updatedAt: params.createdAt,
-    reversedCreatedAt: params?.createdAt
-      ? params.createdAt.getTime() * -1
-      : undefined
+    createdAt: transactionTimestamp,
+    updatedAt: transactionTimestamp,
+    reversedCreatedAt: transactionTimestamp.getTime() * -1,
   });
 
-  documentDBUtil.wallet_list.update(params.walletID, {
+  await documentDBUtil.wallet_list.update(params.walletID, {
     currentAmount: currencyUtil.parse(wallet.currentAmount, wallet.currency)
       .add(transactionEntry2.amount).value
   });

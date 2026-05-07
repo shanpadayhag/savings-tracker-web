@@ -3,10 +3,11 @@
 // "now"), in the active currency. Days with no spend are emitted with
 // `amount: 0` so the heatmap can render the full grid without hole-punching.
 //
-// Spend semantics match the rest of the reports/dashboard: a Spend
-// transaction's goal-side From entry in the active currency is the amount
-// debited that day. Fees and Allocate/Transfer entries do not count here —
-// the heatmap is about discretionary spending, not internal moves.
+// Spend semantics match the rest of the reports/dashboard: the From entry on
+// a Spend transaction in the active currency is the amount debited that day,
+// whether the source is a Goal or a Wallet. Fees and Allocate/Transfer
+// entries do not count here — the heatmap is about discretionary spending,
+// not internal moves.
 
 import Currency from '@/enums/currency';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
@@ -41,13 +42,17 @@ const startOfDay = (date: Date): Date =>
 const dayKeyOf = (date: Date): string =>
   `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
+// Mirror the rest of the reports: a Spend's outflow side can be a Goal or a
+// Wallet. Filtering to Goal-only would erase every wallet-sourced spend from
+// the heatmap, even though those days had real spending activity.
 const spendAmountInCurrency = (transaction: TransactionRow, currency: Currency): number => {
   if (transaction.type !== TransactionType.Spend) return 0;
-  const goalEntry = transaction.entries.find(entry =>
-    entry.type === TransactionSourceType.Goal
+  const fromEntry = transaction.entries.find(entry =>
+    (entry.type === TransactionSourceType.Goal
+      || entry.type === TransactionSourceType.Wallet)
     && entry.direction === TransactionDirection.From
     && entry.currency === currency);
-  return goalEntry?.amount ?? 0;
+  return fromEntry?.amount ?? 0;
 };
 
 type ComputeOptions = {

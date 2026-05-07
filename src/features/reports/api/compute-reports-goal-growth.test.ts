@@ -165,4 +165,25 @@ describe('computeReportsGoalGrowth', () => {
     // No USD movement, so prior months equal current.
     expect(data.every(point => point[key] === 500)).toBe(true);
   });
+
+  it('reverses future-dated allocations off the live anchor (regression)', async () => {
+    // Regression: goal.savedAmount is updated eagerly when a future-dated
+    // transaction is logged, but the cursor only walks backward from the
+    // current month — future-month deltas were never reversed and leaked
+    // into every historical anchor. The fix pre-rolls future deltas off the
+    // running balance before the walkback starts.
+    await seedGoal('g1', 'Goal A', Currency.USD, 700);
+    // 200 worth of allocations dated to NEXT month, already baked into the
+    // 700 savedAmount above.
+    await seedAllocateToGoal('future-1', new Date(2026, 5, 10), 'g1', Currency.USD, 200);
+
+    const { data, series } = await computeReportsGoalGrowth(Currency.USD, '3m', { now: FIXED_NOW });
+
+    const key = series[0].key;
+    // The most-recent point ("now") should be the live present-day balance,
+    // i.e. 700 minus the 200 dated to the future = 500.
+    expect(data[data.length - 1][key]).toBe(500);
+    // Every prior point should also be 500 — there's been no past activity.
+    expect(data.every(point => point[key] === 500)).toBe(true);
+  });
 });

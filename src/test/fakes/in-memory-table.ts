@@ -1,5 +1,24 @@
 type WithId = { id?: string | null };
 
+// Mirrors the subset of Dexie's Collection API the production code reaches
+// for after a `reverse()` call — currently just `sortBy(field)`. Returning
+// the sorted results in reverse order matches Dexie's behavior so callers
+// see the same ordering they would in the real DB.
+class ReversedSortableCollection<T> {
+  constructor(private readonly source: T[]) {}
+
+  async sortBy(field: keyof T): Promise<T[]> {
+    const sorted = [...this.source].sort((a, b) => {
+      const left = a[field];
+      const right = b[field];
+      if (left instanceof Date && right instanceof Date) return left.getTime() - right.getTime();
+      if (typeof left === 'number' && typeof right === 'number') return left - right;
+      return String(left ?? '').localeCompare(String(right ?? ''));
+    });
+    return sorted.reverse();
+  }
+}
+
 class InMemoryTable<T extends WithId> {
   private records = new Map<string, T>();
 
@@ -33,6 +52,10 @@ class InMemoryTable<T extends WithId> {
 
   async toArray(): Promise<T[]> {
     return Array.from(this.records.values());
+  }
+
+  reverse(): ReversedSortableCollection<T> {
+    return new ReversedSortableCollection(Array.from(this.records.values()));
   }
 
   list(): T[] {

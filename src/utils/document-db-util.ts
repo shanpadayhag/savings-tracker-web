@@ -25,7 +25,7 @@ type WalletListItem = Omit<RawWalletListItem, 'currentAmount' | 'createdAt' | 'u
 // the transaction list item object. So that there's no need
 // for unnecessary formatting.
 type TransactionListItem = {
-  id?: Transaction['id'];
+  id: Transaction['id'];
   type: Transaction['type'];
   notes: Transaction['notes'];
   entries: {
@@ -43,9 +43,9 @@ type TransactionListItem = {
   categoryID?: Category['id'];
   categoryName?: Category['name'];
   categoryColor?: Category['color'];
-  createdAt?: Transaction['createdAt'];
-  updatedAt?: Transaction['updatedAt'];
-  reversedCreatedAt?: number;
+  createdAt: Transaction['createdAt'];
+  updatedAt: Transaction['updatedAt'];
+  reversedCreatedAt: number;
 };
 
 class DB extends Dexie {
