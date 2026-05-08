@@ -1,6 +1,7 @@
 import Currency from '@/enums/currency';
 import computeDashboardSummary, { DashboardSummary } from '@/features/dashboard/api/compute-dashboard-summary';
 import GoalStatus from '@/features/goals/enums/goal-status';
+import isCountedTransaction from '@/features/transactions/api/is-counted-transaction';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import TransactionType from '@/features/transactions/enums/transaction-type';
@@ -120,13 +121,14 @@ const computeDashboardInsights = async (
   const now = options.now ?? new Date();
   const startOfThisMonth = startOfMonthAt(now);
 
-  const [goals, transactions, summary] = await Promise.all([
+  const [goals, allTransactions, summary] = await Promise.all([
     documentDBUtil.goal_list.toArray(),
     documentDBUtil.transaction_list.toArray(),
     options.summary
       ? Promise.resolve(options.summary)
       : computeDashboardSummary(currency, { now }),
   ]);
+  const transactions = allTransactions.filter(isCountedTransaction);
 
   const insights = [
     buildSpendTrendInsight(summary),

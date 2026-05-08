@@ -17,6 +17,9 @@ export type RecentActivityRow = {
   amount: number;
   prefix: RecentActivityPrefix;
   currency: Currency;
+  cancelledAt?: Date;
+  reversedAt?: Date;
+  reversalOfID?: string;
   createdAt: Date;
 };
 
@@ -36,6 +39,9 @@ type Row = {
   type: TransactionType;
   notes: string | null;
   entries: Entry[];
+  cancelledAt?: Date;
+  reversedAt?: Date;
+  reversalOfID?: string;
   createdAt?: Date;
 };
 
@@ -67,6 +73,9 @@ const buildAllocateRow = (row: Row, currency: Currency): RecentActivityRow | nul
     amount: destination.amount,
     prefix: '+',
     currency,
+    cancelledAt: row.cancelledAt,
+    reversedAt: row.reversedAt,
+    reversalOfID: row.reversalOfID,
     createdAt: row.createdAt!,
   };
 };
@@ -92,6 +101,9 @@ const buildSpendRow = (row: Row, currency: Currency): RecentActivityRow | null =
     amount: fromEntry.amount,
     prefix: '-',
     currency,
+    cancelledAt: row.cancelledAt,
+    reversedAt: row.reversedAt,
+    reversalOfID: row.reversalOfID,
     createdAt: row.createdAt!,
   };
 };
@@ -116,6 +128,9 @@ const buildDeallocateRow = (row: Row, currency: Currency): RecentActivityRow | n
     amount: goalEntry.amount,
     prefix: '-',
     currency,
+    cancelledAt: row.cancelledAt,
+    reversedAt: row.reversedAt,
+    reversalOfID: row.reversalOfID,
     createdAt: row.createdAt!,
   };
 };
@@ -141,6 +156,9 @@ const buildTransferRow = (row: Row, currency: Currency): RecentActivityRow | nul
     // Internal move — no net change to the active currency. No sign.
     prefix: '',
     currency,
+    cancelledAt: row.cancelledAt,
+    reversedAt: row.reversedAt,
+    reversalOfID: row.reversalOfID,
     createdAt: row.createdAt!,
   };
 };
@@ -166,6 +184,9 @@ const buildConvertRow = (row: Row, currency: Currency): RecentActivityRow | null
     amount: activeWallet.amount,
     prefix: isInflow ? '+' : '-',
     currency,
+    cancelledAt: row.cancelledAt,
+    reversedAt: row.reversedAt,
+    reversalOfID: row.reversalOfID,
     createdAt: row.createdAt!,
   };
 };

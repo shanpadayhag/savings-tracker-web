@@ -1,4 +1,5 @@
 import Currency from '@/enums/currency';
+import isCountedTransaction from '@/features/transactions/api/is-counted-transaction';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import TransactionType from '@/features/transactions/enums/transaction-type';
@@ -190,11 +191,12 @@ const computeDashboardSummary = async (
   const startOfThisMonth = startOfMonthAt(now);
   const startOfLastMonth = startOfPreviousMonthAt(now);
 
-  const [wallets, goals, transactions] = await Promise.all([
+  const [wallets, goals, allTransactions] = await Promise.all([
     documentDBUtil.wallet_list.toArray(),
     documentDBUtil.goal_list.toArray(),
     documentDBUtil.transaction_list.toArray(),
   ]);
+  const transactions = allTransactions.filter(isCountedTransaction);
 
   const walletsBalance = sumWalletBalances(wallets, currency);
   const goalsBalance = sumGoalSavedAmounts(goals, currency);

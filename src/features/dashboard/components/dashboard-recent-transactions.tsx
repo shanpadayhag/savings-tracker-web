@@ -100,19 +100,57 @@ const DashboardRecentTransactions = () => {
         )}
         {transactions.map(transaction => {
           const visual = visualFor(transaction.type);
-          const amountClass = amountClassFor(transaction.type, transaction.prefix);
+          const isSoftCancelled = Boolean(transaction.cancelledAt);
+          const isReversal = Boolean(transaction.reversalOfID);
+          // Reversal entries flip the original sentiment — a reversed Spend
+          // (red) returns money so we render it as a positive (green) and
+          // vice versa. Soft-cancelled rows drop their sentiment entirely.
+          const effectivePrefix = isSoftCancelled
+            ? ''
+            : isReversal
+              ? (transaction.prefix === '+' ? '-' : transaction.prefix === '-' ? '+' : '')
+              : transaction.prefix;
+          const amountClass = isSoftCancelled
+            ? 'text-muted-foreground'
+            : amountClassFor(
+                transaction.type,
+                isReversal
+                  ? (transaction.prefix === '+' ? '-' : transaction.prefix === '-' ? '+' : '')
+                  : transaction.prefix,
+              );
+          // Counterparty replaces the original line for cancellation states
+          // — Reversed/Reversal carries more useful context here than the
+          // original "from X" descriptor.
+          const counterparty = transaction.reversedAt
+            ? `Reversed ${dateUtil.formatDisplayDate(transaction.reversedAt)}`
+            : isReversal
+              ? `Reversal · ${transaction.counterparty}`
+              : transaction.counterparty;
+          const labelSuffix = isSoftCancelled
+            ? ` · cancelled`
+            : '';
           return (
-            <div key={transaction.id} className="flex items-center gap-3">
+            <div key={transaction.id} className={cn(
+              'flex items-center gap-3',
+              isSoftCancelled && 'opacity-90',
+            )}>
               <span className={cn('flex items-center justify-center size-9 rounded-full shrink-0', visual.iconClass)}>
                 {visual.icon}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{transaction.label}</p>
-                <p className="text-xs text-muted-foreground truncate">{transaction.counterparty}</p>
+                <p className="text-sm font-medium truncate">
+                  {transaction.label}
+                  {labelSuffix && <span className="text-muted-foreground font-normal">{labelSuffix}</span>}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{counterparty}</p>
               </div>
               <div className="flex flex-col items-end shrink-0">
-                <span className={cn('text-sm font-medium tabular-nums', amountClass)}>
-                  {transaction.prefix}{currencyUtil.format(transaction.amount, transaction.currency)}
+                <span className={cn(
+                  'text-sm font-medium tabular-nums',
+                  amountClass,
+                  isSoftCancelled && 'line-through decoration-muted-foreground/60',
+                )}>
+                  {effectivePrefix}{currencyUtil.format(transaction.amount, transaction.currency)}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {dateUtil.formatDisplayDate(transaction.createdAt)}

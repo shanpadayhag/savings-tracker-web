@@ -1,4 +1,5 @@
 import Currency from '@/enums/currency';
+import isCountedTransaction from '@/features/transactions/api/is-counted-transaction';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import currencyUtil from '@/utils/currency-util';
@@ -110,11 +111,12 @@ const computeNetWorthTrend = async (
   const now = options.now ?? new Date();
   const cap = Math.max(1, options.maxMonths ?? MAX_MONTHS);
 
-  const [wallets, goals, transactions] = await Promise.all([
+  const [wallets, goals, allTransactions] = await Promise.all([
     documentDBUtil.wallet_list.toArray(),
     documentDBUtil.goal_list.toArray(),
     documentDBUtil.transaction_list.toArray(),
   ]);
+  const transactions = allTransactions.filter(isCountedTransaction);
 
   const currentNetWorth = sumCurrentNetWorth(wallets, goals, currency);
   const deltasByMonth = aggregateMonthlyDeltas(transactions, currency);

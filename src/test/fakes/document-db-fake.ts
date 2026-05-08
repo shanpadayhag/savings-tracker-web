@@ -24,6 +24,7 @@ type GoalListItemRecord = {
   savedPercent: number;
   remainingAmount: number;
   status: Goal['status'];
+  statusChangedAt?: Date;
   currency: Currency;
   categoryID?: Category['id'];
   createdAt?: Date;
@@ -45,6 +46,9 @@ type TransactionListItemRecord = {
   categoryID?: Category['id'];
   categoryName?: Category['name'];
   categoryColor?: Category['color'];
+  cancelledAt?: Date;
+  reversedAt?: Date;
+  reversalOfID?: Transaction['id'];
   createdAt?: Transaction['createdAt'];
   updatedAt?: Transaction['updatedAt'];
   reversedCreatedAt?: number;
