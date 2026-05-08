@@ -43,6 +43,9 @@ type TransactionListItem = {
   categoryID?: Category['id'];
   categoryName?: Category['name'];
   categoryColor?: Category['color'];
+  cancelledAt?: Date;
+  reversedAt?: Date;
+  reversalOfID?: Transaction['id'];
   createdAt: Transaction['createdAt'];
   updatedAt: Transaction['updatedAt'];
   reversedCreatedAt: number;

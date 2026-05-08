@@ -21,11 +21,18 @@ type EntryInput = {
   amount: number;
 };
 
+type SeedOptions = {
+  cancelledAt?: Date;
+  reversedAt?: Date;
+  reversalOfID?: string;
+};
+
 const seedTransaction = async (
   id: string,
   type: TransactionType,
   createdAt: Date,
   entries: EntryInput[],
+  options: SeedOptions = {},
 ) => {
   await documentDBFake.transaction_list.add({
     id, type, notes: null,
@@ -37,6 +44,9 @@ const seedTransaction = async (
       direction: entry.direction,
       amount: entry.amount,
     })),
+    cancelledAt: options.cancelledAt,
+    reversedAt: options.reversedAt,
+    reversalOfID: options.reversalOfID,
     createdAt, updatedAt: createdAt,
   });
 };
@@ -146,5 +156,65 @@ describe('computeReportsDailySpending', () => {
     const points = await computeReportsDailySpending(Currency.USD, { now: FIXED_NOW });
 
     expect(points.every(point => point.amount === 0)).toBe(true);
+  });
+
+  describe('cancellation handling', () => {
+    it('drops a soft-cancelled spend from its day, leaving 0 with cancelledOnly flagged', async () => {
+      const cancelDay = new Date(2026, 4, 14, 9, 0, 0);
+      await seedTransaction('soft-cancel', TransactionType.Spend, cancelDay, [
+        { type: TransactionSourceType.Goal, sourceID: 'g', currency: Currency.USD, direction: TransactionDirection.From, amount: 80 },
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.To, amount: 80 },
+      ], { cancelledAt: cancelDay });
+
+      const points = await computeReportsDailySpending(Currency.USD, { now: FIXED_NOW });
+      const may14 = points.find(point => point.date.getDate() === 14 && point.date.getMonth() === 4);
+
+      expect(may14?.amount).toBe(0);
+      expect(may14?.cancelledOnly).toBe(true);
+    });
+
+    it('subtracts a Spend reversal from the cancel-day amount and surfaces reversedAmount', async () => {
+      // Original spend on May 10: $50. Reversal entry on May 14: nets the
+      // cancel-day's spending down by $50.
+      const originalDay = new Date(2026, 4, 10, 9, 0, 0);
+      const cancelDay = new Date(2026, 4, 14, 9, 0, 0);
+      await seedSpend('original', originalDay, Currency.USD, 50);
+      // Mark the original as reversed so the projection reflects the post-cancel state.
+      await documentDBFake.transaction_list.update('original', { reversedAt: cancelDay });
+      // Same-day fresh spend on May 14 to keep the day above zero net.
+      await seedSpend('may14-spend', new Date(2026, 4, 14, 11, 0, 0), Currency.USD, 80);
+      // The reversal entry: flipped, dated cancel day, marked as reversal.
+      await seedTransaction('reversal', TransactionType.Spend, cancelDay, [
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.From, amount: 50 },
+        { type: TransactionSourceType.Goal, sourceID: 'g', currency: Currency.USD, direction: TransactionDirection.To, amount: 50 },
+      ], { reversalOfID: 'original' });
+
+      const points = await computeReportsDailySpending(Currency.USD, { now: FIXED_NOW });
+      const may10 = points.find(point => point.date.getDate() === 10 && point.date.getMonth() === 4);
+      const may14 = points.find(point => point.date.getDate() === 14 && point.date.getMonth() === 4);
+
+      // Original day still shows the $50 — history unchanged.
+      expect(may10?.amount).toBe(50);
+      // Cancel day: $80 fresh spend - $50 reversal = $30, with reversedAmount surfaced.
+      expect(may14?.amount).toBe(30);
+      expect(may14?.reversedAmount).toBe(50);
+    });
+
+    it('clamps net to 0 when the day\'s reversals exceed its spend', async () => {
+      const cancelDay = new Date(2026, 4, 14, 9, 0, 0);
+      await seedSpend('original', new Date(2026, 4, 10), Currency.USD, 100);
+      await documentDBFake.transaction_list.update('original', { reversedAt: cancelDay });
+      // Cancel-day has only the reversal — no fresh spends.
+      await seedTransaction('reversal', TransactionType.Spend, cancelDay, [
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.From, amount: 100 },
+        { type: TransactionSourceType.Goal, sourceID: 'g', currency: Currency.USD, direction: TransactionDirection.To, amount: 100 },
+      ], { reversalOfID: 'original' });
+
+      const points = await computeReportsDailySpending(Currency.USD, { now: FIXED_NOW });
+      const may14 = points.find(point => point.date.getDate() === 14 && point.date.getMonth() === 4);
+
+      expect(may14?.amount).toBe(0);
+      expect(may14?.reversedAmount).toBe(100);
+    });
   });
 });

@@ -32,7 +32,7 @@ const intensityClass: Record<number, string> = {
 
 type Cell =
   | { kind: 'pad' }
-  | { kind: 'day'; date: Date; amount: number; intensity: number; };
+  | { kind: 'day'; date: Date; amount: number; intensity: number; reversedAmount?: number; cancelledOnly?: boolean; };
 
 const useDailySpending = (currency: Currency): DailySpendingPoint[] => {
   const [days, setDays] = useState<DailySpendingPoint[]>([]);
@@ -77,6 +77,8 @@ const ReportsSpendingHeatmap = () => {
       date: day.date,
       amount: day.amount,
       intensity: intensityFor(day.amount),
+      reversedAmount: day.reversedAmount,
+      cancelledOnly: day.cancelledOnly,
     }));
 
     const total = days.reduce((sum, d) => sum + d.amount, 0);
@@ -122,9 +124,19 @@ const ReportsSpendingHeatmap = () => {
                 key={cell.date.toISOString()}
                 className={cn('size-3 rounded-sm transition-colors hover:ring-1 hover:ring-foreground/40',
                   intensityClass[cell.intensity])}
-                title={`${format(cell.date, 'EEE, MMM d')} — ${cell.amount === 0
-                  ? 'no spend'
-                  : currencyUtil.format(cell.amount, activeCurrency)}`} />)}
+                title={(() => {
+                  const dateLabel = format(cell.date, 'EEE, MMM d');
+                  if (cell.amount === 0) {
+                    if (cell.cancelledOnly) return `${dateLabel} — no net spend (cancelled)`;
+                    return `${dateLabel} — no spend`;
+                  }
+                  const amountLabel = currencyUtil.format(cell.amount, activeCurrency);
+                  if (cell.reversedAmount && cell.reversedAmount > 0) {
+                    const reversedLabel = currencyUtil.format(cell.reversedAmount, activeCurrency);
+                    return `${dateLabel} — ${amountLabel} spent (after ${reversedLabel} reversed)`;
+                  }
+                  return `${dateLabel} — ${amountLabel} spent`;
+                })()} />)}
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import Currency from '@/enums/currency';
+import isCountedTransaction from '@/features/transactions/api/is-counted-transaction';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import TransactionType from '@/features/transactions/enums/transaction-type';
@@ -13,6 +14,12 @@ export type CashflowPoint = {
   income: number;
   /** Money leaving the active currency through spends and fees. */
   expense: number;
+  /** Number of reversal entries that landed in this month. Surfaced for the
+   * reports tooltip so a quieter expense bar can be explained. */
+  reversalCount?: number;
+  /** Net effect of Spend reversals on this month's expense (positive
+   * number — gets subtracted from expense, clamped at 0 for display). */
+  reversalCredit?: number;
 };
 
 const DEFAULT_MONTHS = 6;
@@ -28,6 +35,7 @@ type Entry = {
 type TransactionRow = {
   type: TransactionType;
   entries: Entry[];
+  reversalOfID?: string;
   createdAt?: Date;
 };
 
@@ -86,12 +94,28 @@ const convertExpenseFor = (transaction: TransactionRow, currency: Currency): num
 // from the cashflow chart's expense bar.
 const spendExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
   if (transaction.type !== TransactionType.Spend) return 0;
+  if (transaction.reversalOfID) return 0;
   const fromEntry = transaction.entries.find(entry =>
     (entry.type === TransactionSourceType.Goal
       || entry.type === TransactionSourceType.Wallet)
     && entry.direction === TransactionDirection.From
     && entry.currency === currency);
   return fromEntry?.amount ?? 0;
+};
+
+// Reversal-of-Spend entries flip the original — Goal/Wallet sits on the To
+// side. Counted as a credit against the cancel month's expense rather than
+// fresh income, so the original month's history stays untouched and the
+// cancel month accurately shows reduced spending.
+const spendReversalCreditFor = (transaction: TransactionRow, currency: Currency): number => {
+  if (transaction.type !== TransactionType.Spend) return 0;
+  if (!transaction.reversalOfID) return 0;
+  const toEntry = transaction.entries.find(entry =>
+    (entry.type === TransactionSourceType.Goal
+      || entry.type === TransactionSourceType.Wallet)
+    && entry.direction === TransactionDirection.To
+    && entry.currency === currency);
+  return toEntry?.amount ?? 0;
 };
 
 const feeExpenseFor = (transaction: TransactionRow, currency: Currency): number => {
@@ -107,7 +131,14 @@ const feeExpenseFor = (transaction: TransactionRow, currency: Currency): number 
   return feeEntry.amount;
 };
 
-type Buckets = Map<string, { income: number; expense: number; }>;
+type BucketState = {
+  income: number;
+  expense: number;
+  reversalCount: number;
+  reversalCredit: number;
+};
+
+type Buckets = Map<string, BucketState>;
 
 const buildEmptyBuckets = (now: Date, months: number): { keys: string[]; buckets: Buckets; } => {
   const keys: string[] = [];
@@ -116,7 +147,7 @@ const buildEmptyBuckets = (now: Date, months: number): { keys: string[]; buckets
   for (let i = 0; i < months; i += 1) {
     const key = monthKeyOf(cursor);
     keys.push(key);
-    buckets.set(key, { income: 0, expense: 0 });
+    buckets.set(key, { income: 0, expense: 0, reversalCount: 0, reversalCredit: 0 });
     cursor.setMonth(cursor.getMonth() + 1);
   }
   return { keys, buckets };
@@ -127,6 +158,8 @@ const accumulateInto = (
   key: string,
   income: number,
   expense: number,
+  reversalCredit: number,
+  isReversal: boolean,
   currency: Currency,
 ): void => {
   const bucket = buckets.get(key);
@@ -137,6 +170,10 @@ const accumulateInto = (
   if (expense > 0) {
     bucket.expense = currencyUtil.parse(bucket.expense, currency).add(expense).value;
   }
+  if (reversalCredit > 0) {
+    bucket.reversalCredit = currencyUtil.parse(bucket.reversalCredit, currency).add(reversalCredit).value;
+  }
+  if (isReversal) bucket.reversalCount += 1;
 };
 
 const labelFor = (key: string): string => {
@@ -158,7 +195,8 @@ const computeCashflow = async (
   const now = options.now ?? new Date();
   const months = Math.max(1, options.months ?? DEFAULT_MONTHS);
 
-  const transactions = await documentDBUtil.transaction_list.toArray();
+  const transactions = (await documentDBUtil.transaction_list.toArray())
+    .filter(isCountedTransaction);
   const { keys, buckets } = buildEmptyBuckets(now, months);
   const earliestKey = keys[0];
 
@@ -173,13 +211,21 @@ const computeCashflow = async (
     const expense = spendExpenseFor(transaction, currency)
       + feeExpenseFor(transaction, currency)
       + convertExpenseFor(transaction, currency);
-    accumulateInto(buckets, key, income, expense, currency);
+    const reversalCredit = spendReversalCreditFor(transaction, currency);
+    accumulateInto(buckets, key, income, expense, reversalCredit, Boolean(transaction.reversalOfID), currency);
   }
 
-  return keys.map(key => ({
-    month: labelFor(key),
-    ...buckets.get(key)!,
-  }));
+  return keys.map(key => {
+    const bucket = buckets.get(key)!;
+    const netExpense = currencyUtil.parse(bucket.expense, currency).subtract(bucket.reversalCredit).value;
+    return {
+      month: labelFor(key),
+      income: bucket.income,
+      expense: netExpense > 0 ? netExpense : 0,
+      reversalCount: bucket.reversalCount > 0 ? bucket.reversalCount : undefined,
+      reversalCredit: bucket.reversalCredit > 0 ? bucket.reversalCredit : undefined,
+    };
+  });
 };
 
 export default computeCashflow;

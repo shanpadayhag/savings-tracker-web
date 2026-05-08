@@ -1,5 +1,6 @@
 import Currency from '@/enums/currency';
 import GoalStatus from '@/features/goals/enums/goal-status';
+import isCountedTransaction from '@/features/transactions/api/is-counted-transaction';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import currencyUtil from '@/utils/currency-util';
@@ -91,10 +92,11 @@ const computeTopGoals = async (
   const now = options.now ?? new Date();
   const limit = Math.max(1, options.limit ?? DEFAULT_TOP_N);
 
-  const [goals, transactions] = await Promise.all([
+  const [goals, allTransactions] = await Promise.all([
     documentDBUtil.goal_list.toArray(),
     documentDBUtil.transaction_list.toArray(),
   ]);
+  const transactions = allTransactions.filter(isCountedTransaction);
 
   const candidates = goals
     .filter(goal => goal.currency === currency)

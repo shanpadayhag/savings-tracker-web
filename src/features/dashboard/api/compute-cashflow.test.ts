@@ -21,11 +21,18 @@ type EntryInput = {
   amount: number;
 };
 
+type SeedOptions = {
+  cancelledAt?: Date;
+  reversedAt?: Date;
+  reversalOfID?: string;
+};
+
 const seedTransaction = async (
   id: string,
   type: TransactionType,
   createdAt: Date,
   entries: EntryInput[],
+  options: SeedOptions = {},
 ) => {
   await documentDBFake.transaction_list.add({
     id, type, notes: null,
@@ -37,6 +44,9 @@ const seedTransaction = async (
       direction: entry.direction,
       amount: entry.amount,
     })),
+    cancelledAt: options.cancelledAt,
+    reversedAt: options.reversedAt,
+    reversalOfID: options.reversalOfID,
     createdAt, updatedAt: createdAt,
   });
 };
@@ -219,5 +229,68 @@ describe('computeCashflow', () => {
     const usdPoints = await computeCashflow(Currency.USD, { now: FIXED_NOW, months: 6 });
 
     expect(usdPoints.every(point => point.income === 0)).toBe(true);
+  });
+
+  describe('cancellation handling', () => {
+    it('excludes soft-cancelled spends from the expense bar', async () => {
+      await seedTransaction('cancelled-spend', TransactionType.Spend, new Date(2026, 4, 6), [
+        { type: TransactionSourceType.Goal, sourceID: 'g', currency: Currency.USD, direction: TransactionDirection.From, amount: 200 },
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.To, amount: 200 },
+      ], { cancelledAt: new Date(2026, 4, 6) });
+
+      const points = await computeCashflow(Currency.USD, { now: FIXED_NOW, months: 6 });
+
+      const may = points.find(point => point.month === 'May');
+      expect(may?.expense).toBe(0);
+      expect(may?.reversalCount).toBeUndefined();
+    });
+
+    it('subtracts a Spend reversal from the cancel-month expense', async () => {
+      // Original spend in March stays in March's expense — reversal in May
+      // is a credit that lowers May's expense.
+      await seedTransaction('original', TransactionType.Spend, new Date(2026, 2, 10), [
+        { type: TransactionSourceType.Goal, sourceID: 'g', currency: Currency.USD, direction: TransactionDirection.From, amount: 120 },
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.To, amount: 120 },
+      ], { reversedAt: new Date(2026, 4, 5) });
+      await seedTransaction('reversal', TransactionType.Spend, new Date(2026, 4, 5), [
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.From, amount: 120 },
+        { type: TransactionSourceType.Goal, sourceID: 'g', currency: Currency.USD, direction: TransactionDirection.To, amount: 120 },
+      ], { reversalOfID: 'original' });
+      // Add an unrelated May spend so May's expense isn't fully wiped out.
+      await seedTransaction('may-spend', TransactionType.Spend, new Date(2026, 4, 8), [
+        { type: TransactionSourceType.Wallet, sourceID: 'w', currency: Currency.USD, direction: TransactionDirection.From, amount: 200 },
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.To, amount: 200 },
+      ]);
+
+      const points = await computeCashflow(Currency.USD, { now: FIXED_NOW, months: 6 });
+
+      const march = points.find(point => point.month === 'Mar');
+      const may = points.find(point => point.month === 'May');
+      expect(march?.expense).toBe(120);
+      expect(may?.expense).toBe(80); // 200 spent - 120 reversed
+      expect(may?.reversalCount).toBe(1);
+      expect(may?.reversalCredit).toBe(120);
+    });
+
+    it('clamps net expense at 0 when reversals exceed the month\'s spending', async () => {
+      await seedTransaction('big-original', TransactionType.Spend, new Date(2026, 2, 10), [
+        { type: TransactionSourceType.Goal, sourceID: 'g', currency: Currency.USD, direction: TransactionDirection.From, amount: 500 },
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.To, amount: 500 },
+      ], { reversedAt: new Date(2026, 4, 5) });
+      await seedTransaction('big-reversal', TransactionType.Spend, new Date(2026, 4, 5), [
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.From, amount: 500 },
+        { type: TransactionSourceType.Goal, sourceID: 'g', currency: Currency.USD, direction: TransactionDirection.To, amount: 500 },
+      ], { reversalOfID: 'big-original' });
+      await seedTransaction('small-may-spend', TransactionType.Spend, new Date(2026, 4, 8), [
+        { type: TransactionSourceType.Wallet, sourceID: 'w', currency: Currency.USD, direction: TransactionDirection.From, amount: 50 },
+        { type: TransactionSourceType.External, currency: Currency.USD, direction: TransactionDirection.To, amount: 50 },
+      ]);
+
+      const points = await computeCashflow(Currency.USD, { now: FIXED_NOW, months: 6 });
+
+      const may = points.find(point => point.month === 'May');
+      expect(may?.expense).toBe(0); // clamped, not negative
+      expect(may?.reversalCredit).toBe(500);
+    });
   });
 });

@@ -7,7 +7,7 @@
 // was wiped out by a high-expense one.
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/card';
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/atoms/chart';
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip } from '@/components/atoms/chart';
 import { useActiveCurrency } from '@/contexts/active-currency-context';
 import Currency from '@/enums/currency';
 import computeReportsCashflow, { ReportsCashflowPoint } from '@/features/reports/api/compute-reports-cashflow';
@@ -40,6 +40,39 @@ type ReportsCashflowChartProps = {
   range: ReportRange;
 };
 
+type CashflowTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ payload: ReportsCashflowPoint; }>;
+  currency: Currency;
+};
+
+const CashflowTooltip = ({ active, payload, currency }: CashflowTooltipProps) => {
+  if (!active || !payload?.length) return null;
+  const point = payload[0].payload;
+  const rows: Array<{ key: string; label: string; value: string; }> = [
+    { key: 'income', label: 'Income', value: currencyUtil.format(point.income, currency) },
+    { key: 'expense', label: 'Expense', value: currencyUtil.format(point.expense, currency) },
+    { key: 'savingsRate', label: 'Savings Rate', value: `${point.savingsRate.toFixed(1)}%` },
+  ];
+
+  return (
+    <div className="grid min-w-[10rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <div className="font-medium">{point.month}</div>
+      {rows.map(row => (
+        <div key={row.key} className="flex w-full items-center justify-between gap-4">
+          <span className="text-muted-foreground">{row.label}</span>
+          <span className="font-mono font-medium tabular-nums">{row.value}</span>
+        </div>
+      ))}
+      {point.reversalCount && point.reversalCredit ? (
+        <div className="mt-0.5 italic text-[11px] text-muted-foreground">
+          includes {point.reversalCount} reversal{point.reversalCount === 1 ? '' : 's'} · −{currencyUtil.format(point.reversalCredit, currency)}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 const ReportsCashflowChart = (props: ReportsCashflowChartProps) => {
   const { activeCurrency } = useActiveCurrency();
   const data = useReportsCashflow(activeCurrency, props.range);
@@ -59,21 +92,7 @@ const ReportsCashflowChart = (props: ReportsCashflowChartProps) => {
               tickFormatter={value => currencyUtil.format(value, activeCurrency)} />
             <YAxis yAxisId="rate" orientation="right" tickLine={false} axisLine={false} tickMargin={8}
               width={50} domain={[0, 100]} tickFormatter={value => `${value}%`} />
-            <ChartTooltip cursor={false} content={
-              <ChartTooltipContent
-                formatter={(value, name) => (
-                  <div className="flex w-full items-center justify-between gap-4">
-                    <span className="text-muted-foreground capitalize">
-                      {chartConfig[name as keyof typeof chartConfig]?.label ?? (name as string)}
-                    </span>
-                    <span className="font-mono font-medium tabular-nums">
-                      {name === 'savingsRate'
-                        ? `${(value as number).toFixed(1)}%`
-                        : currencyUtil.format(value as number, activeCurrency)}
-                    </span>
-                  </div>
-                )} />
-            } />
+            <ChartTooltip cursor={false} content={<CashflowTooltip currency={activeCurrency} />} />
             <ChartLegend content={<ChartLegendContent />} />
             <Bar yAxisId="amount" dataKey="income" fill="var(--color-income)" radius={[4, 4, 0, 0]} />
             <Bar yAxisId="amount" dataKey="expense" fill="var(--color-expense)" radius={[4, 4, 0, 0]} />

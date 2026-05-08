@@ -29,6 +29,13 @@ type TransactionListItem = {
     name: Category['name'];
     color: Category['color'];
   };
+  cancelledAt?: Date;
+  reversedAt?: Date;
+  reversalOfID?: Transaction['id'];
+  /** IDs of every Goal this transaction touched on either side. Used by the
+   * cancel control to look up live goal status — a Spend-from-goal whose
+   * goal has since been completed or archived can no longer be cancelled. */
+  goalSourceIDs?: string[];
   createdAt: Transaction['createdAt'];
   updatedAt: Transaction['updatedAt'];
 };

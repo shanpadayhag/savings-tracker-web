@@ -95,11 +95,15 @@ const getTransactions = async (params: GetTransactionsParams): Promise<GetTransa
     const mainFrom: currency[] = [];
     const mainTo: currency[] = [];
     const fees: currency[] = [];
+    const goalSourceIDs: string[] = [];
 
     let fromName: string | null = null;
     let toName: string | null = null;
 
     for (const entry of entries) {
+      if (entry.type === TransactionSourceType.Goal && entry.sourceID) {
+        goalSourceIDs.push(entry.sourceID);
+      }
       if (entry.type === TransactionSourceType.Internal &&
         entry.direction === TransactionDirection.To) {
         fees.push(currencyUtil.parse(entry.amount, entry.currency));
@@ -153,6 +157,10 @@ const getTransactions = async (params: GetTransactionsParams): Promise<GetTransa
       fee: fees.length ? fees[0] : null,
       notes: transactionListItem.notes,
       category,
+      cancelledAt: transactionListItem.cancelledAt,
+      reversedAt: transactionListItem.reversedAt,
+      reversalOfID: transactionListItem.reversalOfID,
+      goalSourceIDs: goalSourceIDs.length > 0 ? goalSourceIDs : undefined,
       createdAt: transactionListItem.createdAt,
       updatedAt: transactionListItem.updatedAt,
     };

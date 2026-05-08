@@ -13,6 +13,8 @@ export type ReportsCashflowPoint = {
   income: number;
   expense: number;
   savingsRate: number;
+  reversalCount?: number;
+  reversalCredit?: number;
 };
 
 const rangeMonths: Record<ReportRange, number> = {
@@ -41,6 +43,8 @@ const computeReportsCashflow = async (
     savingsRate: point.income === 0
       ? 0
       : ((point.income - point.expense) / point.income) * 100,
+    reversalCount: point.reversalCount,
+    reversalCredit: point.reversalCredit,
   }));
 };
 

@@ -8,6 +8,7 @@
 
 import Currency from '@/enums/currency';
 import { ReportRange } from '@/features/reports/data/mock-reports-data';
+import isCountedTransaction from '@/features/transactions/api/is-counted-transaction';
 import TransactionDirection from '@/features/transactions/enums/transaction-direction';
 import TransactionSourceType from '@/features/transactions/enums/transaction-source-type';
 import TransactionType from '@/features/transactions/enums/transaction-type';
@@ -106,7 +107,8 @@ const computeReportsSpendingByCategory = async (
   const priorStart = new Date(now.getFullYear(), now.getMonth() - (months * 2 - 1), 1);
   const priorEnd = currentStart;
 
-  const transactions = await documentDBUtil.transaction_list.toArray();
+  const transactions = (await documentDBUtil.transaction_list.toArray())
+    .filter(isCountedTransaction);
   const current = accumulate(transactions, currency, currentStart, currentEnd);
   const prior = accumulate(transactions, currency, priorStart, priorEnd);
 
